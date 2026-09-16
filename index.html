@@ -860,7 +860,7 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
 <section id="customers" class="view">
 <div class="heading"><h1>Customer / Travel</h1><p>Kelola data transaksi customer/travel.</p></div>
 <div class="toolbar">
-<input class="input" id="customerSearch" placeholder="Cari airlines / invoice / agent / PNR / sales..." oninput="renderCustomers()">
+<input class="input" id="customerSearch" placeholder="Cari agent / PIC / phone / sales..." oninput="renderCustomers()">
 <select class="input" id="customerSalesFilter" onchange="renderCustomers()"><option value="">Semua Sales</option></select>
 <span id="customerSortBox" style="display:flex;gap:6px"></span>
 <button class="primary" onclick="openCustomer()">＋ Tambah Data</button>
@@ -869,7 +869,7 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
 <div class="table-wrap">
 <table>
 <thead><tr>
-<th>AIRLINES</th><th>INVOICE</th><th>AGENT NAME*</th><th>PIC</th><th>PNR</th><th>PAX</th><th>DEPT</th><th>PHONE</th><th>SALES</th><th>TGL CLOSING</th><th>AKSI</th>
+<th>AGENT NAME*</th><th>PIC</th><th>PHONE</th><th>SALES</th><th>AKSI</th>
 </tr></thead>
 <tbody id="customerRows"></tbody>
 </table>
@@ -1082,8 +1082,8 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
       </div>
       <div class="ir-meta">
         <b>LAPORAN INVOICE &amp; PIUTANG</b>
-        <span>Tanggal Laporan: <i id="irDate">-</i></span>
-        <span>Periode Data: <i id="irPeriod">-</i></span>
+        <span>Periode: <i id="irPeriod">-</i></span>
+        <span>Tercetak pada <i id="irPrintedAt">-</i></span>
       </div>
     </div>
     <div class="ir-title"><h1>LAPORAN INVOICE &amp; PIUTANG</h1><p>Rekapitulasi otomatis dari data menu Invoice</p></div>
@@ -1091,9 +1091,12 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
     <div class="ir-toolbar noprint">
       <input class="input" id="irSearch" placeholder="⌕  Cari invoice / customer / sales..." oninput="renderInvReport()">
       <select class="input" id="irStatus" onchange="renderInvReport()"></select>
-      <select class="input" id="irMonth" onchange="renderInvReport()"></select>
       <span style="display:flex;align-items:center;gap:8px;border:1px solid #e3e6ee;border-radius:12px;padding:6px 10px;background:#fff">
-        <b style="font-size:12px;color:var(--muted)">Tgl Closing</b>
+        <select class="input" id="irRangeField" onchange="renderInvReport()" style="min-width:150px">
+          <option value="dept">DEPT</option>
+          <option value="due">Jatuh Tempo</option>
+          <option value="closing">Tgl Closing</option>
+        </select>
         <label style="font-size:12px;color:var(--muted)">From</label>
         <input class="input" type="date" id="irClosingFrom" onchange="renderInvReport()">
         <label style="font-size:12px;color:var(--muted)">To</label>
@@ -1758,7 +1761,10 @@ document.addEventListener('DOMContentLoaded',function(){try{updateActivityBadge(
 const rp=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
 const rpSplit=n=>{let num=Number(n||0).toLocaleString('id-ID');return `<div class="rp-cell"><span class="rp-cur">Rp</span><span class="rp-num">${num}</span></div>`};
 const date=s=>new Date(s+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
-function todayStr(){return new Date().toISOString().slice(0,10)}
+/* Tanggal SELALU dihitung memakai waktu lokal (WIB). toISOString() memakai UTC,
+   sehingga jam 07:00 ke bawah / malam hari bisa meleset satu hari. */
+function isoLocal(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`}
+function todayStr(){return isoLocal(new Date())}
 function status(i){let s=i.amount-i.paid;if(s<=0)return'Lunas';let d=Math.ceil((new Date(i.due)-new Date())/86400000);if(d<0)return'Overdue';if(d===0)return'Jatuh Tempo';return'Belum Jatuh Tempo'}
 function badge(s){return `<span class="badge ${s==='Lunas'?'bb':s==='Overdue'?'br':s==='Jatuh Tempo'?'by':'bg'}">${s}</span>`}
 
@@ -1801,6 +1807,20 @@ let v=String(idx+1).padStart(2,'0');
 return `<option value="${v}" ${selected===v?'selected':''}>${name}</option>`;
 }).join('');
 return `<option value="">Semua Bulan</option>${opts}`;
+}
+function invoiceDept(i,c){
+  // DEPT harus mengikuti tanggal keberangkatan pada invoice ITU SENDIRI.
+  // Data customer dipakai hanya sebagai cadangan terakhir, karena satu customer
+  // bisa punya banyak invoice dengan tanggal berangkat berbeda.
+  if(!i)return '';
+  const MON='JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC';
+  let d=String(i.dept||'').trim();
+  if(!d){
+    const fl=(i.items||[]).map(x=>x.flights).filter(Boolean).join('\n');
+    d=((fl.toUpperCase().match(new RegExp('\\b\\d{1,2}(?:'+MON+')\\b'))||[])[0])||'';
+  }
+  if(!d)d=String((c||custByInvoice(i.id,i.customer)||{}).dept||'').trim();
+  return d.toUpperCase();
 }
 function custByInvoice(id,customerName){
 let c=data.customers.find(x=>x.invoice===id);
@@ -2011,19 +2031,32 @@ function setDashPeriod(p){
 }
 function dashRange(){
   const t=new Date(todayStr()+'T00:00:00');
-  const iso=d=>d.toISOString().slice(0,10);
+  const iso=d=>isoLocal(d);
   if(dashPeriod==='today')return[iso(t),iso(t)];
   if(dashPeriod==='week'){let d=new Date(t);let w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);let e=new Date(d);e.setDate(e.getDate()+6);return[iso(d),iso(e)]}
   if(dashPeriod==='month'){let y=t.getFullYear(),m=t.getMonth();return[iso(new Date(Date.UTC(y,m,1))),iso(new Date(Date.UTC(y,m+1,0)))]}
   if(dashPeriod==='year'){let y=t.getFullYear();return[y+'-01-01',y+'-12-31']}
-  return[dashFrom||'0000-01-01',dashTo||'9999-12-31'];
+  /* Custom: kalau salah satu tanggal belum diisi, jangan pakai rentang ekstrem
+     (0000-9999) karena grafik akan membuat puluhan ribu titik dan UI membeku.
+     Rentang disempitkan ke tanggal data yang ada, atau tahun berjalan. */
+  const ds=[];
+  try{
+    (data.invoices||[]).forEach(i=>{if(i.date)ds.push(i.date);if(i.due)ds.push(i.due)});
+    (data.payments||[]).forEach(p=>{if(p.date)ds.push(p.date)});
+  }catch(e){}
+  ds.sort();
+  const y=t.getFullYear();
+  const lo=ds[0]||(y+'-01-01'), hi=ds[ds.length-1]||(y+'-12-31');
+  let a=dashFrom||lo, b=dashTo||hi;
+  if(a>b){const k=a;a=b;b=k}
+  return[a,b];
 }
 function dashLabel(){
   const[a,b]=dashRange();
   return a===b?date(a):date(a)+' - '+date(b);
 }
 function inRange(d){if(!d)return false;const[a,b]=dashRange();return d>=a&&d<=b}
-function dashInvoices(){return data.invoices.filter(i=>inRange(i.date))}
+function dashInvoices(){return data.invoices.filter(i=>inRange(i.due||i.date))}
 function dashPayEvents(){
   let out=[];
   /* Dibungkus try: saat pemuatan awal, helper invoicePayments/num berada di blok
@@ -2050,11 +2083,17 @@ function monthSeries(getDate,getVal,rows){
   const oneMonth=(start.getFullYear()===end.getFullYear()&&start.getMonth()===end.getMonth());
   let keys=[],lab={};
   if(oneMonth||dashPeriod==='today'||dashPeriod==='week'){
-    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){let k=d.toISOString().slice(0,10);keys.push(k);lab[k]=k.slice(8,10)}
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){let k=isoLocal(d);keys.push(k);lab[k]=k.slice(8,10)}
   }else{
     let d=new Date(Date.UTC(start.getFullYear(),start.getMonth(),1));
     const last=new Date(Date.UTC(end.getFullYear(),end.getMonth(),1));
-    while(d<=last){let k=d.toISOString().slice(0,7);keys.push(k);lab[k]=MONTH_NAMES[d.getUTCMonth()].slice(0,3);d.setUTCMonth(d.getUTCMonth()+1)}
+    const months=(last.getUTCFullYear()-d.getUTCFullYear())*12+(last.getUTCMonth()-d.getUTCMonth())+1;
+    if(months>36){
+      /* Rentang sangat panjang: dikelompokkan per tahun supaya grafik tetap ringan. */
+      for(let y=d.getUTCFullYear();y<=last.getUTCFullYear();y++){const k=String(y);keys.push(k);lab[k]=k}
+    }else{
+      while(d<=last){let k=d.toISOString().slice(0,7);keys.push(k);lab[k]=MONTH_NAMES[d.getUTCMonth()].slice(0,3);d.setUTCMonth(d.getUTCMonth()+1)}
+    }
   }
   const cut=keys[0].length;
   let map={};keys.forEach(k=>map[k]=0);
@@ -2088,7 +2127,7 @@ function renderDashboard(){
 
   document.getElementById('trendMeta').textContent=dashLabel();
   document.getElementById('payMeta').textContent=rp(pays.reduce((a,p)=>a+p.amount,0));
-  document.getElementById('chartTrend').innerHTML=lineChartSVG(monthSeries(i=>i.date,i=>num(i.amount),data.invoices),'#b90d13');
+  document.getElementById('chartTrend').innerHTML=lineChartSVG(monthSeries(i=>i.due||i.date,i=>num(i.amount),data.invoices),'#b90d13');
   document.getElementById('chartPay').innerHTML=lineChartSVG(monthSeries(p=>p.date,p=>p.amount,dashPayEvents()),'#46a95a');
 
   const buckets=agingBuckets();
@@ -2125,7 +2164,7 @@ const invoiceSortOptions=[['date','Tanggal'],['due','Jatuh Tempo'],['closing','T
 function invoiceSortVal(i,key){
 if(key==='sisa')return i.amount-i.paid;
 if(key==='airlines')return custByInvoice(i.id,i.customer).airlines||'';
-if(key==='dept')return custByInvoice(i.id,i.customer).dept||'';
+if(key==='dept')return invoiceDept(i);
 return i[key];
 }
 function renderDashboardTable(){
@@ -2181,7 +2220,7 @@ function invoicePnr(i){
 }
 function rowHTML(i){
 let c=custByInvoice(i.id,i.customer);
-return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${c.airlines||'-'}</td><td>${c.pic||'-'}</td><td>${invoicePnr(i)||'-'}</td><td>${c.pax||0}</td><td>${c.dept||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
+return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${c.airlines||'-'}</td><td>${c.pic||'-'}</td><td>${invoicePnr(i)||'-'}</td><td>${c.pax||0}</td><td>${invoiceDept(i,c)||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
 function deleteInvoice(id){
 if(currentRole==='viewer'){alert('Akun Viewer hanya dapat melihat data (read-only) dan tidak dapat menghapus data.');return;}
 if(!confirm('Apakah Anda yakin ingin menghapus Invoice ini?'))return;
@@ -2205,7 +2244,7 @@ function invoiceFilterValue(i,field){
     pic:i.client||c.pic||'',
     pnr:invoicePnrAll(i).join(' '),
     pax:c.pax??i.pax??'',
-    dept:c.dept||i.dept||'',
+    dept:invoiceDept(i,c),
     phone:i.phone||c.phone||'',
     sales:i.sales||c.sales||'',
     date:i.date||'',
@@ -2249,16 +2288,21 @@ function renderInvoices(){
     const c=custByInvoice(i.id,i.customer);
     const matchesSearch=!q || (
       field==='all'
-        ? [i.id,i.customer,c.airlines||i.airlines,i.client||c.pic,invoicePnrAll(i).join(' '),c.pax??i.pax,c.dept||i.dept,i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
+        ? [i.id,i.customer,c.airlines||i.airlines,i.client||c.pic,invoicePnrAll(i).join(' '),c.pax??i.pax,invoiceDept(i,c),i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
             .join(' ').toLowerCase().includes(q)
-        : String(invoiceFilterValue(i,field)).toLowerCase().includes(q)
+        : (
+            String(invoiceFilterValue(i,field)).toLowerCase().includes(q)
+            // Fallback: walaupun kolom filter diset (mis. DEPT), kode PNR tetap
+            // bisa dicari supaya kombinasi DEPT + Bulan + PNR tidak "kosong".
+            || invoicePnrAll(i).join(' ').toLowerCase().includes(q)
+          )
     );
 
     // Filter BULAN untuk kolom DEPT membaca format DEPT seperti:
     // 28OCT, 17OCT, 14SEP, 13OCT.
     // Jadi ketika kolom filter = DEPT dan Bulan = September,
     // sistem akan mencari kode SEP pada kolom DEPT, bukan tanggal invoice/due/closing.
-    const deptValue=String(c.dept||i.dept||'').trim().toUpperCase();
+    const deptValue=invoiceDept(i,c);
     const deptMonthMap={
       JAN:'01', FEB:'02', MAR:'03', APR:'04',
       MAY:'05', JUN:'06', JUL:'07', AUG:'08',
@@ -2277,7 +2321,11 @@ function renderInvoices(){
     const matchesMonth=!mf || (
       field==='dept'
         ? deptMonth===mf
-        : dateCandidates.some(d=>d.slice(5,7)===mf)
+        : (field==='date'||field==='due'||field==='closing')
+          ? dateCandidates.some(d=>d.slice(5,7)===mf)
+          // Kolom lain (PNR, Customer, dll): bulan cocok bila kode bulan DEPT
+          // ATAU salah satu tanggal invoice/jatuh tempo/closing cocok.
+          : (deptMonth===mf || dateCandidates.some(d=>d.slice(5,7)===mf))
     );
 
     // DEPT seperti 14SEP tidak memiliki informasi tahun, sehingga filter tahun
@@ -2295,8 +2343,31 @@ function renderInvoices(){
 }
 
 /* CUSTOMER / TRAVEL BARU */
-const customerSortOptions=[['agentName','Agent Name'],['closing','Tgl Closing'],['airlines','Airlines'],['invoice','Invoice'],['pic','PIC'],['pnr','PNR'],['pax','Pax'],['dept','DEPT'],['phone','Phone'],['sales','Sales']];
+const customerSortOptions=[['agentName','Agent Name'],['pic','PIC'],['phone','Phone'],['sales','Sales']];
+/* PNR pada Customer/Agent bisa diisi manual (c.pnr) ATAU berasal dari baris
+   tiket invoice terkait (diisi lewat form "Buat Invoice"), yang TIDAK pernah
+   disinkronkan balik ke field c.pnr. Tanpa fungsi ini, PNR yang hanya ada di
+   item tiket invoice tidak akan pernah ditemukan oleh kolom maupun pencarian
+   di menu Customer/Agent. Pencarian dibatasi HANYA ke invoice milik customer
+   ini sendiri (c.invoice) — tidak fallback ke agent lain — supaya PNR invoice
+   lain tidak ikut tercampur/muncul saat memfilter satu PNR tertentu.
+   Angka tanpa huruf (contoh: 1, 45, 2026) diabaikan supaya kolom seperti Pax
+   atau tahun tidak ikut cocok saat mencari kode PNR pendek. */
+function customerPnrAll(c){
+  const own=(c.pnr||'').trim();
+  const inv=c.invoice?data.invoices.find(x=>x.id===c.invoice):null;
+  const itemPnrs=inv?(inv.items||[]).map(x=>(x.pnr||'').trim()).filter(Boolean):[];
+  const invPnr=(inv&&inv.pnr?String(inv.pnr).trim():'');
+  const all=[own,invPnr,...itemPnrs].filter(Boolean);
+  return [...new Set(all)];
+}
+function customerPnrDisplay(c){return customerPnrAll(c).join(', ')||'-'}
+function customerMatchesPnrQuery(c,q){
+  if(!q)return true;
+  return customerPnrAll(c).some(p=>p.toLowerCase().includes(q));
+}
 function renderCustomers(){
+if(typeof ensureCustomerIds==='function')ensureCustomerIds();
 let q=(document.getElementById('customerSearch')?.value||'').toLowerCase(),sf=document.getElementById('customerSalesFilter')?.value||'';
 let salesSel=document.getElementById('customerSalesFilter');
 if(salesSel){
@@ -2305,23 +2376,20 @@ salesSel.innerHTML='<option value="">Semua Sales</option>'+uniq.map(s=>`<option 
 }
 document.getElementById('customerSortBox').innerHTML=sortControlHTML('customers',customerSortOptions);
 let rows=data.customers.filter(c=>
-[c.airlines,c.invoice,c.agentName,c.pic,c.pnr,c.pax,c.dept,c.phone,c.sales,c.closing].join(' ').toLowerCase().includes(q)
+([c.airlines,c.invoice,c.agentName,c.pic,c.pax,c.dept,c.phone,c.sales,c.closing].join(' ').toLowerCase().includes(q)
+||customerMatchesPnrQuery(c,q))
 &&(!sf||c.sales===sf)
 );
-rows=sortRows(rows,'customers',(c,key)=>c[key]);
+rows=sortRows(rows,'customers',(c,key)=>key==='pnr'?customerPnrDisplay(c):c[key]);
 document.getElementById('customerRows').innerHTML=rows.map(c=>`
 <tr>
-<td><b>${c.airlines||'-'}</b></td>
-<td class="inv">${c.invoice||'-'}</td>
 <td>${c.agentName||'-'}</td>
 <td>${c.pic||'-'}</td>
-<td>${c.pnr||'-'}</td>
-<td>${c.pax||0}</td>
-<td>${c.dept||'-'}</td>
+
 <td>${c.phone||'-'}</td>
-<td>${c.sales||'-'}</td><td>${c.closing?date(c.closing):'-'}</td>
+<td>${c.sales||'-'}</td>
 <td><button class="secondary" onclick="editCustomer('${c.__id}')">Edit</button> <button class="secondary" style="color:#d71920" onclick="deleteCustomer('${c.__id}')">Hapus</button></td>
-</tr>`).join('')||'<tr><td colspan="11" class="empty">Belum ada data.</td></tr>'
+</tr>`).join('')||'<tr><td colspan="5" class="empty">Belum ada data.</td></tr>'
 }
 function deleteCustomer(code){
 if(!confirm('Hapus data customer/travel ini?'))return;
@@ -2347,7 +2415,7 @@ function paymentDept(p){
   // otomatis mengikuti perubahan DEPT yang ada di menu Invoice.
   const inv=(data.invoices||[]).find(i=>i.id===p.invoice);
   const c=custByInvoice(p.invoice,p.customer);
-  return String(c?.dept||inv?.dept||'-').trim()||'-';
+  return (invoiceDept(inv,c)||'').trim()||'-';
 }
 function paymentPNR(p){
   // PNR juga selalu mengikuti data Invoice/Customer terbaru.
@@ -2401,7 +2469,7 @@ function paymentQuickPass(p){
  const d=String(p.date||'');
  if(paymentQuickMode==='month')return d.slice(0,7)===todayStr().slice(0,7);
  if(paymentQuickMode==='7'){
-  const lim=new Date(Date.now()-6*86400000).toISOString().slice(0,10);
+  const lim=isoLocal(new Date(Date.now()-6*86400000));
   return d>=lim&&d<=todayStr();
  }
  if(paymentQuickMode==='refund')return isRefundMethod(p.method)||num(p.amount)<0;
@@ -2785,20 +2853,22 @@ function closeModal(){document.getElementById('modal').classList.remove('open')}
 
 /* FORM CUSTOMER BARU */
 function openCustomer(customerId){
-let c=data.customers.find(x=>x.__id===customerId);
+if(typeof ensureCustomerIds==='function')ensureCustomerIds();
+let c=null;
+if(customerId&&customerId!=='undefined'&&customerId!=='null'){
+c=data.customers.find(x=>String(x.__id)===String(customerId))
+||data.customers.find(x=>String(x.code||'')===String(customerId))
+||data.customers.find(x=>String(x.id||'')===String(customerId))
+||null;
+}
+const av=s=>esc(s??'');
 openModal(c?'Edit Data Customer / Travel':'Tambah Data Customer / Travel',`
-<form onsubmit="submitCustomer(event,'${customerId||''}')">
+<form onsubmit="submitCustomer(event,'${c?c.__id:''}')">
 <div class="formgrid">
-<div class="field"><label>Airlines</label><input id="cAirlines" required value="${c?.airlines||''}" placeholder="Contoh: Garuda Indonesia"></div>
-<div class="field"><label>No. Invoice</label><input id="cInvoice" required value="${c?.invoice||''}" placeholder="Contoh: INV-2026-001"></div>
-<div class="field"><label>Agent Name *</label><input id="cAgent" required value="${c?.agentName||''}" placeholder="Nama travel / agent"></div>
-<div class="field"><label>PIC</label><input id="cPic" value="${c?.pic||''}" placeholder="Nama PIC"></div>
-<div class="field"><label>PNR</label><input id="cPnr" value="${c?.pnr||''}" placeholder="Kode PNR"></div>
-<div class="field"><label>Pax</label><input id="cPax" type="number" min="1" value="${c?.pax||1}" placeholder="Jumlah penumpang"></div>
-<div class="field"><label>DEPT</label><input id="cDept" value="${c?.dept||''}" placeholder="Contoh: 15OCT (tanggal berangkat)"></div>
-<div class="field"><label>Phone</label><input id="cPhone" value="${c?.phone||''}" placeholder="Contoh: 0812xxxxxxx"></div>
-<div class="field"><label>Sales</label><input id="cSales" value="${c?.sales||''}" placeholder="Nama sales penanggung jawab"></div>
-<div class="field"><label>Tanggal Closing</label><input id="cClosing" type="date" value="${c?.closing||''}"></div>
+<div class="field"><label>Agent Name *</label><input id="cAgent" required value="${av(c?.agentName)}" placeholder="Nama travel / agent"></div>
+<div class="field"><label>PIC</label><input id="cPic" value="${av(c?.pic)}" placeholder="Nama PIC"></div>
+<div class="field"><label>Phone</label><input id="cPhone" value="${av(c?.phone)}" placeholder="Contoh: 0812xxxxxxx"></div>
+<div class="field"><label>Sales</label><input id="cSales" value="${av(c?.sales)}" placeholder="Nama sales penanggung jawab"></div>
 </div>
 <div class="modalfoot">
 <button type="button" class="secondary" onclick="closeModal()">Batal</button>
@@ -2811,18 +2881,19 @@ function editCustomer(customerId){openCustomer(customerId)}
 
 function submitCustomer(e,oldId){
 e.preventDefault();
+let prev=oldId?data.customers.find(x=>x.__id===oldId):null;
 let c={
 __id:oldId || ('customer-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)),
-airlines:cAirlines.value,
-invoice:cInvoice.value,
+airlines:prev?.airlines||'',
+invoice:prev?.invoice||'',
 agentName:cAgent.value,
 pic:cPic.value,
-pnr:cPnr.value,
-pax:Number(cPax.value||0),
-dept:cDept.value,
+pnr:prev?.pnr||'',
+pax:Number(prev?.pax||0),
+dept:prev?.dept||'',
 phone:cPhone.value,
 sales:cSales.value,
-closing:cClosing.value
+closing:prev?.closing||''
 };
 const custActionType=oldId?'Edit':'Tambah';
 if(oldId){
@@ -3037,7 +3108,7 @@ function renderPaymentInvoiceInfo(invoiceId){
   box.innerHTML=`<span class="iv"><i>Nilai Invoice</i><b>${rp(num(i.amount))}</b></span>`
    +`<span class="iv"><i>Sudah Terbayar</i><b>${rp(paid)}</b></span>`
    +`<span class="iv sisa"><i>Sisa Piutang</i><b>${rp(sisa)}</b></span>`
-   +`<span class="iv"><i>DEPT</i><b>${esc(String(c.dept||i.dept||'-'))}</b></span>`
+   +`<span class="iv"><i>DEPT</i><b>${esc(invoiceDept(i,c)||'-')}</b></span>`
    +`<span class="iv"><i>Jatuh Tempo</i><b>${i.due?date(i.due):'-'}</b></span>`;
 }
 function editPayment(paymentId){
@@ -3568,13 +3639,13 @@ function dateFromDDMonYY(s){
    Semua nilai diambil apa adanya dari PDF. Data yang tidak terbaca TIDAK
    dikarang: nilainya dibiarkan kosong dan dicatat di daftar `missing`
    sehingga di layar tampil "-" dan tersedia tombol Edit Invoice. */
-const FLIGHT_RE=/\b([A-Z]{2}\s?\d{2,4})\s+(\d{1,2}[A-Z]{3})\s+([A-Z]{3}\s?[A-Z]{3})\s+(\d{3,4})\s+(\d{3,4}(?:\s?\+\s?\d)?)/g;
+const FLIGHT_RE=/\b([A-Z]{2}\s?\d{2,4}\s?[A-Z]?)\s+(\d{1,2}\s?[A-Z]{3})\s+([A-Z]{3}\s?[A-Z]{3})\s+(\d{3,4})\s+(\d{3,4}(?:\s*\+\s*\d)?)/g;
 function pdfFlightsFrom(str){
   const out=[]; if(!str)return out;
   FLIGHT_RE.lastIndex=0;
   let m;
   while((m=FLIGHT_RE.exec(String(str)))!==null){
-    out.push({raw:m[0],text:`${m[1].replace(/\s+/g,'')} ${m[2]} ${m[3].replace(/\s+/g,'')} ${m[4]} ${m[5].replace(/\s+/g,'')}`});
+    out.push({raw:m[0],text:`${m[1].replace(/\s+/g,'')} ${m[2].replace(/\s+/g,'')} ${m[3].replace(/\s+/g,'')} ${m[4]} ${m[5].replace(/\s+/g,'')}`});
   }
   return out;
 }
@@ -3790,6 +3861,8 @@ async function importPDF(){
         amount:inv.amount||0,
         paid:inv.paid||0,
         source:'PDF',
+        dept:inv.dept||'',
+        airlines:inv.airlines||'',
         pdfMissing:inv.missing||[]
       };
       const calc=invCalc(rec);
@@ -4196,7 +4269,7 @@ function rowHTML(i){
   let c=custByInvoice(i.id,i.customer);
   let sisa=(i.amount||0)-(i.paid||0);
   let feeTotal=invoiceFeeTotal(i);
-  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(c.airlines||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(c.dept||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
+  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(c.airlines||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(invoiceDept(i,c)||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
   <td class="rowact">
   <button class="secondary" onclick="previewInvoice('${i.id}')" title="Preview / Cetak">👁</button>
   <button class="secondary" onclick="editInvoice('${i.id}')" title="Edit invoice">✎</button>
@@ -5079,10 +5152,12 @@ const type=late<=1?'H+1':late<=3?'H+3':'H+7';
 return {key:'OVERDUE',label:'OVERDUE ('+type+')',type,days:dd,info:'Terlambat '+late+' hari',cls:'br',stop:false};
 }
 if(dd===0)return {key:'H',label:'HARI H',type:'H',days:0,info:'Jatuh tempo hari ini',cls:'by',stop:false};
-if(dd<=1)return {key:'H-1',label:'H-1',type:'H-1',days:dd,info:dd+' hari menuju jatuh tempo',cls:'by',stop:false};
-if(dd<=3)return {key:'H-3',label:'H-3',type:'H-3',days:dd,info:dd+' hari menuju jatuh tempo',cls:'by',stop:false};
-if(dd<=7)return {key:'H-7',label:'H-7',type:'H-7',days:dd,info:dd+' hari menuju jatuh tempo',cls:'bg',stop:false};
-return {key:'BELUM',label:'Belum Jatuh Tempo',type:'H-7',days:dd,info:dd+' hari menuju jatuh tempo',cls:'bg',stop:false};
+/* H-1 / H-3 / H-7 hanya cocok tepat pada selisih hari tersebut (saling eksklusif) */
+const nextType=dd<=1?'H-1':dd<=3?'H-3':'H-7';
+if(dd===1)return {key:'H-1',label:'H-1',type:'H-1',days:dd,info:'1 hari menuju jatuh tempo',cls:'by',stop:false};
+if(dd===3)return {key:'H-3',label:'H-3',type:'H-3',days:dd,info:'3 hari menuju jatuh tempo',cls:'by',stop:false};
+if(dd===7)return {key:'H-7',label:'H-7',type:'H-7',days:dd,info:'7 hari menuju jatuh tempo',cls:'bg',stop:false};
+return {key:'BELUM',label:'Belum Jatuh Tempo',type:nextType,days:dd,info:dd+' hari menuju jatuh tempo',cls:'bg',stop:false};
 }
 function waReminderState(id,type){
 const l=type?waLogOf(id,type):null;
@@ -5139,6 +5214,9 @@ const _waOrigShowView=showView;
 showView=function(v){_waOrigShowView(v);if(v==='reminders')renderWaReminder()};
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
 renderWaReminder();
+/* Pergantian hari otomatis memperbarui hasil filter H-7/H-3/H-1/Hari Ini/Overdue */
+let _waToday=waIso(new Date());
+setInterval(()=>{const t=waIso(new Date());if(t!==_waToday){_waToday=t;renderWaReminder();if(typeof renderAll==='function')renderAll()}},60000);
 </script>
 
 <style>/* ===== LAPORAN INVOICE & PIUTANG ===== */
@@ -5174,7 +5252,7 @@ renderWaReminder();
 .ir-panel-head span{font-size:10.5px;color:#8a8f9c}
 table.ir-table{min-width:1500px;font-size:10.5px}
 table.ir-mini{min-width:0}
-table.ir-table thead th{background:var(--ir-red);color:#fff;font-size:9px;letter-spacing:.4px;padding:9px 6px;border:0;white-space:nowrap}
+table.ir-table thead th{background:var(--ir-red);color:#fff;font-size:9px;letter-spacing:.4px;padding:9px 6px;border:0;white-space:nowrap;text-align:center!important}
 table.ir-table tbody td{padding:9px 6px;font-size:10.5px}
 table.ir-table tbody tr:nth-child(even){background:#fcfcfe}
 table.ir-table .r,table.ir-table td.r{text-align:right}
@@ -5196,29 +5274,60 @@ const IR_STATUSES=['Draft','Terbit','Sebagian Dibayar','Jatuh Tempo','Overdue','
 const irRp=n=>'Rp '+Math.round(Number(n||0)).toLocaleString('id-ID');
 const irDateFmt=s=>s?date(s):'-';
 function irToday(){return new Date().toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}
+function irShortDate(s){if(!s)return '-';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}).replace(/\./g,'')}
+function irPrintedAt(d){d=d||new Date();return d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})+' - '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',hour12:false}).replace('.',':')}
+function irSelectedPeriod(rows){
+  const from=document.getElementById('irClosingFrom')?.value||'';
+  const to=document.getElementById('irClosingTo')?.value||'';
+  if(from&&to)return irShortDate(from)+' s/d '+irShortDate(to);
+  if(from)return 'Mulai '+irShortDate(from);
+  if(to)return 'Sampai '+irShortDate(to);
+  const rf=document.getElementById('irRangeField')?.value||'dept';
+  const ds=(rows||[]).map(r=>irRangeValue(r,rf)).filter(Boolean).sort();
+  return ds.length?(irShortDate(ds[0])+' s/d '+irShortDate(ds[ds.length-1])):'-';
+}
 
 function irData(){
+  // PENTING: laporan WAJIB memakai sumber nilai yang sama persis dengan menu Invoice
+  // (invoiceFilterValue), supaya PNR / PAX / DEPT / PHONE / SALES / AIRLINES tidak
+  // berbeda antara menu Invoice dan Laporan.
   return (data.invoices||[]).map(i=>{
     const c=custByInvoice(i.id,i.customer)||{};
+    const v=f=>String(invoiceFilterValue(i,f)||'').trim();
     const amount=num(i.amount),paid=num(i.paid);
     const days=i.due?Math.ceil((new Date(i.due+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000):null;
-    return {id:i.id||'-',customer:i.customer||'-',airlines:c.airlines||'-',pic:i.client||c.pic||'-',
-      pnr:c.pnr||'-',pax:num(c.pax),dept:c.dept||'-',phone:i.phone||c.phone||'-',sales:c.sales||'-',
-      date:i.date||'',due:i.due||'',closing:i.closing||c.closing||'',days,
+    return {id:v('id')||'-',customer:v('customer')||'-',airlines:v('airlines')||'-',pic:v('pic')||'-',
+      pnr:invoicePnr(i)||'-',pax:num(c.pax??i.pax),dept:v('dept')||'-',phone:v('phone')||'-',sales:v('sales')||'-',
+      date:v('date'),due:v('due'),closing:v('closing'),days,
       amount,paid,sisa:amount-paid,status:status(i)};
   });
+}
+// Ubah DEPT (mis. 28OCT) menjadi tanggal YYYY-MM-DD memakai tahun dari
+// tanggal invoice / jatuh tempo / closing, supaya bisa difilter From - To.
+function irDeptDate(r){
+  const m=String(r.dept||'').toUpperCase().match(/(\d{1,2})\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/);
+  if(!m)return '';
+  const MM={JAN:'01',FEB:'02',MAR:'03',APR:'04',MAY:'05',JUN:'06',JUL:'07',AUG:'08',SEP:'09',OCT:'10',NOV:'11',DEC:'12'}[m[2]];
+  const year=(r.due||r.date||r.closing||'').slice(0,4)||String(new Date().getFullYear());
+  return year+'-'+MM+'-'+String(m[1]).padStart(2,'0');
+}
+function irRangeValue(r,field){
+  if(field==='dept')return irDeptDate(r);
+  if(field==='due')return r.due||'';
+  return r.closing||'';
 }
 function irFiltered(){
   const q=(document.getElementById('irSearch')?.value||'').toLowerCase();
   const st=document.getElementById('irStatus')?.value||'';
-  const mo=document.getElementById('irMonth')?.value||'';
+  const rf=document.getElementById('irRangeField')?.value||'dept';
   const cf=document.getElementById('irClosingFrom')?.value||'';
   const ct=document.getElementById('irClosingTo')?.value||'';
-  return irData().filter(r=>
-    [r.id,r.customer,r.airlines,r.pic,r.pnr,r.dept,r.phone,r.sales].join(' ').toLowerCase().includes(q)
-    &&(!st||r.status===st)&&(!mo||(r.due||'').slice(0,7)===mo)
-    &&(!cf||(r.closing&&r.closing>=cf))&&(!ct||(r.closing&&r.closing<=ct))
-  ).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  return irData().filter(r=>{
+    const v=irRangeValue(r,rf);
+    return [r.id,r.customer,r.airlines,r.pic,r.pnr,r.dept,r.phone,r.sales].join(' ').toLowerCase().includes(q)
+      &&(!st||r.status===st)
+      &&(!cf||(v&&v>=cf))&&(!ct||(v&&v<=ct));
+  }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
 }
 function irDaysCell(r){
   if(r.days===null)return '-';
@@ -5251,19 +5360,9 @@ function irAging(rows){
 function renderInvReport(){
   const stSel=document.getElementById('irStatus');
   if(stSel&&!stSel.options.length)stSel.innerHTML='<option value="">Semua Status</option>'+IR_STATUSES.map(s=>'<option>'+s+'</option>').join('');
-  const moSel=document.getElementById('irMonth');
-  if(moSel){
-    const cur=moSel.value;
-    const months=[...new Set(irData().map(r=>(r.due||'').slice(0,7)).filter(Boolean))].sort().reverse();
-    moSel.innerHTML='<option value="">Semua Bulan Jatuh Tempo</option>'+months.map(m=>{
-      const lbl=new Date(m+'-01T00:00:00').toLocaleDateString('id-ID',{month:'long',year:'numeric'});
-      return '<option value="'+m+'" '+(cur===m?'selected':'')+'>'+lbl+'</option>';
-    }).join('');
-  }
   const rows=irFiltered(),t=irTotals(rows),all=irData();
-  document.getElementById('irDate').textContent=irToday();
-  const ds=all.map(r=>r.date).filter(Boolean).sort();
-  document.getElementById('irPeriod').textContent=ds.length?(irDateFmt(ds[0])+' s/d '+irDateFmt(ds[ds.length-1])):'-';
+  document.getElementById('irPeriod').textContent=irSelectedPeriod(rows);
+  document.getElementById('irPrintedAt').textContent=irPrintedAt();
   document.getElementById('irUser').textContent=(data.settings&&data.settings.user)||'Finance User';
 
   document.getElementById('irSummary').innerHTML=[
@@ -5412,6 +5511,7 @@ async function exportInvReportExcel(){
 /* ---------- EXPORT PDF (A4 Landscape, siap cetak) ---------- */
 function exportInvReportPDF(){
   const rows=irFiltered(),t=irTotals(rows);
+  const printTime=irPrintedAt(),period=irSelectedPeriod(rows);
   const badgeStyle={'Lunas':'background:#e6f0ff;color:#3477d7','Sebagian Dibayar':'background:#fff3d6;color:#a06a00','Jatuh Tempo':'background:#fff3d6;color:#a06a00','Overdue':'background:#ffe4e4;color:#d93b42','Draft':'background:#eceef3;color:#5b6373','Terbit':'background:#e5f6e8;color:#28943d'};
   const body=rows.map(r=>'<tr>'+
     '<td class="inv">'+esc(r.id)+'</td><td>'+esc(r.customer)+'</td><td>'+esc(r.airlines)+'</td><td>'+esc(r.pic)+'</td><td>'+esc(r.pnr)+'</td>'+
@@ -5443,7 +5543,7 @@ function exportInvReportPDF(){
     '.sums{display:flex;gap:6px;margin-bottom:10px}.sc{flex:1;border:1px solid #e0e4ec;border-top:3px solid #c8151c;border-radius:5px;padding:6px 7px}'+
     '.sc p{margin:0 0 3px;font-size:7px;font-weight:bold;color:#8a8f9c;letter-spacing:.3px}.sc strong{font-size:10.5px}'+
     'table{width:100%;border-collapse:collapse}'+
-    'th{background-color:#c8151c!important;background-image:linear-gradient(#c8151c,#c8151c)!important;color:#fff!important;font-size:6.6px;padding:4px 2px;border:.5px solid #a5121a;text-align:left;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
+    'th{background-color:#c8151c!important;background-image:linear-gradient(#c8151c,#c8151c)!important;color:#fff!important;font-size:6.6px;padding:4px 2px;border:.5px solid #a5121a;text-align:center!important;vertical-align:middle;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
     'td{font-size:6.6px;padding:3.6px 2px;border:.5px solid #e2e6ee;white-space:nowrap}'+
     'tbody tr:nth-child(even) td{background:#fbfbfe}'+
     '.r{text-align:right}.c{text-align:center}.inv{color:#c8151c;font-weight:bold}'+
@@ -5457,7 +5557,7 @@ function exportInvReportPDF(){
     '.sign i{display:block;font-style:normal;font-weight:bold;color:#20293a;margin-top:38px;border-top:1px solid #c9ced8;padding-top:3px}'+
     '</style></head><body>'+
     '<div class="hd"><div class="lg"><img src="'+irLogoPNG()+'"><div><h2>PT SHAD AL FATIH INDONESIA</h2><p>Tour &amp; Travel &middot; Yogyakarta, Indonesia</p><p>Divisi Finance &amp; Accounting</p></div></div>'+
-    '<div class="mt"><b>LAPORAN INVOICE &amp; PIUTANG</b>Tanggal Laporan: '+irToday()+'<br>Jumlah Data: '+rows.length+' invoice</div></div><div class="gold"></div>'+
+    '<div class="mt"><b>LAPORAN INVOICE &amp; PIUTANG</b>Periode: '+period+'<br>Tercetak pada '+printTime+'</div></div><div class="gold"></div>'+
     '<h1>LAPORAN INVOICE &amp; PIUTANG</h1><p class="sub">Rekapitulasi otomatis dari data menu Invoice</p>'+
     '<div class="sums">'+sums+'</div>'+
     '<table><thead><tr><th>NO. INVOICE</th><th>CUSTOMER / TRAVEL</th><th>AIRLINES</th><th>PIC</th><th>PNR</th><th class="c">PAX</th><th class="c">DEPT</th><th>PHONE</th><th>SALES</th><th class="c">TANGGAL</th><th class="c">JATUH TEMPO</th><th class="c">TGL CLOSING</th><th class="c">DAYS TO DUE</th><th class="r">NILAI INVOICE</th><th class="r">TERBAYAR</th><th class="r">SISA</th><th class="c">STATUS</th></tr></thead>'+
