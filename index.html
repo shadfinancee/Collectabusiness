@@ -2153,9 +2153,28 @@ function dtdCell(i){
 }
 
 function closingCell(i){let c=custByInvoice(i.id,i.customer);let cl=i.closing||c.closing;return cl?date(cl):'<span class="muted">-</span>'}
+/* PNR bisa berasal dari 3 sumber: data Customer/Agent, field pnr level-invoice
+   (mis. hasil impor PDF lama), atau baris item tiket (form Buat Invoice saat ini
+   menyimpan PNR di sini). Tanpa fallback ke items[], PNR yang diisi lewat form
+   invoice tidak pernah terbaca oleh kolom tabel maupun filter pencarian. */
+function invoicePnrAll(i){
+  // Kumpulkan SEMUA kemungkinan sumber PNR (item tiket, field invoice,
+  // dan field customer/agent), lalu gabungkan tanpa duplikat. Customer/agent
+  // hanya punya satu field PNR yang gampang basi (tertimpa invoice lain untuk
+  // agent yang sama), jadi tidak boleh jadi satu-satunya sumber kebenaran.
+  const c=custByInvoice(i.id,i.customer);
+  const itemPnrs=(i.items||[]).map(x=>x.pnr).filter(Boolean);
+  return [...new Set([...itemPnrs,i.pnr,c.pnr].filter(Boolean))];
+}
+function invoicePnr(i){
+  // Untuk tampilan kolom: utamakan PNR milik invoice ini sendiri (item tiket),
+  // baru field invoice, baru (kalau tidak ada sama sekali) fallback ke customer.
+  const list=invoicePnrAll(i);
+  return list.join(', ');
+}
 function rowHTML(i){
 let c=custByInvoice(i.id,i.customer);
-return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${c.airlines||'-'}</td><td>${c.pic||'-'}</td><td>${c.pnr||'-'}</td><td>${c.pax||0}</td><td>${c.dept||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
+return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${c.airlines||'-'}</td><td>${c.pic||'-'}</td><td>${invoicePnr(i)||'-'}</td><td>${c.pax||0}</td><td>${c.dept||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
 function deleteInvoice(id){
 if(currentRole==='viewer'){alert('Akun Viewer hanya dapat melihat data (read-only) dan tidak dapat menghapus data.');return;}
 if(!confirm('Apakah Anda yakin ingin menghapus Invoice ini?'))return;
@@ -2177,7 +2196,7 @@ function invoiceFilterValue(i,field){
     customer:i.customer||'',
     airlines:c.airlines||i.airlines||'',
     pic:i.client||c.pic||'',
-    pnr:c.pnr||i.pnr||'',
+    pnr:invoicePnrAll(i).join(' '),
     pax:c.pax??i.pax??'',
     dept:c.dept||i.dept||'',
     phone:i.phone||c.phone||'',
@@ -2223,7 +2242,7 @@ function renderInvoices(){
     const c=custByInvoice(i.id,i.customer);
     const matchesSearch=!q || (
       field==='all'
-        ? [i.id,i.customer,c.airlines||i.airlines,i.client||c.pic,c.pnr||i.pnr,c.pax??i.pax,c.dept||i.dept,i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
+        ? [i.id,i.customer,c.airlines||i.airlines,i.client||c.pic,invoicePnrAll(i).join(' '),c.pax??i.pax,c.dept||i.dept,i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
             .join(' ').toLowerCase().includes(q)
         : String(invoiceFilterValue(i,field)).toLowerCase().includes(q)
     );
