@@ -6719,6 +6719,12 @@ body.acc-skin{--acc-line:#d3dae6;--acc-line2:#e8edf4;--acc-head:#f6f8fb;font-siz
 
 /* ---------------- SIDEBAR ---------------- */
 .acc-skin .sidebar{width:var(--sbw);background:linear-gradient(180deg,#3d0407,#1f0103);border-right:1px solid #2a0205}
+@media(max-width:820px){
+  /* Perbaikan: .acc-skin .sidebar (2 class) mengalahkan .sidebar{width:252px}
+     di media query utama (1 class) karena spesifisitas lebih tinggi, sehingga
+     drawer mobile kolaps ke width:var(--sbw) = 0. Kunci lebar drawer di sini. */
+  .acc-skin .sidebar{width:252px}
+}
 .acc-skin .sb-brand{height:48px;padding:0 12px;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.08)}
 .acc-skin .sb-mark{width:30px;height:30px;border-radius:6px;font-size:13px}
 .acc-skin .sb-name b{font-size:11.5px;letter-spacing:.6px}
