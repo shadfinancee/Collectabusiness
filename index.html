@@ -4574,9 +4574,10 @@ function invoiceSheetHTML(i){
   let rows=(i.items||[]).map((x,n)=>{
     const dp=num(x.rateDP!=null?x.rateDP:x.rate2), dasar=num(x.rate), qty=num(x.qty);
     const amount=itemAmount(printType,x);
+    const dasarPlusFee=dasar+itemFee(x);
     const rateHtml=printType==='Normal'
-      ? (dasar?rpSplit(dasar):'-')
-      : `<div>${dp?rpSplit(dp):'-'}</div><div class="rate2-print">${dasar?rpSplit(dasar):'-'}</div>`;
+      ? (dasarPlusFee?rpSplit(dasarPlusFee):'-')
+      : `<div>${dp?rpSplit(dp):'-'}</div><div class="rate2-print">${dasarPlusFee?rpSplit(dasarPlusFee):'-'}</div>`;
     return `<tr>
     <td class="c">${n+1}</td>
     <td class="desc"><b>${esc(x.desc||'-')}</b>${x.flights?'<div class="fl">'+esc(x.flights).split('\n').filter(Boolean).map(f=>'<span>'+f+'</span>').join('')+'</div>':''}</td>
@@ -4585,9 +4586,7 @@ function invoiceSheetHTML(i){
     <td class="r">${rateHtml}</td>
     <td class="r">${amount?rpSplit(amount):'-'}</td></tr>`;
   }).join('');
-  let feeTotal=(i.items||[]).reduce((a,x)=>a+(num(x.qty)*itemFee(x)),0);
   let extra='';
-  if(feeTotal)extra+=`<tr><td colspan="5" class="r muted">Fee</td><td class="r">${rpSplit(feeTotal)}</td></tr>`;
   if(c.fee)extra+=`<tr><td colspan="5" class="r muted">Booking Fee</td><td class="r">${rpSplit(c.fee)}</td></tr>`;
   if(c.tax)extra+=`<tr><td colspan="5" class="r muted">Pajak ${num(i.taxPct)}%</td><td class="r">${rpSplit(c.tax)}</td></tr>`;
   return `<div class="sheet">
