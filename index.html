@@ -199,6 +199,14 @@ body.role-viewer .useracct small{color:var(--yellow);font-weight:800}
   justify-content:center;gap:6px;white-space:nowrap;transition:.15s
 }
 .secondary:hover{border-color:var(--red2);color:var(--red2);background:var(--red-soft)}
+.btn-green{
+  background:linear-gradient(180deg,#25a35a,var(--green));color:#fff;border:1px solid #176b39;
+  border-radius:var(--radius);height:34px;padding:0 14px;font-weight:700;font-size:12.5px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
+  box-shadow:0 1px 2px rgba(30,142,74,.3);transition:.15s
+}
+.btn-green:hover{background:linear-gradient(180deg,#2bbb67,#176b39);box-shadow:0 4px 12px -4px rgba(30,142,74,.7)}
+.btn-green:active{transform:translateY(1px)}
 .linkbtn{border:0;background:transparent;color:var(--red2);font-size:11.5px;font-weight:700;padding:0;white-space:nowrap}
 .linkbtn:hover{text-decoration:underline}
 .input{
@@ -471,7 +479,8 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
   width:44px;height:44px;flex:none;border-radius:50%;
   background:linear-gradient(140deg,var(--red2),var(--red3));color:#fff;
   display:grid;place-items:center;font-size:24px;font-weight:900;line-height:1;
-  letter-spacing:-1px;padding-bottom:3px;box-shadow:0 5px 14px -6px rgba(185,13,19,.85)
+  letter-spacing:-1px;padding-bottom:3px;box-shadow:0 5px 14px -6px rgba(185,13,19,.85);
+  text-transform:uppercase
 }
 .lg-word{font-size:30px;font-weight:800;letter-spacing:-1.4px;color:#3f4652;line-height:1}
 .lg-word i{font-style:normal;font-weight:500;color:var(--red);letter-spacing:-.6px}
@@ -660,7 +669,7 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
 
 <div id="cloudStatus" class="cloud-error"><span class="cloud-dot"></span><span id="cloudStatusText">Cloud belum dikonfigurasi</span></div>
 <div id="login" class="login">
-  <div class="loginbox">
+  <div class="loginbox" id="loginBox">
 
     <div class="lg-brand">
       <span class="lg-mark">s</span>
@@ -714,12 +723,72 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
     </button>
 
     <p class="lg-foot">Belum memiliki akun?
-      <a href="mailto:finance@shadtour.co.id?subject=Permintaan%20Akun%20Finance%20Dashboard">Hubungi Admin</a>
+      <button type="button" class="lg-link" onclick="showRegisterForm()">Hubungi Admin</button>
     </p>
 
     <p class="lg-note">Akses diberikan admin melalui akun Editor atau Viewer.</p>
 
   </div>
+
+  <div class="loginbox hidden" id="registerBox">
+
+    <div class="lg-brand">
+      <span class="lg-mark">s</span>
+      <span class="lg-word">shad<i>finance</i></span>
+    </div>
+
+    <h2>Daftar Akun Baru</h2>
+    <p class="lg-sub">Akun akan aktif setelah disetujui Admin</p>
+
+    <form onsubmit="event.preventDefault();registerAccount()" novalidate>
+
+      <div class="lg-field">
+        <label for="regName">Nama Lengkap</label>
+        <input id="regName" type="text" placeholder="Nama sesuai identitas" autocomplete="name">
+      </div>
+
+      <div class="lg-field">
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" placeholder="nama@perusahaan.co.id" autocomplete="username" autocapitalize="off" spellcheck="false">
+      </div>
+
+      <div class="lg-field">
+        <label for="regPhone">No. Handphone</label>
+        <input id="regPhone" type="tel" placeholder="08xxxxxxxxxx" autocomplete="tel">
+      </div>
+
+      <div class="lg-field">
+        <label for="regRole">Hak Akses yang Diinginkan</label>
+        <select id="regRole">
+          <option value="viewer">VIEWER</option>
+          <option value="editor">EDITOR</option>
+        </select>
+      </div>
+
+      <div class="lg-field">
+        <label for="regPass">Password</label>
+        <input id="regPass" type="password" placeholder="Minimal 6 karakter" autocomplete="new-password">
+      </div>
+
+      <div class="lg-field">
+        <label for="regPass2">Ulangi Password</label>
+        <input id="regPass2" type="password" placeholder="Ulangi password" autocomplete="new-password">
+      </div>
+
+      <div id="regError" class="lg-alert"></div>
+      <div id="regInfo" class="lg-alert ok"></div>
+
+      <button class="primary lg-submit" id="regBtn">Daftar</button>
+    </form>
+
+    <p class="lg-foot">Sudah memiliki akun?
+      <button type="button" class="lg-link" onclick="showLoginForm()">Masuk di sini</button>
+    </p>
+
+    <p class="lg-note">Setelah mendaftar, status akun Anda adalah <b>Menunggu Persetujuan</b>. Anda baru dapat login setelah Admin menyetujui pendaftaran.</p>
+
+  </div>
+
   <p class="lg-copy">PT Shad Al Fatih Indonesia &middot; Tour &amp; Travel &middot; Yogyakarta</p>
 </div>
 
@@ -745,9 +814,9 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
   <div class="hsearch"><svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="globalSearch" type="search" autocomplete="off" placeholder="Cari invoice, customer, PNR..." onkeydown="if(event.key==='Enter')runGlobalSearch()" oninput="runGlobalSearchLive()"><kbd>/</kbd></div>
   <div class="history-actions" aria-label="Riwayat perubahan"><button id="undoBtn" class="history-btn" type="button" onclick="undoChange()" disabled title="Undo (Ctrl+Z)">↶<span>Undo</span></button><button id="redoBtn" class="history-btn" type="button" onclick="redoChange()" disabled title="Ulangi / Redo (Ctrl+Y atau Ctrl+Shift+Z)">↷<span>Ulangi</span></button></div>
   <span class="hdiv"></span>
-  <button class="hbell" type="button" onclick="openNotifications()" title="Notifikasi jatuh tempo &amp; overdue"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><b id="notifCount" class="zero"></b></button>
+  <button class="hbell" type="button" onclick="openActivityLog()" title="Record Perubahan - Log seluruh aktivitas pengguna"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><b id="notifCount" class="zero"></b></button>
   <span class="hdiv"></span>
-  <div class="head-right"><div class="useracct" id="userAcct"><button class="userbtn" onclick="toggleUserMenu(event)"><div class="user"><strong id="uName">Finance User</strong><small id="uEmail">Admin</small></div><span class="avatar">●<i class="dot"></i></span></button><div class="usermenu" id="userMenu"><button onclick="acctAction('penagihan')"><span class="mi">▤</span>Area Penagihan</button><button onclick="acctAction('referral')"><span class="mi">◈</span>Referral Program <em class="badge-new">New</em></button><div class="usermenu-sep"></div><button onclick="acctAction('profil')"><span class="mi">☺</span>Profil Pengguna</button><button onclick="acctAction('2fa')"><span class="mi">◉</span>Aktifkan 2FA</button><button onclick="acctAction('password')"><span class="mi">⚿</span>Ganti Password</button><button onclick="acctAction('nonaktif')"><span class="mi">⊘</span>Data Usaha Nonaktif</button><button onclick="acctAction('riwayat')"><span class="mi">⧗</span>Riwayat Login</button><button onclick="acctAction('persetujuan')"><span class="mi">▩</span>Daftar Persetujuan</button><button onclick="acctAction('logout')"><span class="mi">⇥</span>Log Out</button></div></div></div>
+  <div class="head-right"><div class="useracct" id="userAcct"><button class="userbtn" onclick="toggleUserMenu(event)"><div class="user"><strong id="uName">Finance User</strong><small id="uEmail">Admin</small></div><span class="avatar">●<i class="dot"></i></span></button><div class="usermenu" id="userMenu"><button onclick="acctAction('penagihan')"><span class="mi">▤</span>Area Penagihan</button><button onclick="acctAction('referral')"><span class="mi">◈</span>Referral Program <em class="badge-new">New</em></button><div class="usermenu-sep"></div><button onclick="acctAction('profil')"><span class="mi">☺</span>Profil Pengguna</button><button onclick="acctAction('2fa')"><span class="mi">◉</span>Aktifkan 2FA</button><button onclick="acctAction('password')"><span class="mi">⚿</span>Ganti Password</button><button onclick="acctAction('nonaktif')"><span class="mi">⊘</span>Data Usaha Nonaktif</button><button onclick="acctAction('riwayat')"><span class="mi">⧗</span>Riwayat Login</button><button id="menuPersetujuanBtn" class="hidden" onclick="acctAction('persetujuan')"><span class="mi">▩</span>Daftar Persetujuan</button><button onclick="acctAction('logout')"><span class="mi">⇥</span>Log Out</button></div></div></div>
 </header>
 <div class="viewer-banner">Anda login sebagai <b>Viewer</b> — mode hanya lihat (read-only). Tambah/Edit/Hapus/Simpan dinonaktifkan.</div>
 
@@ -832,7 +901,142 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
 
 <section id="receivables" class="view"><div class="heading"><h1>Piutang</h1><p>Monitoring saldo piutang berdasarkan invoice.</p></div><div class="cards" id="receivableCards"></div><div class="toolbar"><input class="input" id="receivableSearch" placeholder="Cari invoice / customer..." oninput="renderReceivables()"><select class="input" id="receivableFilter" onchange="renderReceivables()"><option value="">Semua Status</option><option>Belum Jatuh Tempo</option><option>Jatuh Tempo</option><option>Overdue</option></select><select class="input" id="receivableDueMonth" onchange="renderReceivables()"></select><span id="receivableSortBox" style="display:flex;gap:6px"></span></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>SISA PIUTANG</th><th>JATUH TEMPO</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody id="receivableRows"></tbody></table></div></div></section>
 
-<section id="payments" class="view"><div class="heading"><h1>Pembayaran</h1><p>Catat pembayaran customer dan riwayat transaksi.</p></div><div class="toolbar"><input class="input" id="paymentPNRFilter" placeholder="Cari PNR..." type="search" autocomplete="off" oninput="renderPayments()"><select class="input" id="paymentMethodFilter" onchange="renderPayments()"><option value="">Semua Metode</option><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select><label class="date-filter"><span>Dari</span><input class="input" id="paymentDateFrom" type="date" onchange="renderPayments()"></label><label class="date-filter"><span>Sampai</span><input class="input" id="paymentDateTo" type="date" onchange="renderPayments()"></label><button class="secondary" type="button" onclick="resetPaymentFilters()">Reset</button><span id="paymentSortBox" style="display:flex;gap:6px"></span><button class="primary" onclick="openPayment()">＋ Catat Pembayaran</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>TANGGAL</th><th>NO. INVOICE</th><th>CUSTOMER</th><th>PNR</th><th>DEPT</th><th>JUMLAH</th><th>METODE</th><th>CATATAN</th><th>BUKTI TRANSFER</th><th>AKSI</th></tr></thead><tbody id="paymentRows"></tbody></table></div></div></section>
+<section id="payments" class="view"><div class="heading"><h1>Pembayaran</h1><p>Catat pembayaran customer dan riwayat transaksi.</p></div>
+<div class="acc-win">
+  <div class="acc-topbar">
+    <button type="button" class="acc-ttab" onclick="showView('dashboard')">Dashboard</button>
+    <button type="button" class="acc-ttab active">Pembayaran <span class="x" onclick="event.stopPropagation();showView('dashboard')">&#10005;</span></button>
+    <span class="acc-tcount"><b id="paymentTabCount">0</b> Data</span>
+  </div>
+
+  <div class="acc-subbar">
+    <span class="acc-greenico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+    <span class="acc-dtab">Daftar Pembayaran <span class="x" onclick="resetPaymentFilters()" title="Bersihkan filter">&#10005;</span></span>
+    <span class="acc-subbar-right">
+      <button type="button" class="acc-sbtn navy" title="Tampilkan / sembunyikan filter" onclick="togglePaymentFilterPanel()"><svg viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></button>
+      <button type="button" class="acc-sbtn amber" title="Bantuan menu Pembayaran" onclick="paymentHelp()"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></button>
+    </span>
+  </div>
+
+  <!-- Header dokumen ala Accurate -->
+  <div class="acc-dochead">
+    <div class="acc-doctitle">
+      <span class="acc-docico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
+      <div>
+        <h2>Daftar Pembayaran</h2>
+        <small>Kas &amp; Bank &rsaquo; Penerimaan Pembayaran Customer</small>
+      </div>
+    </div>
+    <div class="acc-docbtns">
+      <button type="button" class="acc-btn primary" onclick="openPayment()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Baru</button>
+      <button type="button" class="acc-btn" onclick="printPayments()"><svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>Cetak</button>
+      <button type="button" class="acc-btn" onclick="exportPaymentsCSV()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Export</button>
+      <span class="acc-more" id="paymentMoreWrap">
+        <button type="button" class="acc-btn icon" title="Menu lainnya" onclick="togglePaymentMore(event)"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+        <span class="acc-more-menu">
+          <button type="button" onclick="togglePaymentMore();showPaymentProofSummary()">&#128206; Rekap Bukti Transfer</button>
+          <button type="button" onclick="togglePaymentMore();showView('receivables')">&#128200; Buka Piutang</button>
+          <button type="button" onclick="togglePaymentMore();showView('invoices')">&#129534; Buka Invoice</button>
+          <button type="button" onclick="togglePaymentMore();resetPaymentFilters()">&#8635; Reset Filter</button>
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Toolbar filter compact -->
+  <div class="acc-toolbar" id="paymentFilterPanel">
+    <span class="acc-tf wide">
+      <label>Cari</label>
+      <span class="acc-tctrl">
+        <input id="paymentPNRFilter" type="search" autocomplete="off" placeholder="PNR / No. Invoice / Customer / Catatan" oninput="paymentPage=1;renderPayments()">
+        <svg class="acc-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </span>
+    </span>
+    <span class="acc-tf">
+      <label>Customer</label>
+      <span class="acc-tctrl">
+        <input id="paymentCustomerFilter" type="search" autocomplete="off" list="paymentCustomerList" placeholder="Nama customer" oninput="paymentPage=1;renderPayments()">
+        <svg class="acc-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </span>
+      <datalist id="paymentCustomerList"></datalist>
+    </span>
+    <span class="acc-tf">
+      <label>PNR</label>
+      <span class="acc-tctrl">
+        <input id="paymentPnrOnlyFilter" type="search" autocomplete="off" list="paymentPnrList" placeholder="Kode PNR" oninput="paymentPage=1;renderPayments()">
+        <svg class="acc-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </span>
+      <datalist id="paymentPnrList"></datalist>
+    </span>
+    <span class="acc-tf">
+      <label>DEPT</label>
+      <span class="acc-tctrl"><input id="paymentDeptFilter" type="search" autocomplete="off" placeholder="15OCT" oninput="paymentPage=1;renderPayments()"></span>
+    </span>
+    <span class="acc-tf">
+      <label>Metode</label>
+      <span class="acc-tctrl"><select id="paymentMethodFilter" onchange="paymentPage=1;renderPayments()"><option value="">Semua Metode</option></select></span>
+    </span>
+    <span class="acc-tf range">
+      <label>Periode</label>
+      <span class="acc-tctrl"><input id="paymentDateFrom" type="date" onchange="paymentPage=1;renderPayments()"></span>
+      <span class="acc-sep">s/d</span>
+      <span class="acc-tctrl"><input id="paymentDateTo" type="date" onchange="paymentPage=1;renderPayments()"></span>
+    </span>
+    <span class="acc-tf btns">
+      <button class="acc-btn" type="button" onclick="resetPaymentFilters()"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+      <span id="paymentSortBox" class="acc-sortbox"></span>
+    </span>
+    <span class="acc-quickchips" id="paymentQuickChips">
+      <button type="button" data-q="" class="active" onclick="setPaymentQuick(this,'')">Semua</button>
+      <button type="button" data-q="month" onclick="setPaymentQuick(this,'month')">Bulan Ini</button>
+      <button type="button" data-q="7" onclick="setPaymentQuick(this,'7')">7 Hari</button>
+      <button type="button" data-q="refund" onclick="setPaymentQuick(this,'refund')">Refund / Koreksi</button>
+      <button type="button" data-q="noproof" onclick="setPaymentQuick(this,'noproof')">Tanpa Bukti</button>
+      <span class="acc-filterhint" id="paymentFilterHint"></span>
+    </span>
+  </div>
+
+  <!-- Grid transaksi -->
+  <div class="acc-gridwrap">
+    <div class="acc-gridbar">
+      <span class="acc-gridlabel">Rincian Pembayaran <span class="req">*</span></span>
+      <span class="acc-gridtools">
+        <span class="acc-gridsum" id="paymentSummaryStrip"></span>
+      </span>
+    </div>
+    <div class="table-wrap acc-grid">
+      <table>
+        <thead><tr>
+          <th class="acc-handle">&#9776;</th>
+          <th class="w-date">TANGGAL</th>
+          <th class="w-inv">NO. INVOICE</th>
+          <th>CUSTOMER</th>
+          <th class="w-pnr">PNR</th>
+          <th class="w-dept">DEPT</th>
+          <th class="w-amt num">JUMLAH</th>
+          <th class="w-met">METODE</th>
+          <th>CATATAN</th>
+          <th class="w-proof">BUKTI TRANSFER</th>
+          <th class="w-act">AKSI</th>
+        </tr></thead>
+        <tbody id="paymentRows"></tbody>
+        <tfoot id="paymentFootRow"></tfoot>
+      </table>
+    </div>
+    <div class="acc-pager">
+      <span class="acc-pginfo" id="paymentPageInfo">Menampilkan 0 data</span>
+      <span class="acc-pgsize">
+        <label>Tampilkan</label>
+        <select id="paymentPageSize" onchange="paymentPage=1;renderPayments()">
+          <option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="0">Semua</option>
+        </select>
+        <span>baris</span>
+      </span>
+      <span class="acc-pgnav" id="paymentPageNav"></span>
+    </div>
+  </div>
+</div>
+</section>
 
 <section id="aging" class="view"><div class="heading"><h1>Aging Piutang</h1><p>Umur piutang berdasarkan tanggal jatuh tempo.</p></div><div class="panel"><div class="cards" id="agingCards"></div><div class="toolbar"><input class="input" id="agingSearch" placeholder="Cari invoice / customer..." oninput="renderAging()"><select class="input" id="agingCategoryFilter" onchange="renderAging()"><option value="">Semua Kategori</option><option>0 - 30 Hari</option><option>31 - 60 Hari</option><option>61 - 90 Hari</option><option>&gt; 90 Hari</option></select><span id="agingSortBox" style="display:flex;gap:6px"></span></div><div class="table-wrap" style="margin-top:18px"><table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>SISA</th><th>UMUR</th><th>KATEGORI</th></tr></thead><tbody id="agingRows"></tbody></table></div></div></section>
 
@@ -992,6 +1196,56 @@ const SUPABASE_KEY='sb_publishable_5chAyZpYPPbCJGKc4F6yeg_gggwgPf8';
 const SUPABASE_TABLE='finance_app_state';
 const SUPABASE_STATE_ID='PT_SHAD_AL_FATIH_MAIN';
 let supabaseClient=null;
+/* ===================================================================
+   SETUP SERVER-SIDE UNTUK FITUR NONAKTIFKAN / AKTIFKAN / HAPUS AKUN
+   ===================================================================
+   Kode di file ini HANYA memanggil RPC/Edge Function berikut. Fungsi-
+   fungsi ini WAJIB dibuat di sisi Supabase (Dashboard > SQL Editor /
+   Edge Functions) karena operasi admin tidak boleh dijalankan langsung
+   dari browser dengan anon/publishable key.
+
+   1) RPC SECURITY DEFINER (SQL Editor), pola sama seperti approve_user
+      dan reject_user yang sudah ada:
+
+      create or replace function public.disable_user(target_id uuid)
+      returns void language plpgsql security definer as $$
+      begin
+        if (select role from public.profiles where id=auth.uid())<>'admin' then
+          raise exception 'Hanya Admin yang boleh menonaktifkan akun.';
+        end if;
+        update public.profiles
+          set status='disabled', disabled_at=now()
+          where id=target_id and role<>'admin';
+      end; $$;
+
+      create or replace function public.reactivate_user(target_id uuid)
+      returns void language plpgsql security definer as $$
+      begin
+        if (select role from public.profiles where id=auth.uid())<>'admin' then
+          raise exception 'Hanya Admin yang boleh mengaktifkan kembali akun.';
+        end if;
+        update public.profiles
+          set status='approved', disabled_at=null
+          where id=target_id and role<>'admin';
+      end; $$;
+
+      -- Kolom opsional (jika belum ada):
+      -- alter table public.profiles add column if not exists disabled_at timestamptz;
+
+   2) Edge Function 'admin-delete-user' (untuk Hapus Permanen), berjalan
+      dengan SUPABASE_SERVICE_ROLE_KEY yang disimpan aman sebagai secret
+      di server Supabase (TIDAK PERNAH dikirim ke browser):
+
+      - Verifikasi token Authorization pengirim request adalah user
+        dengan role='admin' di tabel profiles.
+      - Panggil supabaseAdmin.auth.admin.deleteUser(target_id).
+      - Hapus baris terkait di public.profiles jika diperlukan.
+      - Jangan menghapus data invoice/transaksi/pembayaran.
+
+   Selama dua hal di atas belum dibuat di Supabase, tombol Nonaktifkan/
+   Aktifkan Kembali/Hapus Permanen akan menampilkan pesan error dari
+   Supabase (fungsi tidak ditemukan) — ini normal sampai setup selesai.
+   =================================================================== */
 let cloudReady=false;
 let cloudSyncTimer=null;
 let cloudLoading=false;
@@ -1001,8 +1255,11 @@ let data=JSON.parse(localStorage.getItem(KEY)||'null')||JSON.parse(JSON.stringif
 
 // ===== ROLE-BASED ACCESS (Supabase Auth) =====
 const PROFILES_TABLE='profiles';
+// Role akun diambil dari tabel profiles berdasarkan UID Supabase.
+// Email ini adalah akun admin utama yang Anda tetapkan.
+const PRIMARY_ADMIN_EMAIL='andikawardana.fat@gmail.com';
 let currentUser=null;   // Supabase auth user object
-let currentRole=null;   // 'editor' | 'viewer'
+let currentRole=null;   // 'admin' | 'editor' | 'viewer'
 let currentName=null;   // display name from profiles table
 let realtimeChannel=null;
 
@@ -1018,12 +1275,12 @@ function getSupabaseClient(){
 
 async function fetchMyProfile(userId){
   const sb=getSupabaseClient();
-  const {data:row,error}=await sb.from(PROFILES_TABLE).select('name,role').eq('id',userId).maybeSingle();
+  const {data:row,error}=await sb.from(PROFILES_TABLE).select('name,role,status,phone,requested_role').eq('id',userId).maybeSingle();
   if(error){console.error('Profile fetch error:',cloudErrorText(error));return null}
   return row;
 }
 
-function roleLabel(role){return role==='editor'?'Editor':role==='viewer'?'Viewer':'Tidak dikenal'}
+function roleLabel(role){return role==='admin'?'Admin':role==='editor'?'Editor':role==='viewer'?'Viewer':'Tidak dikenal'}
 
 function applyIdentityUI(){
   const nEl=document.getElementById('uName');
@@ -1048,7 +1305,7 @@ function isEditorOnlyEl(el){
   return EDITOR_ONLY_PATTERNS.some(re=>re.test(oc));
 }
 function applyRoleRestrictions(){
-  const isViewer=!!(currentRole&&currentRole!=='editor');
+  const isViewer=currentRole==='viewer';
   document.body.classList.toggle('role-viewer',isViewer);
   if(!isViewer)return;
   document.querySelectorAll('[onclick]').forEach(el=>{
@@ -1064,13 +1321,13 @@ function applyRoleRestrictions(){
 let roleObserver=null;
 function startRoleObserver(){
   if(roleObserver)return;
-  roleObserver=new MutationObserver(()=>{ if(currentRole&&currentRole!=='editor')applyRoleRestrictions(); });
+  roleObserver=new MutationObserver(()=>{ if(currentRole==='viewer')applyRoleRestrictions(); });
   roleObserver.observe(document.body,{childList:true,subtree:true});
 }
 // Jaring pengaman terakhir: blokir submit form data apa pun untuk Viewer,
 // walau tombolnya entah bagaimana masih bisa diklik.
 document.addEventListener('submit',function(e){
-  if(!(currentRole&&currentRole!=='editor'))return;
+  if(currentRole!=='viewer')return;
   const oc=(e.target&&e.target.getAttribute&&e.target.getAttribute('onsubmit'))||'';
   if(/^(submitInvoice|submitCustomer|submitPayment)\b/.test(oc)){
     e.preventDefault();e.stopImmediatePropagation();
@@ -1148,6 +1405,7 @@ async function initCloud(){
       // Baris belum ada: buat sekali dari data lokal yang sedang dipakai.
       await pushCloudState(true);
     }
+    try{await loadActivityLogFromCloud()}catch(e){}
     return true;
   }catch(e){
     console.error('Supabase init:',e);
@@ -1158,7 +1416,7 @@ async function initCloud(){
 }
 async function pushCloudState(initial=false){
   if(!supabaseClient)return false;
-  if(currentRole&&currentRole!=='editor'){console.warn('Viewer: penyimpanan cloud diblokir di sisi klien.');return false;}
+  if(currentRole==='viewer'){console.warn('Viewer: penyimpanan cloud diblokir di sisi klien.');return false;}
   try{
     setCloudStatus('sync','Menyimpan ke cloud…');
     const snapshot=JSON.parse(JSON.stringify(data));
@@ -1231,6 +1489,171 @@ async function pollCloud(){
 }
 
 
+/* ===================================================================
+   RECORD PERUBAHAN (ACTIVITY LOG)
+   ===================================================================
+   Mencatat seluruh aktivitas pengguna: tambah, edit, hapus, pembayaran,
+   invoice, customer, login/logout, dan undo/redo. Disimpan otomatis ke
+   localStorage dan disinkronkan ke Supabase menggunakan tabel yang sama
+   (SUPABASE_TABLE) dengan baris terpisah (SUPABASE_LOG_ID) sehingga
+   tidak memerlukan tabel baru di Supabase.
+   =================================================================== */
+const SUPABASE_LOG_ID=SUPABASE_STATE_ID+'_ACTIVITY_LOG';
+const LOG_KEY=KEY+'_activity_log';
+const LOG_SEEN_KEY=LOG_KEY+'_seen';
+const ACTIVITY_LOG_LIMIT=500;
+let activityLogs=JSON.parse(localStorage.getItem(LOG_KEY)||'null')||[];
+let activityLogSeenAt=localStorage.getItem(LOG_SEEN_KEY)||null;
+let activityLogSyncTimer=null;
+
+function logActivity(action,menu,detail){
+  try{
+    const entry={
+      id:'LOG-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),
+      ts:new Date().toISOString(),
+      user:currentName||(currentUser&&currentUser.email)||'Sistem',
+      role:currentRole||'-',
+      action:action||'-',
+      menu:menu||'-',
+      detail:detail||''
+    };
+    activityLogs.unshift(entry);
+    if(activityLogs.length>ACTIVITY_LOG_LIMIT)activityLogs.length=ACTIVITY_LOG_LIMIT;
+    localStorage.setItem(LOG_KEY,JSON.stringify(activityLogs));
+    scheduleActivityLogSync();
+    updateActivityBadge();
+    if(document.getElementById('activityLogTable'))renderActivityLogTable();
+    return entry;
+  }catch(e){console.warn('logActivity error:',e)}
+}
+function scheduleActivityLogSync(){
+  if(!cloudReady)return;
+  clearTimeout(activityLogSyncTimer);
+  activityLogSyncTimer=setTimeout(()=>pushActivityLog(),500);
+}
+async function pushActivityLog(){
+  if(!supabaseClient)return false;
+  try{
+    const payload={id:SUPABASE_LOG_ID,state:{logs:activityLogs},updated_at:new Date().toISOString()};
+    const {error}=await supabaseClient.from(SUPABASE_TABLE).upsert(payload,{onConflict:'id'});
+    if(error)throw error;
+    return true;
+  }catch(e){
+    console.warn('Gagal menyimpan Record Perubahan ke cloud:',cloudErrorText(e));
+    return false;
+  }
+}
+function mergeActivityLogs(a,b){
+  const map=new Map();
+  (a||[]).concat(b||[]).forEach(x=>{if(x&&x.id)map.set(x.id,x)});
+  return Array.from(map.values()).sort((x,y)=>new Date(y.ts)-new Date(x.ts)).slice(0,ACTIVITY_LOG_LIMIT);
+}
+async function loadActivityLogFromCloud(){
+  if(!supabaseClient)return;
+  try{
+    const {data:row,error}=await supabaseClient
+      .from(SUPABASE_TABLE).select('id,state,updated_at').eq('id',SUPABASE_LOG_ID).maybeSingle();
+    if(error)throw error;
+    if(row&&row.state&&Array.isArray(row.state.logs)){
+      activityLogs=mergeActivityLogs(activityLogs,row.state.logs);
+      localStorage.setItem(LOG_KEY,JSON.stringify(activityLogs));
+    }
+    updateActivityBadge();
+    if(document.getElementById('activityLogTable'))renderActivityLogTable();
+  }catch(e){
+    console.warn('Gagal memuat Record Perubahan dari cloud:',cloudErrorText(e));
+  }
+}
+function updateActivityBadge(){
+  const el=document.getElementById('notifCount');if(!el)return;
+  const lastSeen=activityLogSeenAt?new Date(activityLogSeenAt):null;
+  const n=activityLogs.filter(l=>!lastSeen||new Date(l.ts)>lastSeen).length;
+  el.textContent=n>99?'99+':String(n);
+  el.classList.toggle('zero',n===0);
+}
+window.updateActivityBadge=updateActivityBadge;
+
+const ACT_LABEL={Tambah:'Tambah',Edit:'Edit',Hapus:'Hapus',Pembayaran:'Pembayaran',Login:'Login',Logout:'Logout',Undo:'Undo',Redo:'Redo'};
+const ACT_BADGE_CLASS={Tambah:'bb',Edit:'by',Hapus:'br',Pembayaran:'bg',Login:'bb',Logout:'by',Undo:'br',Redo:'bg'};
+function activityDateTime(iso){
+  try{
+    const d=new Date(iso);
+    return d.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){return iso||'-'}
+}
+function activityLogUsers(){
+  const set=new Set();
+  activityLogs.forEach(l=>{if(l.user)set.add(l.user)});
+  return Array.from(set).sort();
+}
+function renderActivityLogTable(){
+  const tbody=document.getElementById('activityLogTable');
+  if(!tbody)return;
+  const from=document.getElementById('actLogFrom')?.value||'';
+  const to=document.getElementById('actLogTo')?.value||'';
+  const user=document.getElementById('actLogUser')?.value||'';
+  const act=document.getElementById('actLogAction')?.value||'';
+  const q=(document.getElementById('actLogSearch')?.value||'').toLowerCase();
+  let rows=activityLogs.slice();
+  if(from)rows=rows.filter(l=>l.ts.slice(0,10)>=from);
+  if(to)rows=rows.filter(l=>l.ts.slice(0,10)<=to);
+  if(user)rows=rows.filter(l=>l.user===user);
+  if(act)rows=rows.filter(l=>l.action===act);
+  if(q)rows=rows.filter(l=>((l.user||'')+' '+(l.detail||'')+' '+(l.menu||'')).toLowerCase().includes(q));
+  const countEl=document.getElementById('actLogCount');
+  if(countEl)countEl.textContent=rows.length+' aktivitas';
+  tbody.innerHTML=rows.map(l=>{
+    const badgeClass=ACT_BADGE_CLASS[l.action]||'bg';
+    return `<tr><td>${activityDateTime(l.ts)}</td><td>${esc(l.user)}</td><td><span class="badge ${badgeClass}">${esc(ACT_LABEL[l.action]||l.action)}</span></td><td>${esc(l.menu)}</td><td>${esc(l.detail)}</td></tr>`;
+  }).join('')||'<tr><td colspan="5" class="empty">Belum ada aktivitas yang tercatat.</td></tr>';
+}
+function resetActivityLogFilter(){
+  ['actLogFrom','actLogTo','actLogUser','actLogAction','actLogSearch'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  renderActivityLogTable();
+}
+function exportActivityLogCSV(){
+  const rows=activityLogs.map(l=>[activityDateTime(l.ts),l.user,ACT_LABEL[l.action]||l.action,l.menu,String(l.detail||'').replace(/"/g,'""')]);
+  const head=['Tanggal/Waktu','Pengguna','Aktivitas','Menu','Detail'];
+  const csv=[head].concat(rows).map(r=>r.map(v=>'"'+String(v??'')+'"').join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='record-perubahan-'+todayStr()+'.csv';
+  document.body.appendChild(a);a.click();a.remove();
+}
+function openActivityLog(){
+  const userOptions=activityLogUsers().map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  const actionOptions=Object.keys(ACT_LABEL).map(k=>`<option value="${k}">${ACT_LABEL[k]}</option>`).join('');
+  openModal('Record Perubahan',`
+  <div class="toolbar" style="margin:0 0 12px">
+    <input class="input" id="actLogSearch" placeholder="Cari pengguna / detail..." oninput="renderActivityLogTable()">
+    <input class="input" id="actLogFrom" type="date" title="Dari tanggal" onchange="renderActivityLogTable()">
+    <input class="input" id="actLogTo" type="date" title="Sampai tanggal" onchange="renderActivityLogTable()">
+    <select class="input" id="actLogUser" onchange="renderActivityLogTable()"><option value="">Semua Pengguna</option>${userOptions}</select>
+    <select class="input" id="actLogAction" onchange="renderActivityLogTable()"><option value="">Semua Aktivitas</option>${actionOptions}</select>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span class="muted" id="actLogCount" style="font-size:11.5px"></span>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="secondary" onclick="resetActivityLogFilter()">Reset Filter</button>
+      <button type="button" class="secondary" onclick="exportActivityLogCSV()">⇩ Ekspor CSV</button>
+    </div>
+  </div>
+  <div class="table-wrap" style="max-height:52vh;overflow:auto">
+    <table><thead><tr><th>TANGGAL/WAKTU</th><th>PENGGUNA</th><th>AKTIVITAS</th><th>MENU</th><th>DETAIL PERUBAHAN</th></tr></thead>
+    <tbody id="activityLogTable"></tbody></table>
+  </div>
+  <div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Tutup</button></div>
+  `);
+  renderActivityLogTable();
+  activityLogSeenAt=new Date().toISOString();
+  localStorage.setItem(LOG_SEEN_KEY,activityLogSeenAt);
+  updateActivityBadge();
+  if(cloudReady)loadActivityLogFromCloud();
+}
+window.openActivityLog=openActivityLog;
+window.openNotifications=function(){openActivityLog()};
+
 // ID internal Customer hanya untuk fungsi Edit/Hapus.
 // Tidak ditampilkan di website dan bukan "Kode Data".
 function ensureCustomerIds(){
@@ -1278,7 +1701,7 @@ function refreshAfterHistory(){
   updateHistoryButtons();
 }
 function save(){
-  if(currentRole&&currentRole!=='editor'){
+  if(currentRole==='viewer'){
     alert('Akun Viewer hanya dapat melihat data (read-only) dan tidak dapat menambah, mengubah, menghapus, atau menyimpan data.');
     // Batalkan perubahan yang mungkin sudah terlanjur diterapkan ke memori
     try{data=cloneSnapshot(lastSavedSnapshot);refreshAfterHistory();}catch(e){}
@@ -1307,6 +1730,7 @@ function undoChange(){
   localStorage.setItem(KEY,previousSnapshot);
   scheduleCloudSync();
   refreshAfterHistory();
+  logActivity('Undo','Sistem','Membatalkan perubahan data terakhir (Undo)');
 }
 function redoChange(){
   if(!redoStack.length)return;
@@ -1319,6 +1743,7 @@ function redoChange(){
   localStorage.setItem(KEY,nextSnapshot);
   scheduleCloudSync();
   refreshAfterHistory();
+  logActivity('Redo','Sistem','Mengulangi perubahan data (Redo)');
 }
 document.addEventListener('keydown',function(e){
   if(e.defaultPrevented)return;
@@ -1329,6 +1754,7 @@ document.addEventListener('keydown',function(e){
   else if(key==='y'||(key==='z'&&e.shiftKey)){e.preventDefault();redoChange()}
 });
 document.addEventListener('DOMContentLoaded',updateHistoryButtons);
+document.addEventListener('DOMContentLoaded',function(){try{updateActivityBadge()}catch(e){}});
 const rp=n=>'Rp '+Number(n||0).toLocaleString('id-ID');
 const rpSplit=n=>{let num=Number(n||0).toLocaleString('id-ID');return `<div class="rp-cell"><span class="rp-cur">Rp</span><span class="rp-num">${num}</span></div>`};
 const date=s=>new Date(s+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -1388,6 +1814,69 @@ async function initAuth(){
   if(!a){a={username:'admin',email:'finance@shadtour.co.id',passwordHash:await sha256('admin'),pending:null};localStorage.setItem(AUTH_KEY,JSON.stringify(a));}
   return a;
 }
+function showRegisterForm(){
+  const lb=document.getElementById('loginBox'),rb=document.getElementById('registerBox');
+  if(lb)lb.classList.add('hidden');
+  if(rb)rb.classList.remove('hidden');
+  const e=document.getElementById('regError'),i=document.getElementById('regInfo');
+  if(e)e.style.display='none';
+  if(i)i.style.display='none';
+}
+function showLoginForm(){
+  const lb=document.getElementById('loginBox'),rb=document.getElementById('registerBox');
+  if(rb)rb.classList.add('hidden');
+  if(lb)lb.classList.remove('hidden');
+}
+function regMsg(kind,text){
+  const e=document.getElementById('regError'),i=document.getElementById('regInfo');
+  if(e)e.style.display='none';
+  if(i)i.style.display='none';
+  const el=(kind==='ok')?i:e;
+  if(el&&text){el.textContent=text;el.style.display='block';}
+}
+async function registerAccount(){
+  const name=(document.getElementById('regName').value||'').trim();
+  const email=(document.getElementById('regEmail').value||'').trim();
+  const phone=(document.getElementById('regPhone').value||'').trim();
+  const requestedRole=document.getElementById('regRole').value||'viewer';
+  const pass=document.getElementById('regPass').value||'';
+  const pass2=document.getElementById('regPass2').value||'';
+  const btn=document.getElementById('regBtn');
+  regMsg('err','');
+  if(!name){regMsg('err','Nama lengkap wajib diisi.');return}
+  if(!email||email.indexOf('@')<0){regMsg('err','Masukkan email yang valid.');return}
+  if(!phone){regMsg('err','No. Handphone wajib diisi.');return}
+  if(pass.length<6){regMsg('err','Password minimal 6 karakter.');return}
+  if(pass!==pass2){regMsg('err','Konfirmasi password tidak cocok.');return}
+  if(!supabaseConfigured()){regMsg('err','Cloud belum dikonfigurasi, hubungi admin.');return}
+  const sb=getSupabaseClient();
+  if(btn){btn.disabled=true;btn.textContent='Memproses…';}
+  try{
+    const {data:signUpData,error}=await sb.auth.signUp({
+      email,password:pass,
+      options:{data:{name,phone,requested_role:requestedRole}}
+    });
+    if(error){
+      regMsg('err',error.message==='User already registered'?'Email sudah terdaftar. Silakan masuk atau gunakan email lain.':('Gagal mendaftar: '+error.message));
+      return;
+    }
+    // Jika Supabase mengembalikan sesi aktif (konfirmasi email nonaktif), keluarkan lagi
+    // karena akun baru wajib menunggu persetujuan Admin sebelum bisa mengakses dashboard.
+    if(signUpData&&signUpData.session){
+      try{await sb.auth.signOut()}catch(e){}
+    }
+    regMsg('ok','Pendaftaran berhasil. Akun Anda berstatus "Menunggu Persetujuan Admin". Anda akan menerima akses setelah disetujui.');
+    document.getElementById('regName').value='';
+    document.getElementById('regPhone').value='';
+    document.getElementById('regPass').value='';
+    document.getElementById('regPass2').value='';
+  }catch(e){
+    console.error('Register error:',e);
+    regMsg('err','Gagal mendaftar. Coba lagi.');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Daftar';}
+  }
+}
 async function login(){
   const emailEl=document.getElementById('loginEmail'),passEl=document.getElementById('loginPass');
   const email=emailEl.value.trim(),pass=passEl.value;
@@ -1404,14 +1893,23 @@ async function login(){
       err.style.display='block';
       return;
     }
-    const ok=await onAuthenticated(authData.user);
-    if(!ok){
+    const res=await onAuthenticated(authData.user);
+    if(!res.ok){
       await sb.auth.signOut();
-      err.textContent='Akun ini belum terdaftar sebagai Editor/Viewer. Hubungi admin.';
+      if(res.reason==='pending'){
+        err.textContent='Akun Anda masih menunggu persetujuan Admin.';
+      }else if(res.reason==='rejected'){
+        err.textContent='Akun Anda belum disetujui oleh Admin.';
+      }else if(res.reason==='disabled'){
+        err.textContent='Akun Anda telah dinonaktifkan oleh Admin. Silakan hubungi Admin.';
+      }else{
+        err.textContent='Akun ini belum terdaftar sebagai Editor/Viewer. Hubungi admin.';
+      }
       err.style.display='block';
       return;
     }
     const acc=acctData();acc.logins=[{time:new Date().toLocaleString('id-ID'),device:navigator.platform||'Web Browser'}].concat(acc.logins||[]).slice(0,15);acctSave(acc);
+    logActivity('Login','Sistem','Login berhasil sebagai '+roleLabel(currentRole)+' ('+(currentUser&&currentUser.email||'-')+')');
   }catch(e){
     console.error('Login error:',e);
     err.textContent='Gagal login. Coba lagi.';
@@ -1420,21 +1918,38 @@ async function login(){
     if(btn){btn.disabled=false;btn.textContent='Masuk';}
   }
 }
+// Mengembalikan {ok:boolean, reason?:'pending'|'rejected'|'norole'|'notfound'}
 async function onAuthenticated(user){
   const profile=await fetchMyProfile(user.id);
-  if(!profile||!profile.role){return false}
+  // Admin utama tetap dikenali sebagai Admin berdasarkan email + UID login.
+  // Untuk akun lain, role tetap wajib berasal dari tabel profiles.
+  const normalizedEmail=String(user.email||'').trim().toLowerCase();
+  const profileRole=String(profile&&profile.role||'').trim().toLowerCase();
+  const effectiveRole=(normalizedEmail===PRIMARY_ADMIN_EMAIL) ? 'admin' : profileRole;
+  if(!profile && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'notfound'}}
+  if(profile&&profile.status==='pending' && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'pending'}}
+  if(profile&&profile.status==='rejected' && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'rejected'}}
+  if(profile&&profile.status==='disabled' && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'disabled'}}
+  if(!effectiveRole){return {ok:false,reason:'norole'}}
+  if(!['admin','editor','viewer'].includes(effectiveRole)){return {ok:false,reason:'norole'}}
   currentUser=user;
-  currentRole=profile.role;
-  currentName=profile.name||user.email;
+  currentRole=effectiveRole;
+  currentName=(profile&&profile.name)||user.email;
   document.getElementById('login').classList.add('hidden');
   applyIdentityUI();
+  applyAdminMenuVisibility();
   startRoleObserver();
   applyRoleRestrictions();
   await boot();
   startRealtimeSync();
-  return true;
+  return {ok:true};
+}
+function applyAdminMenuVisibility(){
+  const pb=document.getElementById('menuPersetujuanBtn');
+  if(pb)pb.classList.toggle('hidden',currentRole!=='admin');
 }
 async function logout(){
+  try{ logActivity('Logout','Sistem','Logout dari sistem'); await pushActivityLog(); }catch(e){}
   stopRealtimeSync();
   clearInterval(cloudPollTimer);
   const sb=getSupabaseClient();
@@ -1447,7 +1962,8 @@ async function logout(){
   const sb=getSupabaseClient();
   const {data:sessionData}=await sb.auth.getSession();
   if(sessionData&&sessionData.session&&sessionData.session.user){
-    await onAuthenticated(sessionData.session.user);
+    const res=await onAuthenticated(sessionData.session.user);
+    if(!res.ok){ try{await sb.auth.signOut()}catch(e){} }
   }
   sb.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT'){ currentUser=null;currentRole=null;currentName=null; }
@@ -1510,7 +2026,11 @@ function inRange(d){if(!d)return false;const[a,b]=dashRange();return d>=a&&d<=b}
 function dashInvoices(){return data.invoices.filter(i=>inRange(i.date))}
 function dashPayEvents(){
   let out=[];
-  data.invoices.forEach(i=>{(invoicePayments(i)||[]).forEach(p=>{if(num(p.amount)>0)out.push({invoice:i.id,customer:i.customer,date:p.date||i.date,amount:num(p.amount),label:p.label||'Pembayaran'})})});
+  /* Dibungkus try: saat pemuatan awal, helper invoicePayments/num berada di blok
+     script berikutnya sehingga bisa belum terdefinisi. Data tetap sama. */
+  try{
+    data.invoices.forEach(i=>{(invoicePayments(i)||[]).forEach(p=>{if(num(p.amount)>0)out.push({invoice:i.id,customer:i.customer,date:p.date||i.date,amount:num(p.amount),label:p.label||'Pembayaran'})})});
+  }catch(e){return out}
   return out.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 }
 function lineChartSVG(pts,color){
@@ -1542,6 +2062,9 @@ function monthSeries(getDate,getVal,rows){
   return keys.map(k=>({l:lab[k],v:map[k]}));
 }
 function renderDashboard(){
+  /* Saat boot, helper num()/invoicePayments() berada di blok script berikutnya.
+     Dashboard akan dirender ulang oleh refreshAll() setelah aplikasi siap. */
+  if(typeof num!=='function')return;
   const inv=dashInvoices();
   const pays=dashPayEvents().filter(p=>inRange(p.date));
   const totalInv=inv.length;
@@ -1634,9 +2157,17 @@ function rowHTML(i){
 let c=custByInvoice(i.id,i.customer);
 return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${c.airlines||'-'}</td><td>${c.pic||'-'}</td><td>${c.pnr||'-'}</td><td>${c.pax||0}</td><td>${c.dept||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
 function deleteInvoice(id){
-if(!confirm('Hapus invoice '+id+'? Riwayat pembayaran terkait invoice ini tidak akan terhapus otomatis.'))return;
+if(currentRole==='viewer'){alert('Akun Viewer hanya dapat melihat data (read-only) dan tidak dapat menghapus data.');return;}
+if(!confirm('Apakah Anda yakin ingin menghapus Invoice ini?'))return;
+const target=data.invoices.find(x=>x.id===id);
 data.invoices=data.invoices.filter(x=>x.id!==id);
-save();renderDashboard();renderInvoices();renderReceivables();renderAging();
+if(Array.isArray(data.payments))data.payments=data.payments.filter(x=>x.invoice!==id);
+save();
+if(currentRole==='viewer')return; // save() membatalkan perubahan untuk Viewer
+renderDashboard();renderInvoices();renderReceivables();renderAging();
+if(typeof renderPayments==='function')try{renderPayments()}catch(e){}
+logActivity('Hapus','Invoice','Menghapus invoice '+(target?target.id:id)+(target&&target.customer?' ('+target.customer+')':''));
+alert('Invoice berhasil dihapus.');
 }
 
 function invoiceFilterValue(i,field){
@@ -1671,13 +2202,18 @@ function renderInvoices(){
   const yearSel=document.getElementById('invoiceYear');
   if(yearSel){
     const current=yearSel.value||yf;
-    const years=[...new Set(
+    const dataYears=[...new Set(
       data.invoices.flatMap(i=>[
         (i.date||'').slice(0,4),
         (i.due||'').slice(0,4),
         (i.closing||custByInvoice(i.id,i.customer).closing||'').slice(0,4)
       ]).filter(Boolean)
-    )].sort().reverse();
+    )];
+    // Sediakan pilihan tahun tetap (2020 s.d. 2031) agar tahun mendatang
+    // tetap bisa dipilih meski belum ada data invoice pada tahun tersebut.
+    const fixedYears=[];
+    for(let y=2020;y<=2031;y++)fixedYears.push(String(y));
+    const years=[...new Set(dataYears.concat(fixedYears))].sort().reverse();
     yearSel.innerHTML='<option value="">Semua Tahun</option>'+years.map(y=>`<option value="${y}" ${current===y?'selected':''}>${y}</option>`).join('');
   }
 
@@ -1793,16 +2329,313 @@ function paymentPNR(p){
   const c=custByInvoice(p.invoice,p.customer);
   return String(c?.pnr||inv?.pnr||'-').trim()||'-';
 }
-function renderPayments(){
- const pnrQuery=(document.getElementById('paymentPNRFilter')?.value||'').trim().toLowerCase();
- const mf=document.getElementById('paymentMethodFilter')?.value||'';
- const from=document.getElementById('paymentDateFrom')?.value||'',to=document.getElementById('paymentDateTo')?.value||'';
- document.getElementById('paymentSortBox').innerHTML=sortControlHTML('payments',[['date','Tanggal'],['invoice','Invoice'],['customer','Customer'],['pnr','PNR'],['dept','DEPT'],['amount','Jumlah'],['method','Metode']]);
- let rows=(data.payments||[]).filter(p=>{const pnr=paymentPNR(p).toLowerCase(),d=String(p.date||'');return (!pnrQuery||pnr.includes(pnrQuery))&&(!mf||p.method===mf)&&(!from||d>=from)&&(!to||d<=to);});
- rows=sortRows(rows,'payments',(p,key)=>key==='dept'?paymentDept(p):key==='pnr'?paymentPNR(p):p[key]);
- document.getElementById('paymentRows').innerHTML=rows.map(p=>{const refund=isRefundMethod(p.method)||num(p.amount)<0,dept=paymentDept(p),pnr=paymentPNR(p),att=p.attachment;const proof=att?`<div class="proof-actions"><a class="secondary proof-ok" style="text-decoration:none" href="${esc(att.data)}" target="_blank" rel="noopener">📎 Lihat</a><button class="secondary" onclick="archivePaymentProof('${esc(p.id)}')">Ganti</button><button class="secondary" style="color:#d71920" onclick="removePaymentProof('${esc(p.id)}')">Hapus</button></div>`:`<div class="proof-actions"><span class="proof-empty">Belum ada</span><button class="secondary" onclick="archivePaymentProof('${esc(p.id)}')">📎 Arsip</button></div>`;return `<tr class="${refund?'payment-refund-row':''}"><td>${date(p.date)}</td><td class="inv">${esc(p.invoice)}</td><td>${esc(p.customer)}</td><td>${esc(pnr)}</td><td>${esc(dept)}</td><td class="${refund?'refund-amount':''}">${rp(p.amount)}</td><td class="${refund?'refund-label':''}">${esc(p.method)}</td><td>${esc(p.note||'-')}</td><td>${proof}</td><td><button class="secondary" style="padding:5px 8px" onclick="editPayment('${esc(p.id)}')">✎ Edit</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deletePayment('${esc(p.id)}')">🗑 Hapus</button></td></tr>`;}).join('')||'<tr><td colspan="10" class="empty">Tidak ada pembayaran yang sesuai dengan filter.</td></tr>';
+/* ==========================================================================
+   MENU PEMBAYARAN — GAYA ACCURATE ONLINE (SHAD FINANCE)
+   Semua fungsi lama dipertahankan; tampilan, filter, dan pagination diperkaya.
+   ========================================================================== */
+const PAYMENT_METHOD_LIST=[
+ 'Booking Fee via Mandiri','Booking Fee via BSI','Booking Fee via Tunai',
+ 'Deposit via Mandiri','Deposit via BSI','Deposit via Tunai',
+ 'Full Payment via Mandiri','Full Payment via BSI','Full Payment via Tunai',
+ 'Fee Portal',
+ 'Refund via BSI','Refund via Mandiri','Refund via Tunai',
+ 'Koreksi / Pengurangan Pembayaran'
+];
+let paymentPage=1;
+let paymentQuickMode='';
+function syncPaymentMethodFilter(){
+ const sel=document.getElementById('paymentMethodFilter');
+ if(!sel)return;
+ const cur=sel.value||'';
+ const set=new Set(PAYMENT_METHOD_LIST);
+ (data.payments||[]).forEach(p=>{if(p&&p.method)set.add(String(p.method))});
+ const list=Array.from(set);
+ const html=['<option value="">Semua Metode</option>'].concat(
+   list.map(m=>`<option value="${esc(m)}"${isRefundMethod(m)?' style="color:#d71920;font-weight:700"':''}>${esc(m)}</option>`)
+ ).join('');
+ if(sel.innerHTML!==html)sel.innerHTML=html;
+ sel.value=list.includes(cur)?cur:'';
 }
+function syncPaymentDatalists(){
+ const cl=document.getElementById('paymentCustomerList');
+ const pl=document.getElementById('paymentPnrList');
+ if(cl){
+  const names=Array.from(new Set((data.payments||[]).map(p=>String(p.customer||'').trim()).filter(Boolean))).sort();
+  const h=names.map(n=>`<option value="${esc(n)}"></option>`).join('');
+  if(cl.innerHTML!==h)cl.innerHTML=h;
+ }
+ if(pl){
+  const pnrs=Array.from(new Set((data.payments||[]).map(p=>paymentPNR(p)).filter(x=>x&&x!=='-'))).sort();
+  const h=pnrs.map(n=>`<option value="${esc(n)}"></option>`).join('');
+  if(pl.innerHTML!==h)pl.innerHTML=h;
+ }
+}
+function paymentQuickPass(p){
+ if(!paymentQuickMode)return true;
+ const d=String(p.date||'');
+ if(paymentQuickMode==='month')return d.slice(0,7)===todayStr().slice(0,7);
+ if(paymentQuickMode==='7'){
+  const lim=new Date(Date.now()-6*86400000).toISOString().slice(0,10);
+  return d>=lim&&d<=todayStr();
+ }
+ if(paymentQuickMode==='refund')return isRefundMethod(p.method)||num(p.amount)<0;
+ if(paymentQuickMode==='noproof')return !p.attachment;
+ return true;
+}
+function getFilteredPayments(){
+ const gq=(document.getElementById('paymentPNRFilter')?.value||'').trim().toLowerCase();
+ const cq=(document.getElementById('paymentCustomerFilter')?.value||'').trim().toLowerCase();
+ const pq=(document.getElementById('paymentPnrOnlyFilter')?.value||'').trim().toLowerCase();
+ const dq=(document.getElementById('paymentDeptFilter')?.value||'').trim().toLowerCase();
+ const mf=document.getElementById('paymentMethodFilter')?.value||'';
+ const from=document.getElementById('paymentDateFrom')?.value||'';
+ const to=document.getElementById('paymentDateTo')?.value||'';
+ const hay=p=>[paymentPNR(p),p.invoice,p.customer,p.method,p.note,paymentDept(p)].map(x=>String(x||'').toLowerCase()).join(' ');
+ let rows=(data.payments||[]).filter(p=>{
+   const d=String(p.date||'');
+   return (!gq||hay(p).includes(gq))
+     &&(!cq||String(p.customer||'').toLowerCase().includes(cq))
+     &&(!pq||paymentPNR(p).toLowerCase().includes(pq))
+     &&(!dq||paymentDept(p).toLowerCase().includes(dq))
+     &&(!mf||p.method===mf)&&(!from||d>=from)&&(!to||d<=to)
+     &&paymentQuickPass(p);
+ });
+ return sortRows(rows,'payments',(p,key)=>key==='dept'?paymentDept(p):key==='pnr'?paymentPNR(p):p[key]);
+}
+function paymentPageSizeValue(){
+ const v=document.getElementById('paymentPageSize')?.value;
+ const n=v===undefined?25:Number(v);
+ return Number.isFinite(n)&&n>0?n:0;
+}
+function gotoPaymentPage(n){
+ paymentPage=Math.max(1,Number(n)||1);
+ renderPayments();
+ const w=document.querySelector('#payments .acc-grid');
+ if(w)w.scrollTop=0;
+}
+function setPaymentQuick(btn,mode){
+ paymentQuickMode=mode||'';
+ document.querySelectorAll('#paymentQuickChips button').forEach(b=>b.classList.toggle('active',b===btn));
+ paymentPage=1;
+ renderPayments();
+}
+function paymentRowHTML(p,no){
+ const refund=isRefundMethod(p.method)||num(p.amount)<0;
+ const dept=paymentDept(p),pnr=paymentPNR(p),att=p.attachment;
+ const proof=att
+  ?`<span class="acc-proof ok"><a href="${esc(att.data)}" target="_blank" rel="noopener" title="Lihat bukti: ${esc(att.name||'')}"><svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>Lihat</a><button type="button" class="acc-iconbtn xs" title="Ganti bukti" onclick="archivePaymentProof('${esc(p.id)}')"><svg viewBox="0 0 24 24"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button></span>`
+  :`<span class="acc-proof"><i>Belum ada</i><button type="button" class="acc-iconbtn xs" title="Arsipkan bukti transfer" onclick="archivePaymentProof('${esc(p.id)}')"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button></span>`;
+ const note=String(p.note||'').trim();
+ return `<tr class="${refund?'payment-refund-row':''}">`
+  +`<td class="acc-handle">${no}</td>`
+  +`<td class="acc-c nowrap">${date(p.date)}</td>`
+  +`<td class="acc-inv nowrap">${esc(p.invoice)}</td>`
+  +`<td class="acc-ell" title="${esc(p.customer)}">${esc(p.customer)}</td>`
+  +`<td class="acc-c nowrap"><span class="acc-pnr">${esc(pnr)}</span></td>`
+  +`<td class="acc-c nowrap">${esc(dept)}</td>`
+  +`<td class="acc-num ${refund?'refund-amount':''}">${rp(p.amount)}</td>`
+  +`<td class="nowrap ${refund?'refund-label':''}">${esc(p.method)}</td>`
+  +`<td class="acc-ell" title="${esc(note)}">${note?esc(note):'<i class="acc-dash">-</i>'}</td>`
+  +`<td>${proof}</td>`
+  +`<td class="acc-actcell">`
+   +`<button type="button" class="acc-iconbtn" title="Edit pembayaran" onclick="editPayment('${esc(p.id)}')"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>`
+   +`<button type="button" class="acc-iconbtn danger" title="Hapus pembayaran" onclick="deletePayment('${esc(p.id)}')"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>`
+   +`<button type="button" class="acc-iconbtn kebab" title="Menu lainnya" onclick="openPaymentRowMenu('${esc(p.id)}',event)"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>`
+  +`</td></tr>`;
+}
+function renderPayments(){
+ syncPaymentMethodFilter();
+ syncPaymentDatalists();
+ const sortBox=document.getElementById('paymentSortBox');
+ if(sortBox)sortBox.innerHTML=sortControlHTML('payments',[['date','Tanggal'],['invoice','Invoice'],['customer','Customer'],['pnr','PNR'],['dept','DEPT'],['amount','Jumlah'],['method','Metode']]);
 
+ const rows=getFilteredPayments();
+ const size=paymentPageSizeValue();
+ const pages=size?Math.max(1,Math.ceil(rows.length/size)):1;
+ if(paymentPage>pages)paymentPage=pages;
+ if(paymentPage<1)paymentPage=1;
+ const start=size?(paymentPage-1)*size:0;
+ const pageRows=size?rows.slice(start,start+size):rows;
+
+ const body=document.getElementById('paymentRows');
+ if(body){
+  body.innerHTML=pageRows.map((p,k)=>paymentRowHTML(p,start+k+1)).join('')
+   ||'<tr><td colspan="11" class="acc-empty"><b>Belum ada data pembayaran.</b><span>Ubah filter di atas atau klik tombol <b>Baru</b> untuk mencatat pembayaran.</span></td></tr>';
+ }
+
+ const totalAll=rows.reduce((a,p)=>a+num(p.amount),0);
+ const totalPage=pageRows.reduce((a,p)=>a+num(p.amount),0);
+ const masuk=rows.filter(p=>num(p.amount)>0).reduce((a,p)=>a+num(p.amount),0);
+ const keluar=rows.filter(p=>num(p.amount)<0).reduce((a,p)=>a+num(p.amount),0);
+
+ const foot=document.getElementById('paymentFootRow');
+ if(foot){
+  foot.innerHTML=rows.length?(
+   `<tr class="acc-foot-page"><th colspan="6">SUBTOTAL HALAMAN INI (${pageRows.length} baris)</th><th class="acc-num ${totalPage<0?'refund-amount':''}">${rp(totalPage)}</th><th colspan="4"></th></tr>`
+   +`<tr class="acc-foot-all"><th colspan="6">TOTAL KESELURUHAN (${rows.length} transaksi)</th><th class="acc-num ${totalAll<0?'refund-amount':''}">${rp(totalAll)}</th><th colspan="4"></th></tr>`
+  ):'';
+ }
+
+ const strip=document.getElementById('paymentSummaryStrip');
+ if(strip){
+  strip.innerHTML=`<span class="sum"><i>Pembayaran Masuk</i><b>${rp(masuk)}</b></span>`
+   +`<span class="sum neg"><i>Refund / Koreksi</i><b>${rp(keluar)}</b></span>`
+   +`<span class="sum net"><i>Nilai Bersih</i><b>${rp(totalAll)}</b></span>`;
+ }
+
+ const info=document.getElementById('paymentPageInfo');
+ if(info){
+  info.innerHTML=rows.length
+   ?`Menampilkan <b>${start+1}</b>&ndash;<b>${start+pageRows.length}</b> dari <b>${rows.length}</b> data`
+   :'Tidak ada data untuk ditampilkan';
+ }
+ const nav=document.getElementById('paymentPageNav');
+ if(nav){
+  if(!size||pages<=1){
+   nav.innerHTML=`<span class="acc-pgstatic">Halaman 1 dari 1</span>`;
+  }else{
+   let nums=[];
+   const win=2;
+   for(let n=1;n<=pages;n++){
+    if(n===1||n===pages||(n>=paymentPage-win&&n<=paymentPage+win))nums.push(n);
+    else if(nums[nums.length-1]!=='…')nums.push('…');
+   }
+   nav.innerHTML=`<button type="button" class="acc-pgbtn" ${paymentPage===1?'disabled':''} onclick="gotoPaymentPage(1)" title="Halaman pertama">&laquo;</button>`
+    +`<button type="button" class="acc-pgbtn" ${paymentPage===1?'disabled':''} onclick="gotoPaymentPage(${paymentPage-1})" title="Sebelumnya">&lsaquo;</button>`
+    +nums.map(n=>n==='…'?'<span class="acc-pgdots">…</span>'
+      :`<button type="button" class="acc-pgbtn num ${n===paymentPage?'active':''}" onclick="gotoPaymentPage(${n})">${n}</button>`).join('')
+    +`<button type="button" class="acc-pgbtn" ${paymentPage===pages?'disabled':''} onclick="gotoPaymentPage(${paymentPage+1})" title="Berikutnya">&rsaquo;</button>`
+    +`<button type="button" class="acc-pgbtn" ${paymentPage===pages?'disabled':''} onclick="gotoPaymentPage(${pages})" title="Halaman terakhir">&raquo;</button>`;
+  }
+ }
+
+ const tc=document.getElementById('paymentTabCount');if(tc)tc.textContent=rows.length;
+ const hint=document.getElementById('paymentFilterHint');
+ if(hint){
+  const all=(data.payments||[]).length;
+  hint.textContent=rows.length===all?`Seluruh ${all} data ditampilkan.`:`${rows.length} dari ${all} data (filter aktif).`;
+ }
+}
+/* --- Menu aksi baris (⋮) --- */
+function closePaymentRowMenu(){
+ const m=document.getElementById('paymentRowMenu');
+ if(m)m.remove();
+}
+function openPaymentRowMenu(id,ev){
+ if(ev&&ev.stopPropagation)ev.stopPropagation();
+ const exist=document.getElementById('paymentRowMenu');
+ const sameBtn=exist&&exist.dataset.pid===id;
+ closePaymentRowMenu();
+ if(sameBtn)return;
+ const p=(data.payments||[]).find(x=>x.id===id);
+ if(!p)return;
+ const m=document.createElement('div');
+ m.className='acc-rowmenu';m.id='paymentRowMenu';m.dataset.pid=id;
+ m.innerHTML=`<div class="hd">${esc(p.invoice||'-')} &bull; ${rp(p.amount)}</div>`
+  +`<button type="button" onclick="closePaymentRowMenu();editPayment('${esc(p.id)}')">&#9998; Edit Pembayaran</button>`
+  +`<button type="button" onclick="closePaymentRowMenu();archivePaymentProof('${esc(p.id)}')">&#128206; ${p.attachment?'Ganti Bukti Transfer':'Arsipkan Bukti Transfer'}</button>`
+  +(p.attachment?`<button type="button" onclick="closePaymentRowMenu();window.open('${esc(p.attachment.data)}','_blank')">&#128065; Lihat Bukti Transfer</button>`
+    +`<button type="button" onclick="closePaymentRowMenu();removePaymentProof('${esc(p.id)}')">&#128465; Hapus Arsip Bukti</button>`:'')
+  +`<button type="button" onclick="closePaymentRowMenu();openPaymentInvoice('${esc(p.invoice)}')">&#129534; Buka Invoice Terkait</button>`
+  +`<div class="sep"></div>`
+  +`<button type="button" class="danger" onclick="closePaymentRowMenu();deletePayment('${esc(p.id)}')">&#128465; Hapus Pembayaran</button>`;
+ document.body.appendChild(m);
+ if(typeof applyRoleRestrictions==='function'&&typeof currentRole!=='undefined'&&currentRole==='viewer')applyRoleRestrictions();
+ const r=(ev&&ev.currentTarget&&ev.currentTarget.getBoundingClientRect)?ev.currentTarget.getBoundingClientRect():{bottom:80,right:200,top:60};
+ const w=m.offsetWidth,h=m.offsetHeight;
+ let top=r.bottom+6,left=r.right-w;
+ if(top+h>window.innerHeight-10)top=Math.max(10,r.top-h-6);
+ if(left<10)left=10;
+ m.style.top=top+'px';m.style.left=left+'px';
+}
+document.addEventListener('click',function(e){
+ const m=document.getElementById('paymentRowMenu');
+ if(m&&!m.contains(e.target))closePaymentRowMenu();
+});
+window.addEventListener('resize',closePaymentRowMenu);
+function openPaymentInvoice(invoiceId){
+ const inv=(data.invoices||[]).find(x=>x.id===invoiceId);
+ if(!inv){alert('Invoice terkait tidak ditemukan.');return;}
+ /* Akun Viewer tidak boleh membuka form invoice, cukup diarahkan ke daftar invoice. */
+ if(typeof currentRole!=='undefined'&&currentRole==='viewer'){showView('invoices');return;}
+ if(typeof openInvoice==='function')openInvoice(inv.id);
+ else showView('invoices');
+}
+/* --- Toolbar & utilitas --- */
+function togglePaymentFilterPanel(){
+ const el=document.getElementById('paymentFilterPanel');
+ if(!el)return;
+ el.classList.toggle('collapsed');
+}
+function paymentHelp(){
+ alert('Menu Pembayaran\n\n'
+  +'• Tombol BARU: mencatat pembayaran baru.\n'
+  +'• PNR atau Nama Customer dapat diketik/dicari; No. Invoice terisi otomatis.\n'
+  +'• Gunakan nominal negatif atau jenis Refund/Koreksi untuk mengurangi pembayaran.\n'
+  +'• Tombol ⋮ pada tiap baris berisi aksi lengkap: edit, bukti transfer, buka invoice, hapus.\n'
+  +'• Footer menampilkan subtotal halaman, total keseluruhan, dan pagination.');
+}
+function togglePaymentMore(e){
+ if(e&&e.stopPropagation)e.stopPropagation();
+ const w=document.getElementById('paymentMoreWrap');
+ if(w)w.classList.toggle('open');
+}
+document.addEventListener('click',function(e){
+ const w=document.getElementById('paymentMoreWrap');
+ if(w&&w.classList.contains('open')&&!w.contains(e.target))w.classList.remove('open');
+});
+function exportPaymentsCSV(){
+ const rows=getFilteredPayments();
+ if(!rows.length){alert('Tidak ada data pembayaran untuk diexport.');return;}
+ const head=['Tanggal','No. Invoice','Customer','PNR','DEPT','Jumlah','Metode','Catatan','Bukti Transfer'];
+ const cell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const body=rows.map(p=>[p.date||'',p.invoice||'',p.customer||'',paymentPNR(p),paymentDept(p),num(p.amount),p.method||'',p.note||'',p.attachment?(p.attachment.name||'Ada'):'Belum ada'].map(cell).join(','));
+ const csv='\ufeff'+[head.map(cell).join(',')].concat(body).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);
+ a.download='Pembayaran-SHAD-'+todayStr()+'.csv';
+ document.body.appendChild(a);a.click();
+ setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},400);
+}
+function printPayments(){
+ const rows=getFilteredPayments();
+ if(!rows.length){alert('Tidak ada data pembayaran untuk dicetak.');return;}
+ const total=rows.reduce((a,p)=>a+num(p.amount),0);
+ const comp=(data.settings&&(data.settings.companyName||data.settings.company))||'PT SHAD AL FATIH';
+ const trs=rows.map((p,k)=>`<tr><td class="c">${k+1}</td><td class="c">${date(p.date)}</td><td>${esc(p.invoice)}</td><td>${esc(p.customer)}</td><td class="c">${esc(paymentPNR(p))}</td><td class="c">${esc(paymentDept(p))}</td><td class="r">${rp(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.note||'-')}</td></tr>`).join('');
+ const w=window.open('','_blank');
+ if(!w){alert('Popup diblokir browser. Izinkan popup untuk mencetak.');return;}
+ w.document.write(`<html><head><title>Daftar Pembayaran</title><style>
+  *{font-family:Arial,Helvetica,sans-serif}
+  body{margin:18px;color:#1b2230;font-size:11px}
+  h1{font-size:15px;margin:0 0 2px;color:#b90d13;letter-spacing:.4px}
+  .sub{font-size:10px;color:#666;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #c9d1de;padding:4px 6px}
+  thead th{background:#b90d13;color:#fff;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase}
+  td.c{text-align:center}td.r{text-align:right;font-variant-numeric:tabular-nums}
+  tfoot th{background:#f3f4f7;text-align:right;font-size:11px}
+  tfoot th.lbl{text-align:left}
+ </style></head><body>
+ <h1>${esc(comp)}</h1>
+ <div class="sub">DAFTAR PEMBAYARAN &bull; Dicetak ${date(todayStr())} &bull; ${rows.length} transaksi</div>
+ <table><thead><tr><th>NO</th><th>TANGGAL</th><th>NO. INVOICE</th><th>CUSTOMER</th><th>PNR</th><th>DEPT</th><th>JUMLAH</th><th>METODE</th><th>CATATAN</th></tr></thead>
+ <tbody>${trs}</tbody>
+ <tfoot><tr><th class="lbl" colspan="6">TOTAL</th><th>${rp(total)}</th><th colspan="2"></th></tr></tfoot></table>
+ </body></html>`);
+ w.document.close();
+ setTimeout(()=>{try{w.focus();w.print()}catch(err){}},350);
+}
+function showPaymentProofSummary(){
+ const rows=getFilteredPayments();
+ const withProof=rows.filter(p=>p.attachment);
+ alert('Arsip Bukti Transfer\n\n'
+  +'Total transaksi (sesuai filter): '+rows.length+'\n'
+  +'Sudah ada bukti: '+withProof.length+'\n'
+  +'Belum ada bukti: '+(rows.length-withProof.length)+'\n\n'
+  +'Gunakan chip "Tanpa Bukti" pada toolbar untuk menyaring transaksi yang belum memiliki arsip.');
+}
 function latestPaymentDate(invoiceId){
   const linked=(data.payments||[]).filter(p=>p.invoice===invoiceId && p.date);
   if(!linked.length)return '';
@@ -1827,6 +2660,7 @@ let inv=data.invoices.find(x=>x.id===p.invoice);
 data.payments=data.payments.filter(x=>x.id!==id);
 if(inv)syncInvoicePaymentData(inv);
 save();refreshAll();
+logActivity('Hapus','Pembayaran','Menghapus pembayaran '+(p.method||'')+' sebesar '+rp(Math.abs(p.amount))+' pada invoice '+(p.invoice||'-'));
 }
 
 function aging(i){let s=i.amount-i.paid;if(s<=0)return 0;return Math.max(0,Math.floor((new Date()-new Date(i.due))/86400000))}
@@ -1964,6 +2798,7 @@ phone:cPhone.value,
 sales:cSales.value,
 closing:cClosing.value
 };
+const custActionType=oldId?'Edit':'Tambah';
 if(oldId){
   let i=data.customers.findIndex(x=>x.__id===oldId);
   if(i>=0)data.customers[i]=c;
@@ -1972,11 +2807,13 @@ if(oldId){
   data.customers.push(c);
 }
 save();closeModal();renderCustomers();
+logActivity(custActionType,'Customer',(custActionType==='Tambah'?'Menambahkan':'Mengubah')+' data customer "'+(c.agentName||'-')+'" (Invoice '+(c.invoice||'-')+')');
 }
 
 function deleteCustomer(customerId){
 if(!customerId){alert('Data customer tidak memiliki ID internal. Silakan refresh halaman terlebih dahulu.');return;}
 if(!confirm('Hapus data customer/travel ini?'))return;
+const target=data.customers.find(x=>x.__id===customerId);
 const before=data.customers.length;
 data.customers=data.customers.filter(x=>x.__id!==customerId);
 if(data.customers.length===before){
@@ -1989,6 +2826,7 @@ renderDashboard();
 renderInvoices();
 renderReceivables();
 renderAging();
+logActivity('Hapus','Customer','Menghapus data customer "'+(target?target.agentName:customerId)+'"');
 }
 
 function openInvoice(id){
@@ -2020,10 +2858,18 @@ function archivePaymentProof(paymentId){
  input.onchange=()=>{if(!input.files?.[0])return;handlePaymentAttachment(input);setTimeout(()=>{if(paymentAttachmentDraft){p.attachment={...paymentAttachmentDraft,archivedAt:new Date().toISOString()};paymentAttachmentDraft=null;save();renderPayments();alert('Bukti pembayaran berhasil diarsipkan.');}},150);};input.click();
 }
 function removePaymentProof(paymentId){const p=(data.payments||[]).find(x=>x.id===paymentId);if(!p?.attachment)return;if(!confirm('Hapus arsip bukti pembayaran ini? Data pembayaran tetap dipertahankan.'))return;delete p.attachment;save();renderPayments();}
-function resetPaymentFilters(){['paymentPNRFilter','paymentDateFrom','paymentDateTo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const m=document.getElementById('paymentMethodFilter');if(m)m.value='';renderPayments();}
+function resetPaymentFilters(){
+ ['paymentPNRFilter','paymentCustomerFilter','paymentPnrOnlyFilter','paymentDeptFilter','paymentDateFrom','paymentDateTo']
+   .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+ const m=document.getElementById('paymentMethodFilter');if(m)m.value='';
+ const ps=document.getElementById('paymentPageSize');if(ps)ps.value='25';
+ paymentQuickMode='';paymentPage=1;
+ document.querySelectorAll('#paymentQuickChips button').forEach(b=>b.classList.toggle('active',(b.dataset.q||'')===''));
+ renderPayments();
+}
 
 function openPayment(invoice,paymentId){
-  // Mode tambah atau edit pembayaran.
+  // Mode tambah atau edit pembayaran. Tampilan mengikuti form transaksi Accurate Online.
   const existingPay=paymentId ? (data.payments||[]).find(x=>x.id===paymentId) : null;
   const invoiceId=existingPay ? existingPay.invoice : invoice;
   const i=invoiceId ? (data.invoices||[]).find(x=>x.id===invoiceId) : null;
@@ -2035,28 +2881,105 @@ function openPayment(invoice,paymentId){
   const defaultMethod=existingPay?.method || 'Booking Fee via Mandiri';
   const defaultNote=existingPay?.note || '';
   const title=existingPay ? 'Edit Pembayaran' : 'Catat Pembayaran';
+  const tabLabel=existingPay ? 'Edit Data' : 'Data Baru';
+  const docNo=existingPay?.id || ('PAY-'+todayStr().replace(/-/g,'')+'-BARU');
   paymentAttachmentDraft=null;
 
-  openModal(title,`<form onsubmit="submitPayment(event)">
+  openModal(title,`<form class="accf" onsubmit="submitPayment(event)">
     <input type="hidden" id="pReference" value="${esc(i?.id||'')}">
     <input type="hidden" id="pEditId" value="${esc(existingPay?.id||'')}">
-    <div class="formgrid">
-      <div class="field"><label>Nama Customer</label><input id="pCustomer" value="${esc(customerName)}" placeholder="Otomatis dari PNR" readonly style="background:#f7f8fa"></div>
-      <div class="field"><label>PNR *</label><div class="pnr-autocomplete-wrap"><input id="pPNR" value="${esc(pnr==='-'?'':pnr)}" placeholder="Ketik PNR" oninput="updatePaymentByPNR()" onfocus="showPNRSuggestions()" autocomplete="off" required><div id="pPNRSuggestions" class="pnr-autocomplete-list"></div></div></div>
-      <div class="field"><label>No. Invoice</label><input id="pInvoice" value="${esc(i?.id||'')}" placeholder="Otomatis dari PNR" readonly style="background:#f7f8fa"></div>
-      <div class="field"><label>Tanggal Pembayaran / Koreksi</label><input id="pDate" type="date" value="${esc(defaultDate)}" required></div>
-      <div class="field"><label>Jumlah</label><input id="pAmount" type="number" step="1" value="${defaultAmt}" placeholder="Contoh: 50000000 atau -50000000" required><small style="display:block;margin-top:5px;color:#777">Gunakan angka negatif untuk mengurangi pembayaran yang sudah tercatat.</small></div>
-      <div class="field"><label>Jenis Pembayaran</label><select id="pMethod">
-        <option>Booking Fee via Mandiri</option><option>Booking Fee via BSI</option><option>Booking Fee via Tunai</option>
-        <option>Deposit via Mandiri</option><option>Deposit via BSI</option><option>Deposit via Tunai</option>
-        <option>Full Payment via Mandiri</option><option>Full Payment via BSI</option><option>Full Payment via Tunai</option>
-        <option style="color:#d71920;font-weight:700">Refund via BSI</option><option style="color:#d71920;font-weight:700">Refund via Mandiri</option><option style="color:#d71920;font-weight:700">Refund via Tunai</option>
-        <option>Koreksi / Pengurangan Pembayaran</option>
-      </select></div>
-      <div class="field full"><label>Catatan</label><input id="pNote" value="${esc(defaultNote)}" placeholder="Keterangan tambahan / alasan koreksi (opsional)"></div><div class="field full"><label>Bukti Transfer / Pembayaran</label><input id="pAttachment" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onchange="handlePaymentAttachment(this)"><small id="pAttachmentStatus" style="display:block;margin-top:5px;color:#777">${existingPay?.attachment?.name?`Arsip saat ini: ${esc(existingPay.attachment.name)}. Pilih file baru untuk mengganti.`:'Opsional. Maksimal 8 MB.'}</small></div>
+
+    <div class="accf-tabs">
+      <span class="accf-tab"><span class="ast">*</span>${tabLabel} <span class="x" onclick="closeModal()" title="Tutup">&#10005;</span></span>
+      <span class="accf-docno">No. Bukti <b>${esc(docNo)}</b></span>
     </div>
-    <div id="pLookupStatus" style="font-size:11px;color:#777;margin-top:8px">${existingPay?'Edit transaksi pembayaran.':'Ketik PNR untuk menampilkan Nama Customer dan No. Invoice secara otomatis.'}</div>
-    <div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">${existingPay?'Simpan Perubahan':'Simpan Pembayaran'}</button></div>
+
+    <div class="accf-body">
+      <div class="accf-main">
+        <!-- Blok 1: sumber transaksi -->
+        <div class="accf-block">
+          <div class="accf-blockhd"><span class="n">1</span>Sumber Transaksi</div>
+          <div class="accf-grid">
+            <div class="acc-frow">
+              <label>PNR <span class="req">*</span></label>
+              <span class="acc-ctrl pnr-autocomplete-wrap acc-ac-wrap">
+                <input id="pPNR" value="${esc(pnr==='-'?'':pnr)}" placeholder="Ketik / cari PNR" oninput="updatePaymentByPNR()" onfocus="showPNRSuggestions()" autocomplete="off">
+                <svg class="acc-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <span id="pPNRSuggestions" class="pnr-autocomplete-list acc-ac-list"></span>
+              </span>
+            </div>
+            <div class="acc-frow">
+              <label>Nama Customer <span class="req">*</span></label>
+              <span class="acc-ctrl cust-autocomplete-wrap acc-ac-wrap">
+                <input id="pCustomer" value="${esc(customerName)}" placeholder="Ketik / cari nama customer" oninput="updatePaymentByCustomer()" onfocus="showCustomerSuggestions()" autocomplete="off">
+                <svg class="acc-ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <span id="pCustomerSuggestions" class="acc-ac-list"></span>
+              </span>
+            </div>
+            <div class="acc-frow">
+              <label>No. Invoice</label>
+              <span class="acc-ctrl"><input id="pInvoice" value="${esc(i?.id||'')}" placeholder="Otomatis dari PNR / Customer" readonly></span>
+            </div>
+            <div class="acc-frow">
+              <label>Tanggal <span class="req">*</span></label>
+              <span class="acc-ctrl"><input id="pDate" type="date" value="${esc(defaultDate)}" required></span>
+            </div>
+          </div>
+          <div class="accf-invbox" id="pInvoiceInfo"></div>
+        </div>
+
+        <!-- Blok 2: rincian pembayaran -->
+        <div class="accf-block">
+          <div class="accf-blockhd"><span class="n">2</span>Rincian Pembayaran</div>
+          <div class="accf-grid">
+            <div class="acc-frow">
+              <label>Jenis Pembayaran</label>
+              <span class="acc-ctrl"><select id="pMethod" onchange="updatePaymentAmountPreview()">
+                <option>Booking Fee via Mandiri</option><option>Booking Fee via BSI</option><option>Booking Fee via Tunai</option>
+                <option>Deposit via Mandiri</option><option>Deposit via BSI</option><option>Deposit via Tunai</option>
+                <option>Full Payment via Mandiri</option><option>Full Payment via BSI</option><option>Full Payment via Tunai</option>
+                <option>Fee Portal</option>
+                <option style="color:#d71920;font-weight:700">Refund via BSI</option><option style="color:#d71920;font-weight:700">Refund via Mandiri</option><option style="color:#d71920;font-weight:700">Refund via Tunai</option>
+                <option>Koreksi / Pengurangan Pembayaran</option>
+              </select></span>
+            </div>
+            <div class="acc-frow">
+              <label>Jumlah <span class="req">*</span></label>
+              <span class="acc-ctrl"><span class="acc-money"><i>Rp</i><input id="pAmount" class="num" type="number" step="1" value="${defaultAmt}" placeholder="0" oninput="updatePaymentAmountPreview()" required></span><small>Angka negatif / jenis Refund dipakai untuk mengurangi pembayaran.</small></span>
+            </div>
+            <div class="acc-frow full">
+              <label>Catatan</label>
+              <span class="acc-ctrl"><input id="pNote" value="${esc(defaultNote)}" placeholder="Keterangan tambahan / alasan koreksi (opsional)"></span>
+            </div>
+            <div class="acc-frow full">
+              <label>Bukti Transfer</label>
+              <span class="acc-ctrl"><input id="pAttachment" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onchange="handlePaymentAttachment(this)"><small id="pAttachmentStatus">${existingPay?.attachment?.name?`Arsip saat ini: ${esc(existingPay.attachment.name)}. Pilih file baru untuk mengganti.`:'Opsional. PDF/JPG/PNG/WEBP, maksimal 8 MB.'}</small></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accf-side">
+        <div class="accf-total" id="pAmountBox">
+          <span class="lb">Nilai Pembayaran</span>
+          <span class="vl" id="pAmountPreview">Rp 0</span>
+          <span class="sub" id="pAmountWords">&nbsp;</span>
+        </div>
+        <div class="accf-rail">
+          <button type="submit" class="acc-rbtn red" title="Simpan pembayaran"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>Simpan</button>
+          <button type="button" class="acc-rbtn" title="Lampirkan bukti transfer" onclick="document.getElementById('pAttachment').click()"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>Bukti</button>
+          <button type="button" class="acc-rbtn" title="Batal" onclick="closeModal()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>Batal</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="accf-foot">
+      <span class="accf-status" id="pLookupStatus">${existingPay?'Edit transaksi pembayaran.':'Ketik PNR atau Nama Customer untuk mengisi No. Invoice secara otomatis.'}</span>
+      <span class="accf-btns">
+        <button type="button" class="secondary" onclick="closeModal()">Batal</button>
+        <button class="primary">${existingPay?'Simpan Perubahan':'Simpan Pembayaran'}</button>
+      </span>
+    </div>
   </form>`);
 
   const methodEl=document.getElementById('pMethod');
@@ -2065,9 +2988,32 @@ function openPayment(invoice,paymentId){
     const found=opts.find(o=>o.value===defaultMethod);
     if(found)methodEl.value=defaultMethod;
   }
+  updatePaymentAmountPreview();
+  renderPaymentInvoiceInfo(i?.id||'');
   if(!i) setTimeout(()=>document.getElementById('pPNR')?.focus(),50);
 }
 
+/* Ringkasan invoice terkait di dalam form (nilai, terbayar, sisa) */
+function renderPaymentInvoiceInfo(invoiceId){
+  const box=document.getElementById('pInvoiceInfo');
+  if(!box)return;
+  const i=invoiceId?(data.invoices||[]).find(x=>x.id===invoiceId):null;
+  if(!i){
+    box.className='accf-invbox empty';
+    box.innerHTML='<span>Belum ada invoice terpilih. Data invoice akan muncul di sini setelah PNR / Customer ditemukan.</span>';
+    return;
+  }
+  const editId=String(document.getElementById('pEditId')?.value||'').trim();
+  const paid=(data.payments||[]).filter(x=>x.invoice===i.id&&x.id!==editId).reduce((s,x)=>s+num(x.amount),0);
+  const sisa=Math.max(0,num(i.amount)-paid);
+  const c=custByInvoice(i.id,i.customer)||{};
+  box.className='accf-invbox';
+  box.innerHTML=`<span class="iv"><i>Nilai Invoice</i><b>${rp(num(i.amount))}</b></span>`
+   +`<span class="iv"><i>Sudah Terbayar</i><b>${rp(paid)}</b></span>`
+   +`<span class="iv sisa"><i>Sisa Piutang</i><b>${rp(sisa)}</b></span>`
+   +`<span class="iv"><i>DEPT</i><b>${esc(String(c.dept||i.dept||'-'))}</b></span>`
+   +`<span class="iv"><i>Jatuh Tempo</i><b>${i.due?date(i.due):'-'}</b></span>`;
+}
 function editPayment(paymentId){
   const p=(data.payments||[]).find(x=>x.id===paymentId);
   if(!p){alert('Data pembayaran tidak ditemukan.');return;}
@@ -2118,6 +3064,8 @@ function choosePaymentPNR(invoiceId){
   // Nilai Jumlah yang sudah diketik/dipilih pengguna harus tetap.
   if(statusEl)statusEl.textContent='Data ditemukan: '+name+' • Invoice '+i.id+' • PNR '+p;
   hidePNRSuggestions();
+  if(typeof renderPaymentInvoiceInfo==='function')renderPaymentInvoiceInfo(i.id);
+  if(typeof updatePaymentAmountPreview==='function')updatePaymentAmountPreview();
 }
 
 function showPNRSuggestions(){
@@ -2165,7 +3113,8 @@ function updatePaymentByPNR(){
     invoiceEl.value='';
     refEl.value='';
     // Field Jumlah tidak disentuh ketika PNR dikosongkan.
-    if(statusEl)statusEl.textContent='Ketik PNR untuk menampilkan Nama Customer dan No. Invoice secara otomatis.';
+    if(statusEl)statusEl.textContent='Ketik PNR atau Nama Customer untuk mengisi No. Invoice secara otomatis.';
+    if(typeof renderPaymentInvoiceInfo==='function')renderPaymentInvoiceInfo('');
     hidePNRSuggestions();
     return;
   }
@@ -2191,6 +3140,7 @@ function updatePaymentByPNR(){
     if(statusEl)statusEl.textContent=matches.length>1
       ? 'Pilih PNR dari daftar agar Nama Customer dan No. Invoice terisi otomatis.'
       : 'PNR tidak ditemukan. Periksa kembali kode PNR.';
+    if(typeof renderPaymentInvoiceInfo==='function')renderPaymentInvoiceInfo('');
     showPNRSuggestions();
   }
 }
@@ -2198,6 +3148,110 @@ function updatePaymentByPNR(){
 document.addEventListener('click',function(e){
   const wrap=document.querySelector('.pnr-autocomplete-wrap');
   if(wrap&&!wrap.contains(e.target))hidePNRSuggestions();
+});
+/* --- Autocomplete Nama Customer pada form Pembayaran (Accurate style) --- */
+function paymentCustomerName(inv){
+  const c=custByInvoice(inv.id,inv.customer)||{};
+  return String(c.agentName||inv.customer||'').trim();
+}
+function getPaymentCustomerMatches(q){
+  q=String(q||'').trim().toLowerCase();
+  if(!q)return [];
+  return (data.invoices||[]).filter(x=>{
+    const name=paymentCustomerName(x).toLowerCase();
+    return name && name.includes(q);
+  });
+}
+function hideCustomerSuggestions(){
+  const box=document.getElementById('pCustomerSuggestions');
+  if(box)box.style.display='none';
+}
+function showCustomerSuggestions(){
+  const input=document.getElementById('pCustomer');
+  const box=document.getElementById('pCustomerSuggestions');
+  if(!input||!box)return;
+  const q=String(input.value||'').trim();
+  if(!q){box.innerHTML='';box.style.display='none';return;}
+  const matches=getPaymentCustomerMatches(q).slice(0,12);
+  if(!matches.length){
+    box.innerHTML='<div class="acc-ac-item"><small>Nama customer tidak ditemukan</small></div>';
+    box.style.display='block';
+    return;
+  }
+  box.innerHTML=matches.map(x=>{
+    const c=custByInvoice(x.id,x.customer)||{};
+    const p=String(c.pnr||x.pnr||'-').trim()||'-';
+    return '<div class="acc-ac-item" data-invoice="'+esc(x.id)+'"><strong>'+esc(paymentCustomerName(x))+'</strong><small>Invoice '+esc(x.id)+' &bull; PNR '+esc(p)+'</small></div>';
+  }).join('');
+  box.querySelectorAll('.acc-ac-item[data-invoice]').forEach(el=>{
+    el.addEventListener('mousedown',function(e){
+      e.preventDefault();
+      choosePaymentPNR(this.getAttribute('data-invoice'));
+      hideCustomerSuggestions();
+    });
+  });
+  box.style.display='block';
+}
+function updatePaymentByCustomer(){
+  const input=document.getElementById('pCustomer');
+  const invoiceEl=document.getElementById('pInvoice');
+  const refEl=document.getElementById('pReference');
+  const statusEl=document.getElementById('pLookupStatus');
+  if(!input)return;
+  const q=String(input.value||'').trim();
+  if(!q){
+    if(invoiceEl)invoiceEl.value='';
+    if(refEl)refEl.value='';
+    if(statusEl)statusEl.textContent='Ketik PNR atau Nama Customer untuk mengisi No. Invoice secara otomatis.';
+    hideCustomerSuggestions();
+    return;
+  }
+  const matches=getPaymentCustomerMatches(q);
+  const exact=matches.filter(x=>paymentCustomerName(x).toLowerCase()===q.toLowerCase());
+  if(exact.length===1){choosePaymentPNR(exact[0].id);hideCustomerSuggestions();return;}
+  if(matches.length===1){choosePaymentPNR(matches[0].id);hideCustomerSuggestions();return;}
+  if(invoiceEl)invoiceEl.value='';
+  if(refEl)refEl.value='';
+  if(typeof renderPaymentInvoiceInfo==='function')renderPaymentInvoiceInfo('');
+  if(statusEl)statusEl.textContent=matches.length>1
+    ? 'Beberapa invoice cocok. Pilih dari daftar agar PNR dan No. Invoice terisi otomatis.'
+    : 'Nama customer belum cocok dengan data invoice.';
+  showCustomerSuggestions();
+}
+function terbilangID(n){
+  n=Math.floor(Math.abs(num(n)));
+  const sat=['','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];
+  function t(x){
+    if(x<12)return sat[x];
+    if(x<20)return t(x-10)+' belas';
+    if(x<100)return t(Math.floor(x/10))+' puluh'+(x%10?' '+t(x%10):'');
+    if(x<200)return 'seratus'+(x%100?' '+t(x%100):'');
+    if(x<1000)return t(Math.floor(x/100))+' ratus'+(x%100?' '+t(x%100):'');
+    if(x<2000)return 'seribu'+(x%1000?' '+t(x%1000):'');
+    if(x<1000000)return t(Math.floor(x/1000))+' ribu'+(x%1000?' '+t(x%1000):'');
+    if(x<1000000000)return t(Math.floor(x/1000000))+' juta'+(x%1000000?' '+t(x%1000000):'');
+    if(x<1000000000000)return t(Math.floor(x/1000000000))+' miliar'+(x%1000000000?' '+t(x%1000000000):'');
+    return t(Math.floor(x/1000000000000))+' triliun'+(x%1000000000000?' '+t(x%1000000000000):'');
+  }
+  if(!n)return 'nol rupiah';
+  const w=t(n).replace(/\s+/g,' ').trim();
+  return w.charAt(0).toUpperCase()+w.slice(1)+' rupiah';
+}
+function updatePaymentAmountPreview(){
+  const box=document.getElementById('pAmountBox');
+  const el=document.getElementById('pAmountPreview');
+  if(!el)return;
+  let amt=num(document.getElementById('pAmount')?.value||0);
+  const method=document.getElementById('pMethod')?.value||'';
+  if(isRefundMethod(method)&&amt>0)amt=-amt;
+  el.textContent=rp(amt);
+  if(box)box.classList.toggle('neg',amt<0);
+  const w=document.getElementById('pAmountWords');
+  if(w)w.textContent=(amt<0?'Pengurangan: ':'')+terbilangID(amt);
+}
+document.addEventListener('click',function(e){
+  const wrap=document.querySelector('.cust-autocomplete-wrap');
+  if(wrap&&!wrap.contains(e.target))hideCustomerSuggestions();
 });
 function submitPayment(e){
 e.preventDefault();
@@ -2302,7 +3356,9 @@ if(oldInvoiceId && oldInvoiceId!==i.id){
   if(oldInv)syncInvoicePaymentData(oldInv);
 }
 syncInvoicePaymentData(i);
+const payActionType=oldPay?'Edit':'Tambah';
 save();closeModal();refreshAll();
+logActivity(payActionType,'Pembayaran',(payActionType==='Tambah'?'Mencatat':'Mengubah')+' pembayaran invoice '+i.id+' sebesar '+rp(Math.abs(amt))+(amt<0?' (pengurangan/refund)':''));
 }
 
 function setNav(k){
@@ -2828,6 +3884,7 @@ renderDashboard();renderCustomers();renderImportSummary()
 async function boot(){
   await initCloud();
   init();
+  updateActivityBadge();
   if(cloudReady){clearInterval(cloudPollTimer);cloudPollTimer=setInterval(pollCloud,15000);}
 }
 // Catatan: boot() sekarang dipanggil otomatis setelah login berhasil
@@ -2847,8 +3904,8 @@ select option[style*='color:#d71920']{color:#d71920;font-weight:700}
 </style>
 <style>/* ===== MODUL INVOICE ===== */
 .badge.bd{background:#eceef3;color:#5b6373}
-.rowact{white-space:nowrap}
-.rowact button{padding:5px 8px;margin-right:2px}
+.rowact{white-space:nowrap;flex-wrap:nowrap}
+.rowact button{padding:5px 8px;margin-right:2px;flex:0 0 auto}
 table.ivitems td{padding:5px 6px;vertical-align:top}
 table.ivitems input,table.ivitems textarea{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:13px;resize:vertical}
 table.ivitems td.amt{text-align:right;font-weight:700;white-space:nowrap}
@@ -3124,7 +4181,7 @@ function nextInvoiceNo(dateStr){
 }
 
 /* ---------- FORM INVOICE ---------- */
-const PAY_TYPES=['Deposit via Mandiri','Deposit via BSI','Deposit via Tunai','Booking Fee via Mandiri','Booking Fee via BSI','Booking Fee via Tunai','Full Payment via Mandiri','Full Payment via BSI','Full Payment via Tunai','Refund via BSI','Refund via Mandiri','Refund via Tunai'];
+const PAY_TYPES=['Deposit via Mandiri','Deposit via BSI','Deposit via Tunai','Booking Fee via Mandiri','Booking Fee via BSI','Booking Fee via Tunai','Full Payment via Mandiri','Full Payment via BSI','Full Payment via Tunai','Fee Portal','Refund via BSI','Refund via Mandiri','Refund via Tunai'];
 function isRefundMethod(method){return /^Refund via /i.test(String(method||''))}
 function payTypeOptions(v){let cur=v||PAY_TYPES[0];let list=PAY_TYPES.includes(cur)?PAY_TYPES:[cur].concat(PAY_TYPES);return list.map(o=>`<option value="${esc(o)}" ${o===cur?'selected':''}>${esc(o)}</option>`).join('')}
 function migratePayments(i){
@@ -3462,7 +4519,9 @@ function submitInvoice(e){
   let cu=data.customers.find(x=>x.agentName===rec.customer);
   if(cu&&rec.sales)cu.sales=rec.sales;
   if(cu&&!data.customers.some(x=>x.invoice===rec.id)&&!cu.invoice)cu.invoice=rec.id;
+  const invActionType=old?'Edit':'Tambah';
   save();closeModal();refreshAll();
+  logActivity(invActionType,'Invoice',(invActionType==='Tambah'?'Membuat':'Mengubah')+' invoice '+rec.id+' untuk '+(rec.customer||'-')+' sebesar '+rp(rec.amount));
 }
 function refreshAll(){
   renderDashboard();renderInvoices();renderReceivables();renderPayments();renderAging();renderReminders();renderCustomers();
@@ -4419,7 +5478,7 @@ function acctEsc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt
 function acctAction(k){
   document.getElementById('userMenu').classList.remove('open');
   const a=acctData();
-  if(k==='logout'){if(confirm('Keluar dari aplikasi?'))logout();return}
+  if(k==='logout'){if(confirm('Apakah Anda yakin ingin keluar?'))logout();return}
   if(k==='penagihan'){showView('receivables');return}
   if(k==='referral'){openModal('Referral Program','<p>Bagikan kode referral Anda dan dapatkan benefit untuk setiap mitra travel yang bergabung.</p><div class="notice">Kode referral Anda: <strong>SHAD-'+acctEsc(a.name.split(" ")[0].toUpperCase())+'-2026</strong></div><div class="modalfoot"><button class="secondary" onclick="closeModal()">Tutup</button></div>');return}
   if(k==='profil'){openModal('Profil Pengguna','<form onsubmit="acctSaveProfile(event)"><div class="formgrid"><div class="field"><label>Nama Lengkap</label><input id="acName" required value="'+acctEsc(a.name)+'"></div><div class="field"><label>Email</label><input id="acEmail" type="email" required value="'+acctEsc(a.email)+'"></div><div class="field full"><label>Peran</label><input id="acRole" value="'+acctEsc(a.role)+'"></div></div><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Simpan</button></div></form>');return}
@@ -4427,7 +5486,224 @@ function acctAction(k){
   if(k==='password'){openModal('Ganti Password','<form onsubmit="acctChangePass(event)"><div class="formgrid"><div class="field full"><label>Password Lama</label><input id="acOld" type="password" autocomplete="current-password" required></div><div class="field"><label>Password Baru</label><input id="acNew" type="password" minlength="8" autocomplete="new-password" required><small style="color:#777">Minimal 8 karakter.</small></div><div class="field"><label>Ulangi Password Baru</label><input id="acNew2" type="password" minlength="8" autocomplete="new-password" required></div><div class="field full"><label>Email Aktivasi</label><input id="acEmailVerify" type="email" value="'+acctEsc(a.email)+'" required><small style="color:#777">Kode aktivasi akan dikirim ke email ini.</small></div></div><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Kirim Kode Aktivasi</button></div></form>');return}
   if(k==='nonaktif'){openModal('Data Usaha Nonaktif','<p>Menonaktifkan data usaha akan menyembunyikan seluruh transaksi dari daftar aktif. Data tidak dihapus dan dapat diaktifkan kembali.</p><div class="modalfoot"><button class="secondary" onclick="closeModal()">Tutup</button></div>');return}
   if(k==='riwayat'){const rows=(a.logins||[]).slice(0,15);const html=rows.length?'<div class="acct-list">'+rows.map(r=>'<div><span>'+acctEsc(r.time)+'</span><span>'+acctEsc(r.device)+'</span></div>').join('')+'</div>':'<div class="empty">Belum ada riwayat login.</div>';openModal('Riwayat Login',html+'<div class="modalfoot"><button class="secondary" onclick="closeModal()">Tutup</button></div>');return}
-  if(k==='persetujuan'){openModal('Daftar Persetujuan','<div class="empty">Tidak ada permintaan persetujuan yang menunggu.</div><div class="modalfoot"><button class="secondary" onclick="closeModal()">Tutup</button></div>');return}
+  if(k==='persetujuan'){
+    if(currentRole!=='admin'){alert('Hanya Admin yang dapat membuka Daftar Persetujuan.');return}
+    openApprovalModal();
+    return;
+  }
+}
+
+/* ===================================================================
+   DAFTAR PERSETUJUAN — approval pendaftaran user baru (khusus Admin)
+   =================================================================== */
+let approvalRequests=[];
+let approvalTab='semua';
+let approvalSearchTerm='';
+
+async function openApprovalModal(){
+  document.getElementById('userMenu').classList.remove('open');
+  openModal('Daftar Persetujuan','<div class="empty">Memuat data pendaftaran…</div>');
+  await loadApprovalRequests();
+  renderApprovalModal();
+}
+async function loadApprovalRequests(){
+  if(currentRole!=='admin'){approvalRequests=[];return}
+  const sb=getSupabaseClient();
+  if(!sb){approvalRequests=[];return}
+  try{
+    const {data:rows,error}=await sb.from(PROFILES_TABLE)
+      .select('id,name,email,phone,status,requested_role,role,created_at,approved_at')
+      .order('created_at',{ascending:false});
+    if(error){console.error('Load approval error:',cloudErrorText(error));approvalRequests=[];return}
+    approvalRequests=(rows||[]).filter(r=>(r.role||'')!=='admin');
+  }catch(e){
+    console.error('Load approval error:',e);
+    approvalRequests=[];
+  }
+}
+function approvalStatusBadge(s){
+  if(s==='pending')return '<span class="badge by">Menunggu Persetujuan</span>';
+  if(s==='approved')return '<span class="badge bg">Disetujui</span>';
+  if(s==='rejected')return '<span class="badge br">Ditolak</span>';
+  if(s==='disabled')return '<span class="badge bd">Dinonaktifkan</span>';
+  return '<span class="badge bd">'+esc(s||'-')+'</span>';
+}
+function approvalRoleLabel(r){return r==='editor'?'EDITOR':r==='viewer'?'VIEWER':r==='admin'?'ADMIN':'-'}
+function fmtApprovalDate(s){
+  if(!s)return '-';
+  try{return new Date(s).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}catch(e){return s}
+}
+function setApprovalTab(t){approvalTab=t;renderApprovalModal()}
+function setApprovalSearch(v){approvalSearchTerm=v;renderApprovalModal()}
+async function reloadApprovalModal(){
+  document.getElementById('modalBody').innerHTML='<div class="empty">Memuat ulang…</div>';
+  await loadApprovalRequests();
+  renderApprovalModal();
+}
+function renderApprovalModal(){
+  if(currentRole!=='admin'){closeModal();return}
+  const rows=approvalRequests;
+  const c={
+    total:rows.length,
+    menunggu:rows.filter(r=>r.status==='pending').length,
+    disetujui:rows.filter(r=>r.status==='approved').length,
+    dinonaktifkan:rows.filter(r=>r.status==='disabled').length,
+    ditolak:rows.filter(r=>r.status==='rejected').length
+  };
+  const map={semua:null,menunggu:'pending',disetujui:'approved',dinonaktifkan:'disabled',ditolak:'rejected'};
+  let filtered=approvalTab==='semua'?rows:rows.filter(r=>r.status===map[approvalTab]);
+  const term=approvalSearchTerm.trim().toLowerCase();
+  if(term){
+    filtered=filtered.filter(r=>
+      (r.name||'').toLowerCase().includes(term)||
+      (r.email||'').toLowerCase().includes(term)||
+      (r.phone||'').toLowerCase().includes(term)||
+      String(r.id||'').toLowerCase().includes(term)
+    );
+  }
+  const tabBtn=(key,label)=>'<button class="'+(approvalTab===key?'active':'')+'" onclick="setApprovalTab(\''+key+'\')">'+label+'</button>';
+  const rowsHtml=filtered.map(r=>{
+    let actions;
+    const nm=esc(r.name||r.email||'');
+    if(r.status==='pending'){
+      actions='<button class="primary" style="padding:6px 10px;font-size:11.5px" onclick="openApproveDialog(\''+r.id+'\',\''+nm+'\',\''+(r.requested_role||'viewer')+'\')">Setujui</button> '+
+              '<button class="secondary" style="padding:6px 10px;font-size:11.5px" onclick="rejectRequest(\''+r.id+'\',\''+nm+'\')">Tolak</button>';
+    }else if(r.status==='approved'){
+      actions='<span style="color:var(--muted);font-size:11.5px">Akses: '+approvalRoleLabel(r.role)+'</span> '+
+              '<button class="primary" style="padding:6px 10px;font-size:11.5px" onclick="disableUser(\''+r.id+'\',\''+nm+'\')">Nonaktifkan Akun</button>';
+    }else if(r.status==='disabled'){
+      actions='<button class="btn-green" style="padding:6px 10px;font-size:11.5px" onclick="reactivateUser(\''+r.id+'\',\''+nm+'\')">Aktifkan Kembali</button> '+
+              '<button class="primary" style="padding:6px 10px;font-size:11.5px" onclick="hardDeleteUser(\''+r.id+'\',\''+nm+'\')">Hapus Permanen</button>';
+    }else{
+      actions='<span style="color:var(--muted);font-size:11.5px">Ditolak '+fmtApprovalDate(r.approved_at)+'</span> '+
+              '<button class="primary" style="padding:6px 10px;font-size:11.5px" onclick="hardDeleteUser(\''+r.id+'\',\''+nm+'\')">Hapus Permanen</button>';
+    }
+    return '<tr>'+
+      '<td>'+esc(r.name||'-')+'</td>'+
+      '<td>'+esc(r.email||'-')+'</td>'+
+      '<td>'+esc(r.phone||'-')+'</td>'+
+      '<td>'+fmtApprovalDate(r.created_at)+'</td>'+
+      '<td>'+approvalRoleLabel(r.requested_role)+'</td>'+
+      '<td>'+approvalStatusBadge(r.status)+'</td>'+
+      '<td>'+actions+'</td>'+
+    '</tr>';
+  }).join('');
+  const tableOrEmpty=filtered.length
+    ?'<div class="table-wrap"><table><thead><tr><th>NAMA</th><th>EMAIL</th><th>NO. HANDPHONE</th><th>TGL DAFTAR</th><th>HAK AKSES DIMINTA</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>'
+    :'<div class="empty">Belum ada permintaan persetujuan.</div>';
+  const html=
+    '<div class="wa-cards">'+
+      '<div class="wa-card red"><p>TOTAL PERMINTAAN</p><strong>'+c.total+'</strong></div>'+
+      '<div class="wa-card yellow"><p>MENUNGGU</p><strong>'+c.menunggu+'</strong></div>'+
+      '<div class="wa-card"><p>DISETUJUI</p><strong>'+c.disetujui+'</strong></div>'+
+      '<div class="wa-card red"><p>DINONAKTIFKAN</p><strong>'+c.dinonaktifkan+'</strong></div>'+
+      '<div class="wa-card red"><p>DITOLAK</p><strong>'+c.ditolak+'</strong></div>'+
+    '</div>'+
+    '<div class="toolbar">'+
+      '<div class="wa-tabs" style="margin:0">'+tabBtn('semua','Semua')+tabBtn('menunggu','Menunggu')+tabBtn('disetujui','Disetujui')+tabBtn('dinonaktifkan','Dinonaktifkan')+tabBtn('ditolak','Ditolak')+'</div>'+
+      '<input class="input" placeholder="Cari nama, email, atau no. HP..." value="'+esc(approvalSearchTerm)+'" oninput="setApprovalSearch(this.value)" style="flex:1;min-width:180px">'+
+      '<button class="secondary" onclick="reloadApprovalModal()">↻ Muat Ulang</button>'+
+    '</div>'+
+    tableOrEmpty+
+    '<div class="modalfoot"><button class="secondary" onclick="closeModal()">Tutup</button></div>';
+  document.getElementById('modalTitle').textContent='Daftar Persetujuan';
+  document.getElementById('modalBody').innerHTML=html;
+}
+function openApproveDialog(id,name,requestedRole){
+  if(currentRole!=='admin')return;
+  const html=
+    '<div class="heading" style="margin-bottom:6px"><h1 style="font-size:16px;margin:0 0 4px">Setujui Pendaftaran</h1><p style="margin:0">Tentukan hak akses untuk <b>'+name+'</b>.</p></div>'+
+    '<div class="formgrid"><div class="field full"><label>Hak Akses</label>'+
+    '<select id="apvRoleSelect">'+
+      '<option value="viewer"'+(requestedRole==='viewer'?' selected':'')+'>VIEWER</option>'+
+      '<option value="editor"'+(requestedRole==='editor'?' selected':'')+'>EDITOR</option>'+
+    '</select></div></div>'+
+    '<div class="modalfoot"><button class="secondary" onclick="renderApprovalModal()">Batal</button><button class="primary" onclick="confirmApprove(\''+id+'\')">Setujui &amp; Berikan Akses</button></div>';
+  document.getElementById('modalTitle').textContent='Setujui Pendaftaran';
+  document.getElementById('modalBody').innerHTML=html;
+}
+async function confirmApprove(id){
+  if(currentRole!=='admin')return;
+  const role=document.getElementById('apvRoleSelect').value;
+  const sb=getSupabaseClient();
+  try{
+    const {error}=await sb.rpc('approve_user',{target_id:id,new_role:role});
+    if(error){alert('Gagal menyetujui pengguna: '+cloudErrorText(error));return}
+    await loadApprovalRequests();
+    renderApprovalModal();
+  }catch(e){
+    console.error('Approve error:',e);
+    alert('Gagal menyetujui pengguna.');
+  }
+}
+async function rejectRequest(id,name){
+  if(currentRole!=='admin')return;
+  if(!confirm('Tolak pendaftaran '+name+'? Pengguna tidak akan bisa masuk ke dashboard.'))return;
+  const sb=getSupabaseClient();
+  try{
+    const {error}=await sb.rpc('reject_user',{target_id:id});
+    if(error){alert('Gagal menolak pengguna: '+cloudErrorText(error));return}
+    await loadApprovalRequests();
+    renderApprovalModal();
+  }catch(e){
+    console.error('Reject error:',e);
+    alert('Gagal menolak pengguna.');
+  }
+}
+async function disableUser(id,name){
+  if(currentRole!=='admin')return;
+  if(!confirm('Apakah Anda yakin ingin menonaktifkan akun ini? User tidak akan dapat mengakses website lagi.'))return;
+  const sb=getSupabaseClient();
+  try{
+    const {error}=await sb.rpc('disable_user',{target_id:id});
+    if(error){alert('Gagal menonaktifkan akun: '+cloudErrorText(error));return}
+    await loadApprovalRequests();
+    renderApprovalModal();
+  }catch(e){
+    console.error('Disable user error:',e);
+    alert('Gagal menonaktifkan akun.');
+  }
+}
+async function reactivateUser(id,name){
+  if(currentRole!=='admin')return;
+  if(!confirm('Apakah Anda ingin mengaktifkan kembali akun ini?'))return;
+  const sb=getSupabaseClient();
+  try{
+    const {error}=await sb.rpc('reactivate_user',{target_id:id});
+    if(error){alert('Gagal mengaktifkan kembali akun: '+cloudErrorText(error));return}
+    await loadApprovalRequests();
+    renderApprovalModal();
+  }catch(e){
+    console.error('Reactivate user error:',e);
+    alert('Gagal mengaktifkan kembali akun.');
+  }
+}
+async function hardDeleteUser(id,name){
+  if(currentRole!=='admin')return;
+  if(!confirm('Hapus akun '+name+' secara permanen? Tindakan ini memutus akses login pengguna.'))return;
+  if(!confirm('PERINGATAN: akun ini akan dihapus permanen dan tidak dapat dipulihkan. Lanjutkan?'))return;
+  const sb=getSupabaseClient();
+  try{
+    const {data:sessionData}=await sb.auth.getSession();
+    const token=sessionData&&sessionData.session&&sessionData.session.access_token;
+    if(!token){alert('Sesi tidak valid, silakan login ulang.');return}
+    const resp=await fetch(SUPABASE_URL+'/functions/v1/admin-delete-user',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':SUPABASE_KEY},
+      body:JSON.stringify({target_id:id})
+    });
+    if(!resp.ok){
+      let msg='Gagal menghapus akun.';
+      try{const j=await resp.json();if(j&&j.error)msg='Gagal menghapus akun: '+j.error;}catch(e){}
+      alert(msg);
+      return;
+    }
+    await loadApprovalRequests();
+    renderApprovalModal();
+  }catch(e){
+    console.error('Hard delete user error:',e);
+    alert('Gagal menghapus akun. Pastikan Edge Function admin-delete-user sudah dibuat di Supabase.');
+  }
 }
 function acctSaveProfile(e){e.preventDefault();const a=acctData();a.name=document.getElementById('acName').value.trim();a.email=document.getElementById('acEmail').value.trim();a.role=document.getElementById('acRole').value.trim();acctSave(a);closeModal();alert('Profil tersimpan.')}
 function acctToggle2FA(){const a=acctData();a.twofa=!a.twofa;acctSave(a);closeModal();alert('2FA '+(a.twofa?'diaktifkan':'dinonaktifkan')+'.')}
@@ -4599,23 +5875,19 @@ async function requestPasswordReset(){
     return out;
   }
   function updateNotif(){
+    // Badge lonceng kini menampilkan jumlah aktivitas baru pada Record Perubahan
+    // (bukan lagi jumlah invoice jatuh tempo/overdue - itu tetap tersedia di menu
+    // Monitoring Piutang).
+    if (typeof window.updateActivityBadge === 'function'){ window.updateActivityBadge(); return; }
     var el = document.getElementById('notifCount'); if (!el) return;
-    var n = overdueList().length;
-    el.textContent = n > 99 ? '99+' : String(n);
-    el.classList.toggle('zero', n === 0);
+    el.classList.add('zero');
   }
   window.updateNotif = updateNotif;
 
+  // Bell header kini membuka Record Perubahan (Log Aktivitas), bukan notifikasi
+  // jatuh tempo. openNotifications tetap ada sebagai alias agar kompatibel.
   window.openNotifications = function(){
-    var list = overdueList();
-    var n = list.length;
-    if (typeof showView === 'function') showView('reminders');
-    var host = document.getElementById('waReminderBody') || document.querySelector('#reminders');
-    if (host) host.scrollIntoView({behavior:'smooth', block:'start'});
-    if (!n) return;
-    var bell = document.querySelector('.hbell');
-    if (bell){ bell.style.transition='transform .2s'; bell.style.transform='scale(1.15)';
-      setTimeout(function(){ bell.style.transform=''; }, 220); }
+    if (typeof window.openActivityLog === 'function') window.openActivityLog();
   };
 
   /* ---------- 4. Pencarian global di header ---------- */
@@ -4873,6 +6145,915 @@ document.addEventListener('keydown',function(e){
     var p=document.getElementById('loginPass'); if(p&&!p.value){e.preventDefault();p.focus();}
   }
 });
+</script>
+<style>
+/* ==========================================================================
+   MENU PEMBAYARAN — TAMPILAN "ACCURATE ONLINE VERSI SHAD FINANCE"
+   Semua kelas diawali .acc- / .accf- agar tidak mempengaruhi menu lain.
+   ========================================================================== */
+#payments .heading{display:none}
+
+.acc-win{
+  background:#fff;border:1px solid #cfd6e2;border-radius:8px;overflow:visible;
+  box-shadow:0 2px 12px -4px rgba(20,28,45,.16);margin-top:4px
+}
+
+/* --- Tab utama (Dashboard | Pembayaran ✕) --- */
+.acc-topbar{display:flex;align-items:flex-end;gap:5px;padding:7px 10px 0;background:#eef1f6;border-bottom:1px solid #cfd6e2}
+.acc-ttab{
+  display:inline-flex;align-items:center;gap:8px;height:31px;padding:0 14px;
+  border:1px solid #cfd6e2;border-bottom:0;border-radius:5px 5px 0 0;
+  background:#dfe4ec;color:#47526a;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s
+}
+.acc-ttab:hover{background:#e9edf3;color:#1b2230}
+.acc-ttab.active{background:linear-gradient(180deg,var(--red2),var(--red));border-color:var(--red3);color:#fff;box-shadow:0 -2px 8px -3px rgba(185,13,19,.8)}
+.acc-ttab .x{font-size:13px;opacity:.85;line-height:1}
+.acc-ttab.active .x:hover{opacity:1}
+.acc-topbar .acc-tcount{
+  margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;margin-bottom:5px;
+  border:1px solid #cfd6e2;border-radius:4px;background:#fff;color:#5b6679;font-size:11px;font-weight:800
+}
+
+/* --- Sub tab (ikon hijau + "Daftar Pembayaran" + tombol kanan) --- */
+.acc-subbar{display:flex;align-items:center;gap:7px;padding:9px 10px 0;background:#fff;border-bottom:1px solid #e0e5ee}
+.acc-greenico{
+  width:38px;height:31px;border:1px solid #3f9a4d;border-radius:5px 5px 0 0;
+  background:linear-gradient(180deg,#61c06e,#3f9a4d);color:#fff;display:grid;place-items:center;flex:none
+}
+.acc-greenico svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.acc-dtab{
+  display:inline-flex;align-items:center;gap:9px;height:31px;padding:0 13px;
+  border:1px solid #d6dce6;border-bottom:2px solid var(--red2);border-radius:5px 5px 0 0;
+  background:#fff;font-size:12.5px;font-weight:750;color:#1b2230
+}
+.acc-dtab .x{color:#9aa3b2;font-size:13px;line-height:1;cursor:pointer}
+.acc-dtab .x:hover{color:var(--red2)}
+.acc-subbar-right{margin-left:auto;display:flex;gap:6px;margin-bottom:6px}
+.acc-sbtn{width:36px;height:30px;border-radius:5px;border:1px solid transparent;display:grid;place-items:center;transition:.15s;cursor:pointer}
+.acc-sbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.acc-sbtn.navy{background:linear-gradient(180deg,#2a6fbb,#1d5493);color:#fff;border-color:#164277}
+.acc-sbtn.navy:hover{filter:brightness(1.08)}
+.acc-sbtn.amber{background:linear-gradient(180deg,#ffb020,#ee8f00);color:#fff;border-color:#c97a00}
+.acc-sbtn.amber:hover{filter:brightness(1.08)}
+
+/* --- Badan: rail kiri + konten + rail kanan --- */
+.acc-body{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#f3f6fa}
+.acc-rail-l{display:flex;flex-direction:column;gap:7px;flex:none}
+.acc-rail-l button{
+  width:40px;height:40px;border:1px solid #dde3ec;background:#fff;border-radius:7px;color:#6d7789;
+  display:grid;place-items:center;transition:.15s;cursor:pointer
+}
+.acc-rail-l button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.acc-rail-l button:hover{border-color:var(--red2);color:var(--red2);background:var(--red-soft)}
+.acc-rail-l button.active{background:var(--red-soft);border-color:var(--red2);color:var(--red2);box-shadow:inset 3px 0 0 var(--red2)}
+.acc-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+
+/* --- Panel filter gaya form Accurate (label di kiri) --- */
+.acc-panel{background:#fff;border:1px solid #dfe5ee;border-radius:7px;box-shadow:0 1px 2px rgba(20,28,45,.04)}
+.acc-filter{padding:14px 16px;display:grid;grid-template-columns:repeat(2,minmax(300px,1fr));gap:11px 30px}
+.acc-frow{display:flex;align-items:center;gap:10px;min-width:0}
+.acc-frow>label{width:112px;flex:none;font-size:12px;font-weight:700;color:#3a4356;letter-spacing:.1px}
+.acc-frow>label .req{color:var(--red2);font-weight:900}
+.acc-ctrl{flex:1;min-width:0;position:relative}
+.acc-ctrl>input,.acc-ctrl>select{
+  width:100%;height:33px;border:1px solid #c7d0de;border-radius:3px;background:#fff;padding:0 30px 0 10px;
+  font-family:var(--ff);font-size:12.5px;color:var(--text);outline:none;transition:.14s
+}
+.acc-ctrl>select{appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236d7789' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 9px center}
+.acc-ctrl>input:hover,.acc-ctrl>select:hover{border-color:#a9b5c8}
+.acc-ctrl>input:focus,.acc-ctrl>select:focus{border-color:var(--red2);box-shadow:0 0 0 3px var(--red-soft)}
+.acc-ctrl .acc-ic{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#8b95a7;fill:none;stroke-width:2;pointer-events:none}
+.acc-ctrl input[type=date]{padding-right:8px}
+.acc-frow.two{gap:8px}
+.acc-frow.two .acc-ctrl{flex:1}
+.acc-frow .acc-sep{font-size:11px;font-weight:800;color:#8b95a7;flex:none}
+.acc-filter-foot{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 16px 14px;
+}
+.acc-filter-foot .acc-hint{font-size:11px;color:#8b95a7;margin-right:auto}
+
+/* --- Kartu grid "Rincian Pembayaran" --- */
+.acc-gridcard{padding:12px 14px 14px}
+.acc-gridhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.acc-gridhead .acc-search{position:relative;width:min(330px,48%)}
+.acc-gridhead .acc-search input{
+  width:100%;height:33px;border:1px solid #c7d0de;border-radius:3px;padding:0 32px 0 11px;font-size:12.5px;
+  font-family:var(--ff);outline:none;background:#fff;transition:.14s}
+.acc-gridhead .acc-search input:focus{border-color:var(--red2);box-shadow:0 0 0 3px var(--red-soft)}
+.acc-gridhead .acc-search svg{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#8b95a7;fill:none;stroke-width:2}
+.acc-gridtitle{margin-left:auto;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#1b2230}
+.acc-gridtitle .req{color:var(--red2)}
+.acc-gridsub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-2px 0 10px}
+
+#payments .table-wrap{border:1px solid #dfe5ee;border-radius:5px}
+#payments .table-wrap table{min-width:1120px}
+#payments .table-wrap thead th{
+  background:linear-gradient(180deg,var(--red2),var(--red))!important;color:#fff!important;
+  border-bottom:1px solid var(--red3)!important;border-right:1px solid rgba(255,255,255,.18);
+  font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;font-weight:800;padding:9px 10px;text-align:center;white-space:nowrap
+}
+#payments .table-wrap thead th:last-child{border-right:0}
+#payments .table-wrap td{border-right:1px solid #eef1f6;font-size:12.5px;padding:8px 10px}
+#payments .table-wrap td:last-child{border-right:0}
+#payments .table-wrap tbody tr:nth-child(even){background:#f8fafd}
+#payments .table-wrap tbody tr:hover{background:var(--red-soft)}
+#payments .acc-handle{width:34px;text-align:center;color:#a8b1c0;font-size:11px;font-weight:800;background:#f4f6fa}
+#payments .table-wrap thead th.acc-handle{background:linear-gradient(180deg,var(--red2),var(--red))!important}
+#payments td.acc-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#1b2230}
+#payments td.acc-c{text-align:center}
+#payments .acc-inv{font-weight:750;color:var(--red-ink)}
+#payments .acc-empty{padding:34px 16px;text-align:center;color:#8b95a7;font-size:12.5px}
+
+/* --- Rail kanan (tombol besar seperti Accurate) --- */
+.acc-rail-r{display:flex;flex-direction:column;gap:9px;flex:none;width:62px}
+.acc-rbtn{
+  width:62px;height:52px;border-radius:9px;border:1px solid #cfd6e2;background:#fff;color:#5b6679;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  font-size:9px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;transition:.15s;
+  box-shadow:0 1px 3px rgba(20,28,45,.08)
+}
+.acc-rbtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.acc-rbtn:hover{border-color:var(--red2);color:var(--red2);background:var(--red-soft);transform:translateY(-1px)}
+.acc-rbtn.red{background:linear-gradient(180deg,var(--red2),var(--red));border-color:var(--red3);color:#fff;box-shadow:0 5px 14px -6px rgba(185,13,19,.9)}
+.acc-rbtn.red:hover{background:linear-gradient(180deg,#e0242b,var(--red3));color:#fff}
+.acc-rbtn.green{background:linear-gradient(180deg,#61c06e,#3f9a4d);border-color:#2f7d3c;color:#fff}
+.acc-rbtn.green:hover{filter:brightness(1.07);color:#fff;background:linear-gradient(180deg,#61c06e,#3f9a4d)}
+
+/* --- Kotak total melayang "Nilai" --- */
+.acc-totalbox{
+  align-self:flex-end;min-width:250px;background:#fff;border:1px solid #cfd6e2;border-radius:8px;
+  padding:12px 18px;box-shadow:0 8px 22px -10px rgba(20,28,45,.35)
+}
+.acc-totalbox .lb{display:block;font-size:13px;font-weight:650;color:#5b6679;margin-bottom:4px}
+.acc-totalbox .vl{display:block;font-size:22px;font-weight:850;letter-spacing:-.02em;color:var(--red-ink);font-variant-numeric:tabular-nums}
+.acc-totalbox .sub{display:block;margin-top:5px;font-size:10.5px;font-weight:700;color:#8b95a7}
+.acc-totalbox.neg .vl{color:var(--red2)}
+
+/* --- Menu "Lainnya" --- */
+.acc-more{position:relative}
+.acc-more-menu{
+  position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:216px;background:#fff;
+  border:1px solid #cfd6e2;border-radius:8px;box-shadow:var(--shadow-3);padding:6px;display:none
+}
+.acc-more.open .acc-more-menu{display:block}
+.acc-more-menu button{
+  width:100%;text-align:left;border:0;background:transparent;padding:9px 11px;border-radius:5px;
+  font-size:12.5px;font-weight:650;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:9px
+}
+.acc-more-menu button:hover{background:var(--red-soft);color:var(--red2)}
+
+/* ==========================================================================
+   FORM "DATA BARU" (modal Catat / Edit Pembayaran)
+   ========================================================================== */
+.accf{margin:-20px;background:#f3f6fa}
+.accf-tabs{display:flex;align-items:flex-end;gap:6px;padding:9px 12px 0;background:#eef1f6;border-bottom:1px solid #cfd6e2}
+.accf-tab{
+  display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 13px;background:#fff;
+  border:1px solid #d6dce6;border-bottom:2px solid var(--red2);border-radius:5px 5px 0 0;
+  font-size:12.5px;font-weight:750;color:#1b2230
+}
+.accf-tab .ast{color:var(--red2);font-weight:900}
+.accf-tab .x{color:#9aa3b2;cursor:pointer;font-size:13px;line-height:1}
+.accf-tab .x:hover{color:var(--red2)}
+.accf-body{display:flex;align-items:flex-start;gap:12px;padding:14px}
+.accf-fields{
+  flex:1;min-width:0;background:#fff;border:1px solid #dfe5ee;border-radius:7px;padding:15px 16px;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 26px
+}
+.accf-fields .acc-frow>label{width:132px}
+.accf-fields .full{grid-column:1/-1}
+.accf-fields .acc-ctrl>input[type=file]{height:auto;padding:6px 9px;font-size:11.5px;background:#f8fafd}
+.accf-fields .acc-ctrl>textarea{width:100%;min-height:62px;border:1px solid #c7d0de;border-radius:3px;padding:8px 10px;font-family:var(--ff);font-size:12.5px;outline:none;resize:vertical}
+.accf-fields .acc-ctrl>textarea:focus{border-color:var(--red2);box-shadow:0 0 0 3px var(--red-soft)}
+.accf-fields .acc-ctrl>input[readonly]{background:#f4f6fa;color:#5b6679;cursor:not-allowed}
+.accf-fields .acc-ctrl small{display:block;margin-top:5px;font-size:10.5px;color:#8b95a7;line-height:1.45}
+.accf-fields .acc-ctrl input.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.accf-rail{display:flex;flex-direction:column;gap:9px;flex:none;width:62px}
+.accf-foot{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;background:#fff;
+  border-top:1px solid #dfe5ee
+}
+.accf-status{font-size:11px;color:#6d7789;flex:1;min-width:180px;line-height:1.45}
+.accf-total{
+  background:#fff;border:1px solid #cfd6e2;border-radius:8px;padding:8px 16px;min-width:190px;
+  box-shadow:0 6px 18px -10px rgba(20,28,45,.35)
+}
+.accf-total .lb{display:block;font-size:11.5px;font-weight:650;color:#5b6679}
+.accf-total .vl{display:block;font-size:19px;font-weight:850;color:var(--red-ink);font-variant-numeric:tabular-nums}
+.accf-total.neg .vl{color:var(--red2)}
+.accf-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Autocomplete (PNR & Customer) di form Accurate */
+.acc-ac-wrap{position:relative}
+.acc-ac-list{
+  position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:9999;background:#fff;
+  border:1px solid #cfd6e2;border-radius:0 0 7px 7px;box-shadow:0 8px 20px -8px rgba(20,28,45,.4);
+  max-height:230px;overflow:auto;display:none
+}
+.acc-ac-item{padding:9px 12px;cursor:pointer;border-bottom:1px solid #eef1f6;font-size:12.5px;line-height:1.35}
+.acc-ac-item:last-child{border-bottom:0}
+.acc-ac-item:hover,.acc-ac-item.active{background:var(--red-soft)}
+.acc-ac-item strong{font-weight:750;color:var(--red-ink)}
+.acc-ac-item small{display:block;color:#7b8598;margin-top:2px;font-size:11px}
+
+/* --- Responsif --- */
+@media(max-width:1100px){
+  .acc-filter{grid-template-columns:1fr}
+  .accf-fields{grid-template-columns:1fr}
+  .accf-fields .full{grid-column:auto}
+}
+@media(max-width:860px){
+  .acc-body,.accf-body{flex-direction:column}
+  .acc-rail-l{flex-direction:row;width:100%;overflow:auto}
+  .acc-rail-r,.accf-rail{flex-direction:row;width:100%;flex-wrap:wrap}
+  .acc-rbtn{flex:1;min-width:76px}
+  .acc-totalbox{align-self:stretch;width:100%}
+  .acc-frow{flex-direction:column;align-items:stretch;gap:5px}
+  .acc-frow>label{width:auto}
+  .acc-gridtitle{margin-left:0;width:100%;font-size:15px}
+  .acc-gridhead .acc-search{width:100%}
+}
+</style>
+<style>
+/* Selaraskan autocomplete PNR lama dengan gaya Accurate pada form Pembayaran */
+.accf .pnr-autocomplete-list{border-color:#cfd6e2;border-radius:0 0 7px 7px;box-shadow:0 8px 20px -8px rgba(20,28,45,.4);margin-top:2px}
+.accf .pnr-autocomplete-item{font-size:12.5px;border-bottom-color:#eef1f6;padding:9px 12px}
+.accf .pnr-autocomplete-item:hover,.accf .pnr-autocomplete-item.active{background:var(--red-soft)}
+.accf .pnr-autocomplete-item strong{color:var(--red-ink)}
+.accf .pnr-autocomplete-item small{font-size:11px;color:#7b8598}
+</style>
+<style>
+/* ==========================================================================
+   PEMBAYARAN v2 — PENYELARASAN VISUAL DENGAN ACCURATE ONLINE
+   Ditulis setelah blok v1 agar menimpa aturan lama. Scope: #payments & .accf
+   ========================================================================== */
+#payments{--acc-line:#d3dae6;--acc-line2:#e8edf4;--acc-head:#f6f8fb}
+#payments .acc-win{border-color:var(--acc-line);border-radius:6px;box-shadow:0 1px 3px rgba(20,28,45,.10),0 8px 24px -18px rgba(20,28,45,.4)}
+
+/* ---------- Header dokumen ---------- */
+.acc-dochead{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px 14px;background:linear-gradient(180deg,#fff,#f7f9fc);border-bottom:1px solid var(--acc-line)
+}
+.acc-doctitle{display:flex;align-items:center;gap:10px;min-width:0}
+.acc-docico{
+  width:34px;height:34px;flex:none;border-radius:6px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(140deg,var(--red2),var(--red3));box-shadow:0 3px 9px -4px rgba(185,13,19,.9)
+}
+.acc-docico svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.acc-doctitle h2{margin:0;font-size:14.5px;font-weight:800;letter-spacing:-.01em;color:#16203a;line-height:1.25}
+.acc-doctitle small{display:block;font-size:10.5px;color:#7b8598;font-weight:600;letter-spacing:.2px}
+.acc-docbtns{margin-left:auto;display:flex;align-items:center;gap:6px}
+
+/* ---------- Tombol standar (compact, ada ikon) ---------- */
+.acc-btn{
+  display:inline-flex;align-items:center;gap:6px;height:29px;padding:0 10px;border-radius:4px;
+  border:1px solid #c7d0de;background:linear-gradient(180deg,#fff,#f4f6fa);color:#39445a;
+  font-family:var(--ff);font-size:11.5px;font-weight:700;letter-spacing:.1px;cursor:pointer;transition:.13s;white-space:nowrap
+}
+.acc-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acc-btn:hover{border-color:var(--red2);color:var(--red2);background:var(--red-soft)}
+.acc-btn:active{transform:translateY(1px)}
+.acc-btn.primary{background:linear-gradient(180deg,var(--red2),var(--red));border-color:var(--red3);color:#fff;box-shadow:0 3px 9px -4px rgba(185,13,19,.85);height:29px;padding:0 12px;font-size:11.5px}
+.acc-btn.primary:hover{background:linear-gradient(180deg,#e0242b,var(--red3));color:#fff}
+.acc-btn.icon{width:29px;padding:0;justify-content:center}
+
+/* ---------- Toolbar filter compact ---------- */
+.acc-toolbar{
+  display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px;padding:9px 14px 10px;
+  background:var(--acc-head);border-bottom:1px solid var(--acc-line)
+}
+.acc-toolbar.collapsed{display:none}
+.acc-tf{display:flex;flex-direction:column;gap:3px;min-width:0}
+.acc-tf>label{font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#7b8598}
+.acc-tctrl{position:relative;display:block}
+.acc-tctrl>input,.acc-tctrl>select{
+  width:168px;max-width:100%;height:28px;border:1px solid #c7d0de;border-radius:3px;background:#fff;
+  padding:0 24px 0 8px;font-family:var(--ff);font-size:12px;color:var(--text);outline:none;transition:.13s
+}
+.acc-tf.wide .acc-tctrl>input{width:250px}
+.acc-tctrl>select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:22px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b8598' stroke-width='2.6' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 7px center}
+.acc-tctrl>input[type=date]{width:134px;padding-right:6px}
+.acc-tctrl>input:hover,.acc-tctrl>select:hover{border-color:#a9b5c8}
+.acc-tctrl>input:focus,.acc-tctrl>select:focus{border-color:var(--red2);box-shadow:0 0 0 2px var(--red-soft)}
+.acc-tctrl .acc-ic{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:#9aa4b5;fill:none;stroke-width:2.2;pointer-events:none}
+.acc-tf.range{flex-direction:row;align-items:center;gap:6px;flex-wrap:wrap}
+.acc-tf.range>label{align-self:center;margin-bottom:0}
+.acc-tf.range .acc-sep{font-size:10px;font-weight:800;color:#9aa4b5}
+.acc-tf.btns{flex-direction:row;align-items:center;gap:6px}
+.acc-sortbox{display:flex;gap:5px;align-items:center}
+.acc-sortbox button,.acc-sortbox select{height:28px!important;font-size:11.5px!important;border-radius:3px!important}
+.acc-quickchips{display:flex;flex-wrap:wrap;align-items:center;gap:5px;width:100%;padding-top:2px;border-top:1px dashed #dce3ee;margin-top:2px}
+.acc-quickchips button{
+  height:23px;padding:0 10px;border-radius:12px;border:1px solid #cbd4e2;background:#fff;color:#5b6679;
+  font-family:var(--ff);font-size:10.5px;font-weight:750;letter-spacing:.2px;cursor:pointer;transition:.13s
+}
+.acc-quickchips button:hover{border-color:var(--red2);color:var(--red2)}
+.acc-quickchips button.active{background:linear-gradient(180deg,var(--red2),var(--red));border-color:var(--red3);color:#fff}
+.acc-filterhint{margin-left:auto;font-size:10.5px;font-weight:700;color:#8b95a7}
+
+/* ---------- Area grid ---------- */
+.acc-gridwrap{padding:0;background:#fff}
+.acc-gridbar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 14px;
+  border-bottom:1px solid var(--acc-line2);background:#fff
+}
+.acc-gridlabel{font-size:12px;font-weight:850;letter-spacing:.8px;text-transform:uppercase;color:#16203a}
+.acc-gridlabel .req{color:var(--red2)}
+.acc-gridtools{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acc-gridsum{display:flex;gap:7px;flex-wrap:wrap}
+.acc-gridsum .sum{
+  display:flex;flex-direction:column;gap:1px;padding:4px 11px;border:1px solid var(--acc-line);border-radius:4px;
+  background:#f8fafd;min-width:118px
+}
+.acc-gridsum .sum i{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8b95a7}
+.acc-gridsum .sum b{font-size:12.5px;font-weight:800;color:#16203a;font-variant-numeric:tabular-nums}
+.acc-gridsum .sum.neg b{color:var(--red2)}
+.acc-gridsum .sum.net{background:var(--red-soft);border-color:#f3c9cb}
+.acc-gridsum .sum.net b{color:var(--red-ink)}
+
+/* ---------- Tabel transaksi ---------- */
+#payments .table-wrap{border:0;border-radius:0;max-height:min(60vh,560px)}
+#payments .table-wrap table{min-width:1180px;border-collapse:separate;border-spacing:0}
+#payments .table-wrap thead th{
+  position:sticky;top:0;z-index:3;
+  background:linear-gradient(180deg,var(--red2),var(--red))!important;color:#fff!important;
+  font-size:9.5px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;
+  padding:7px 9px!important;text-align:left;white-space:nowrap;
+  border-bottom:1px solid var(--red3)!important;border-right:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.12)
+}
+#payments .table-wrap thead th.num{text-align:right}
+#payments .table-wrap thead th:last-child{border-right:0;text-align:center}
+#payments .table-wrap thead th.acc-handle{text-align:center;width:36px}
+#payments .table-wrap td{
+  padding:4px 9px!important;border-bottom:1px solid var(--acc-line2);border-right:1px solid #f1f4f9;
+  font-size:12px;line-height:1.45;color:#39445a;height:28px;vertical-align:middle
+}
+#payments .table-wrap td:last-child{border-right:0}
+#payments .table-wrap tbody tr{background:#fff}
+#payments .table-wrap tbody tr:nth-child(even){background:#fcfdff}
+#payments .table-wrap tbody tr:hover{background:var(--red-soft)}
+#payments .table-wrap tbody tr:hover td{color:#16203a}
+#payments .table-wrap tbody tr.payment-refund-row{background:#fff7f7}
+#payments td.nowrap{white-space:nowrap}
+#payments td.acc-c{text-align:center}
+#payments td.acc-num,#payments th.acc-num{text-align:right;font-variant-numeric:tabular-nums;font-weight:750;color:#16203a;white-space:nowrap}
+#payments td.acc-inv{font-weight:800;color:var(--red-ink);letter-spacing:.1px}
+#payments .acc-pnr{
+  display:inline-block;padding:1px 7px;border-radius:3px;background:#eef2f9;border:1px solid #dde4ef;
+  font-size:11px;font-weight:800;letter-spacing:.6px;color:#41506b
+}
+#payments td.acc-ell{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#payments .acc-dash{color:#b3bbc9;font-style:normal}
+#payments .w-date{width:92px}#payments .w-inv{width:126px}#payments .w-pnr{width:96px}
+#payments .w-dept{width:78px}#payments .w-amt{width:132px}#payments .w-met{width:172px}
+#payments .w-proof{width:126px}#payments .w-act{width:104px}
+#payments .table-wrap td.acc-handle{
+  text-align:center;background:#f5f7fb;color:#98a2b3;font-size:10.5px;font-weight:800;
+  font-variant-numeric:tabular-nums;border-right:1px solid var(--acc-line2)
+}
+#payments .acc-empty{padding:34px 16px!important;text-align:center;color:#8b95a7;height:auto}
+#payments .acc-empty b{display:block;font-size:13px;color:#5b6679;margin-bottom:4px}
+#payments .acc-empty span{font-size:11.5px}
+
+/* Baris total pada tfoot */
+#payments tfoot th{
+  position:sticky;bottom:0;z-index:2;padding:6px 9px;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;
+  background:#f4f6fa;border-top:1px solid var(--acc-line);color:#5b6679;text-align:left;white-space:nowrap
+}
+#payments tfoot tr.acc-foot-all th{background:#fdecec;color:var(--red-ink);border-top:1px solid #f0c7c9;font-size:11px}
+#payments tfoot th.acc-num{text-align:right;font-size:12.5px;font-weight:850;color:#16203a}
+#payments tfoot tr.acc-foot-all th.acc-num{color:var(--red-ink)}
+#payments tfoot th.acc-num.refund-amount{color:var(--red2)!important}
+
+/* ---------- Tombol ikon di baris ---------- */
+.acc-iconbtn{
+  width:24px;height:24px;flex:none;display:inline-grid;place-items:center;border-radius:3px;
+  border:1px solid #d3dae6;background:#fff;color:#6d7789;cursor:pointer;transition:.12s;padding:0
+}
+.acc-iconbtn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acc-iconbtn:hover{border-color:var(--red2);color:var(--red2);background:var(--red-soft)}
+.acc-iconbtn.danger:hover{border-color:var(--red2);color:#fff;background:var(--red2)}
+.acc-iconbtn.kebab{border-color:transparent;background:transparent}
+.acc-iconbtn.kebab:hover{border-color:#d3dae6;background:#fff;color:var(--red2)}
+.acc-iconbtn.xs{width:21px;height:21px}
+.acc-iconbtn.xs svg{width:11px;height:11px}
+#payments td.acc-actcell{white-space:nowrap;text-align:center}
+#payments td.acc-actcell .acc-iconbtn{margin:0 1px;vertical-align:middle}
+.acc-proof{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.acc-proof a{
+  display:inline-flex;align-items:center;gap:4px;height:21px;padding:0 7px;border-radius:3px;text-decoration:none;
+  border:1px solid #bfe0c9;background:#eef8f1;color:#1e8e4a;font-size:10.5px;font-weight:800
+}
+.acc-proof a svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+.acc-proof a:hover{background:#dff0e6}
+.acc-proof i{font-style:normal;font-size:10.5px;color:#a8b1c0;font-weight:700}
+
+/* ---------- Menu aksi baris (⋮) ---------- */
+.acc-rowmenu{
+  position:fixed;z-index:120;min-width:238px;background:#fff;border:1px solid var(--acc-line);border-radius:7px;
+  box-shadow:0 14px 34px -12px rgba(20,28,45,.45);padding:5px;font-family:var(--ff)
+}
+.acc-rowmenu .hd{
+  padding:6px 9px 7px;margin:-1px 0 4px;border-bottom:1px solid var(--acc-line2);
+  font-size:10.5px;font-weight:850;letter-spacing:.4px;color:var(--red-ink);text-transform:uppercase
+}
+.acc-rowmenu button{
+  width:100%;text-align:left;border:0;background:transparent;padding:7px 9px;border-radius:4px;
+  font-family:var(--ff);font-size:12px;font-weight:650;color:#39445a;cursor:pointer;display:block
+}
+.acc-rowmenu button:hover{background:var(--red-soft);color:var(--red2)}
+.acc-rowmenu button.danger{color:var(--red2)}
+.acc-rowmenu button.danger:hover{background:var(--red2);color:#fff}
+.acc-rowmenu .sep{height:1px;background:var(--acc-line2);margin:4px 0}
+
+/* ---------- Footer / pagination ---------- */
+.acc-pager{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 14px;
+  background:var(--acc-head);border-top:1px solid var(--acc-line);border-radius:0 0 6px 6px
+}
+.acc-pginfo{font-size:11.5px;color:#5b6679;font-weight:650}
+.acc-pginfo b{color:#16203a;font-weight:850}
+.acc-pgsize{display:flex;align-items:center;gap:6px;font-size:11px;color:#7b8598;font-weight:700}
+.acc-pgsize label{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8b95a7}
+.acc-pgsize select{
+  height:26px;border:1px solid #c7d0de;border-radius:3px;background:#fff;padding:0 6px;
+  font-family:var(--ff);font-size:11.5px;color:var(--text);cursor:pointer;outline:none
+}
+.acc-pgsize select:focus{border-color:var(--red2);box-shadow:0 0 0 2px var(--red-soft)}
+.acc-pgnav{margin-left:auto;display:flex;align-items:center;gap:3px}
+.acc-pgbtn{
+  min-width:26px;height:26px;padding:0 6px;border-radius:3px;border:1px solid #c7d0de;background:#fff;
+  color:#5b6679;font-family:var(--ff);font-size:11.5px;font-weight:750;cursor:pointer;transition:.12s
+}
+.acc-pgbtn:hover:not(:disabled){border-color:var(--red2);color:var(--red2);background:var(--red-soft)}
+.acc-pgbtn:disabled{opacity:.4;cursor:not-allowed}
+.acc-pgbtn.active{background:linear-gradient(180deg,var(--red2),var(--red));border-color:var(--red3);color:#fff}
+.acc-pgdots{color:#a8b1c0;padding:0 2px;font-size:11px}
+.acc-pgstatic{font-size:11px;color:#8b95a7;font-weight:700}
+
+/* ==========================================================================
+   FORM TRANSAKSI (modal Catat / Edit Pembayaran)
+   ========================================================================== */
+.accf{margin:-20px;background:#f2f5f9}
+.accf-tabs{align-items:center;padding:8px 12px 0;gap:8px}
+.accf-docno{margin-left:auto;margin-bottom:6px;font-size:10.5px;font-weight:700;color:#7b8598;letter-spacing:.3px}
+.accf-docno b{color:var(--red-ink);font-weight:850;margin-left:4px}
+.accf-body{display:flex;align-items:flex-start;gap:12px;padding:12px}
+.accf-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.accf-block{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.accf-blockhd{
+  display:flex;align-items:center;gap:8px;padding:7px 12px;background:linear-gradient(180deg,#fff,#f5f8fc);
+  border-bottom:1px solid #e8edf4;font-size:10.5px;font-weight:850;letter-spacing:.8px;text-transform:uppercase;color:#41506b
+}
+.accf-blockhd .n{
+  width:17px;height:17px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:linear-gradient(140deg,var(--red2),var(--red3));color:#fff;font-size:9.5px;font-weight:900
+}
+.accf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px;padding:12px 14px 14px}
+.accf-grid .acc-frow{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.accf-grid .acc-frow>label{
+  width:124px;flex:none;padding-top:7px;font-size:11.5px;font-weight:700;color:#4a5570;letter-spacing:.1px
+}
+.accf-grid .acc-frow>label .req{color:var(--red2);font-weight:900}
+.accf-grid .full{grid-column:1/-1}
+.accf-grid .acc-ctrl{flex:1;min-width:0;position:relative}
+.accf-grid .acc-ctrl>input,.accf-grid .acc-ctrl>select{
+  width:100%;height:30px;border:1px solid #c7d0de;border-radius:3px;background:#fff;padding:0 26px 0 9px;
+  font-family:var(--ff);font-size:12.5px;color:var(--text);outline:none;transition:.13s
+}
+.accf-grid .acc-ctrl>select{appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b8598' stroke-width='2.6' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 8px center}
+.accf-grid .acc-ctrl>input:hover,.accf-grid .acc-ctrl>select:hover{border-color:#a9b5c8}
+.accf-grid .acc-ctrl>input:focus,.accf-grid .acc-ctrl>select:focus{border-color:var(--red2);box-shadow:0 0 0 2px var(--red-soft)}
+.accf-grid .acc-ctrl>input[readonly]{background:#f4f6fa;color:#5b6679;font-weight:700;cursor:not-allowed}
+.accf-grid .acc-ctrl>input[type=date]{padding-right:8px}
+.accf-grid .acc-ctrl>input[type=file]{height:auto;padding:5px 8px;font-size:11px;background:#f8fafd}
+.accf-grid .acc-ctrl small{display:block;margin-top:4px;font-size:10.5px;color:#8b95a7;line-height:1.45}
+.accf-grid .acc-ic{position:absolute;right:8px;top:9px;width:13px;height:13px;stroke:#9aa4b5;fill:none;stroke-width:2.2;pointer-events:none}
+.acc-money{display:flex;align-items:stretch}
+.acc-money i{
+  display:flex;align-items:center;padding:0 9px;border:1px solid #c7d0de;border-right:0;border-radius:3px 0 0 3px;
+  background:#eef2f9;color:#5b6679;font-style:normal;font-size:11.5px;font-weight:850
+}
+.acc-money input{border-radius:0 3px 3px 0!important;text-align:right;font-variant-numeric:tabular-nums;font-weight:800!important;font-size:13.5px!important;padding-right:10px!important}
+
+/* Ringkasan invoice di dalam form */
+.accf-invbox{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 13px}
+.accf-invbox.empty{padding:0 14px 13px}
+.accf-invbox.empty span{
+  flex:1;padding:8px 11px;border:1px dashed #d3dae6;border-radius:5px;background:#fafbfe;
+  font-size:11px;color:#8b95a7;font-weight:650
+}
+.accf-invbox .iv{
+  display:flex;flex-direction:column;gap:2px;padding:6px 12px;border:1px solid #e3e9f2;border-radius:5px;
+  background:#f8fafd;min-width:128px
+}
+.accf-invbox .iv i{font-style:normal;font-size:9px;font-weight:850;letter-spacing:.6px;text-transform:uppercase;color:#8b95a7}
+.accf-invbox .iv b{font-size:12.5px;font-weight:800;color:#16203a;font-variant-numeric:tabular-nums}
+.accf-invbox .iv.sisa{background:var(--red-soft);border-color:#f3c9cb}
+.accf-invbox .iv.sisa b{color:var(--red-ink)}
+
+/* Sisi kanan form */
+.accf-side{width:190px;flex:none;display:flex;flex-direction:column;gap:10px}
+.accf-total{
+  width:100%;background:#fff;border:1px solid var(--acc-line,#d3dae6);border-radius:6px;padding:11px 13px;
+  box-shadow:0 6px 18px -12px rgba(20,28,45,.4)
+}
+.accf-total .lb{display:block;font-size:9.5px;font-weight:850;letter-spacing:.6px;text-transform:uppercase;color:#8b95a7}
+.accf-total .vl{display:block;margin-top:3px;font-size:20px;font-weight:850;letter-spacing:-.02em;color:var(--red-ink);font-variant-numeric:tabular-nums;line-height:1.15}
+.accf-total .sub{display:block;margin-top:5px;font-size:10px;font-weight:650;color:#8b95a7;line-height:1.4}
+.accf-total.neg .vl{color:var(--red2)}
+.accf-rail{display:flex;flex-direction:column;gap:7px;width:100%}
+.accf-rail .acc-rbtn{
+  width:100%;height:42px;flex-direction:row;gap:8px;justify-content:flex-start;padding:0 13px;border-radius:6px;
+  font-size:11px;letter-spacing:.4px
+}
+.accf-foot{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 13px;background:#fff;
+  border-top:1px solid var(--line)
+}
+.accf-status{font-size:11px;color:#6d7789;flex:1;min-width:170px;line-height:1.45}
+.accf-btns{display:flex;gap:7px;flex-wrap:wrap}
+.accf-btns .primary,.accf-btns .secondary{height:31px;font-size:12px;padding:0 14px}
+
+/* ---------- Responsif ---------- */
+@media(max-width:1180px){
+  .acc-tf.wide .acc-tctrl>input{width:200px}
+}
+@media(max-width:980px){
+  .accf-body{flex-direction:column}
+  .accf-side{width:100%;flex-direction:row;flex-wrap:wrap;align-items:stretch}
+  .accf-total{flex:1;min-width:190px}
+  .accf-rail{flex-direction:row;width:auto;flex:1}
+  .accf-rail .acc-rbtn{flex:1;justify-content:center;padding:0 10px}
+  .accf-grid{grid-template-columns:1fr}
+  .accf-grid .full{grid-column:auto}
+}
+@media(max-width:760px){
+  .acc-dochead{padding:9px 11px}
+  .acc-docbtns{margin-left:0;width:100%}
+  .acc-toolbar{padding:9px 11px}
+  .acc-tf{flex:1;min-width:150px}
+  .acc-tctrl>input,.acc-tctrl>select,.acc-tf.wide .acc-tctrl>input{width:100%}
+  .acc-gridsum{width:100%}
+  .acc-gridsum .sum{flex:1}
+  .acc-pgnav{margin-left:0;width:100%;justify-content:center;flex-wrap:wrap}
+  .accf-grid .acc-frow{flex-direction:column;gap:4px}
+  .accf-grid .acc-frow>label{width:auto;padding-top:0}
+  .accf-grid .acc-ic{top:auto;bottom:10px}
+}
+</style>
+<style>
+/* ==========================================================================
+   SHAD FINANCE — SKIN GLOBAL "ACCURATE ONLINE"
+   Ditulis paling akhir agar menimpa gaya lama. Hanya presentasi.
+   ========================================================================== */
+body.acc-skin{--acc-line:#d3dae6;--acc-line2:#e8edf4;--acc-head:#f6f8fb;font-size:12.5px;background:#eaeef4}
+
+/* ---------------- SIDEBAR ---------------- */
+.acc-skin .sidebar{width:var(--sbw);background:linear-gradient(180deg,#3d0407,#1f0103);border-right:1px solid #2a0205}
+.acc-skin .sb-brand{height:48px;padding:0 12px;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.08)}
+.acc-skin .sb-mark{width:30px;height:30px;border-radius:6px;font-size:13px}
+.acc-skin .sb-name b{font-size:11.5px;letter-spacing:.6px}
+.acc-skin .sb-name span{font-size:8.5px;letter-spacing:1.2px}
+.acc-skin .sb-book{margin:9px 9px 4px;padding:7px 9px;border-radius:5px;background:rgba(255,255,255,.055)}
+.acc-skin .sb-book b{font-size:10.5px}
+.acc-skin .sb-book small{font-size:8.5px}
+.acc-skin nav{padding:4px 8px 12px}
+.acc-skin .nav-ghead{padding:10px 8px 5px;font-size:8.5px;letter-spacing:1.3px;border-top:1px solid rgba(255,255,255,.07);margin-top:4px;border-radius:0}
+.acc-skin .nav-group:first-child .nav-ghead{border-top:0;margin-top:0}
+.acc-skin nav button{padding:7px 9px;border-radius:4px;font-size:12px;gap:9px;font-weight:650}
+.acc-skin nav button .ico svg{width:15px;height:15px;stroke-width:1.75}
+.acc-skin nav button:hover{background:rgba(255,255,255,.08)}
+.acc-skin nav button.active{
+  background:linear-gradient(90deg,rgba(215,25,32,.95),rgba(141,6,11,.92));box-shadow:none;font-weight:750;
+  position:relative
+}
+.acc-skin nav button.active:before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:0 3px 3px 0;background:#ffd018}
+.acc-skin .sb-foot{padding:7px 10px;background:rgba(0,0,0,.28)}
+.acc-skin .sb-foot small{font-size:8.5px}
+
+/* ---------------- HEADER / TOP BAR ---------------- */
+.acc-skin header{
+  height:48px;padding:0 12px;gap:10px;background:#fff;border-bottom:1px solid var(--acc-line);
+  box-shadow:0 1px 2px rgba(20,28,45,.05)
+}
+.acc-skin .hamb,.acc-skin .hbell{width:29px;height:29px;border-radius:4px;border-color:#c7d0de}
+.acc-skin .hamb svg,.acc-skin .hbell svg{width:15px;height:15px}
+.acc-skin .crumb .ch{font-size:11px;font-weight:700;color:#8b95a7}
+.acc-skin .crumb b{font-size:12.5px;font-weight:800;color:#16203a}
+.acc-skin .title{font-size:9.5px;letter-spacing:1px;font-weight:800;color:#8b95a7;padding-left:10px}
+.acc-skin .hsearch input{height:29px;border-radius:4px;font-size:12px;background:#f6f8fb;border-color:#c7d0de}
+.acc-skin .hsearch input:focus{box-shadow:0 0 0 2px var(--red-soft)}
+.acc-skin .history-btn{height:29px;border-radius:4px;font-size:11px;border-color:#c7d0de}
+.acc-skin .hdiv{height:22px;background:var(--acc-line)}
+.acc-skin .avatar{width:29px;height:29px;font-size:11px}
+.acc-skin .userbtn{gap:8px}
+.acc-skin .user strong{font-size:11.5px;font-weight:800}
+.acc-skin .user small{font-size:9.5px}
+.acc-skin .viewer-banner{font-size:10.5px;padding:5px 12px}
+
+/* ---------------- KERANGKA HALAMAN ---------------- */
+.acc-skin .wrap{padding:12px 14px 34px;max-width:1860px}
+.acc-skin .accskin-view>.heading{display:none}
+.accskin-chrome{
+  background:#fff;border:1px solid var(--acc-line);border-radius:6px;overflow:hidden;margin-bottom:10px;
+  box-shadow:0 1px 3px rgba(20,28,45,.09)
+}
+.accskin-chrome .acc-topbar{padding:6px 10px 0}
+.accskin-chrome .acc-dochead{border-bottom:0}
+.acc-skin .acc-docbtns.empty{display:none}
+
+/* Toolbar / filter bar seragam */
+.acc-skin .wrap .toolbar{
+  background:var(--acc-head);border:1px solid var(--acc-line);border-radius:6px;box-shadow:none;
+  padding:8px 11px;gap:7px;margin:0 0 10px;align-items:center
+}
+.acc-skin .panel>.toolbar{border-radius:0;border-width:0 0 1px;margin:0}
+.acc-skin .wrap .input{height:28px;border-radius:3px;font-size:12px;border-color:#c7d0de;padding:0 9px}
+.acc-skin .wrap .input:focus{box-shadow:0 0 0 2px var(--red-soft)}
+.acc-skin .toolbar .input{min-width:158px}
+.acc-skin .date-filter{height:28px;border-radius:3px;border-color:#c7d0de;background:#fff}
+.acc-skin .date-filter span{font-size:9px;letter-spacing:.7px}
+.acc-skin .date-filter .input{height:24px}
+
+/* Tombol umum */
+.acc-skin .wrap .primary,.acc-skin .wrap .secondary,.acc-skin .wrap .btn-green{
+  height:29px;border-radius:4px;font-size:11.5px;font-weight:750;padding:0 12px;letter-spacing:.1px
+}
+.acc-skin .wrap .secondary{border-color:#c7d0de;background:linear-gradient(180deg,#fff,#f5f7fb);color:#39445a}
+.acc-skin .wrap .secondary:hover{border-color:var(--red2);color:var(--red2);background:var(--red-soft)}
+.acc-skin .linkbtn{font-size:11px}
+
+/* Kartu statistik */
+.acc-skin .cards{gap:9px}
+.acc-skin .card{border-radius:6px;border-color:var(--acc-line);box-shadow:0 1px 2px rgba(20,28,45,.05)}
+.acc-skin .card h4,.acc-skin .card h3{font-size:9.5px;letter-spacing:.8px;text-transform:uppercase;color:#8b95a7;font-weight:850}
+.acc-skin .card strong{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.acc-skin .card.mini{position:relative;padding-left:14px}
+.acc-skin .card.mini:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--red2)}
+.acc-skin .panel{border-radius:6px;border-color:var(--acc-line);box-shadow:0 1px 3px rgba(20,28,45,.08);margin-bottom:10px}
+.acc-skin .panel-head{padding:9px 12px;border-bottom:1px solid var(--acc-line2);background:linear-gradient(180deg,#fff,#f8fafd)}
+.acc-skin .panel-head h3{font-size:11.5px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;color:#16203a}
+
+/* ---------------- TABEL (semua halaman) ---------------- */
+.acc-skin .wrap .table-wrap{border-radius:0}
+.acc-skin .wrap .table-wrap thead th{
+  position:sticky;top:0;z-index:3;
+  background:linear-gradient(180deg,var(--red2),var(--red));color:#fff;
+  font-size:9.5px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;
+  padding:7px 9px;white-space:nowrap;text-align:left;
+  border-bottom:1px solid var(--red3);border-right:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.12)
+}
+.acc-skin .wrap .table-wrap thead th:last-child{border-right:0}
+.acc-skin .wrap .table-wrap td{
+  padding:5px 9px;font-size:12px;line-height:1.45;height:28px;color:#39445a;
+  border-bottom:1px solid var(--acc-line2);border-right:1px solid #f1f4f9
+}
+.acc-skin .wrap .table-wrap td:last-child{border-right:0}
+.acc-skin .wrap .table-wrap tbody tr{background:#fff}
+.acc-skin .wrap .table-wrap tbody tr:nth-child(even){background:#fcfdff}
+.acc-skin .wrap .table-wrap tbody tr:hover{background:var(--red-soft)}
+.acc-skin .wrap .table-wrap tbody tr.acc-row-selected{background:#fde7e8;box-shadow:inset 3px 0 0 var(--red2)}
+.acc-skin .wrap .table-wrap tbody tr.acc-row-selected td{color:#16203a;font-weight:650}
+.acc-skin .wrap .table-wrap td.inv,.acc-skin .wrap .table-wrap td .inv{font-weight:800;color:var(--red-ink)}
+.acc-skin td.acc-cell-money{text-align:right;font-variant-numeric:tabular-nums;font-weight:750;color:#16203a;white-space:nowrap}
+.acc-skin tbody tr:hover td.acc-cell-money{color:#16203a}
+.acc-skin td.acc-cell-c{text-align:center;white-space:nowrap}
+.acc-skin .wrap .table-wrap tfoot td,.acc-skin .wrap .table-wrap tfoot th{
+  background:#f4f6fa;border-top:1px solid var(--acc-line);padding:6px 9px;font-size:11.5px
+}
+/* Tombol aksi di dalam tabel dibuat compact */
+.acc-skin .wrap .table-wrap td .secondary,.acc-skin .wrap .table-wrap td .primary{
+  height:23px;padding:0 8px;font-size:10.5px;border-radius:3px
+}
+.acc-skin .wrap .table-wrap td .rowact{gap:4px}
+
+/* Badge status ala accounting */
+.acc-skin .badge{
+  border-radius:3px;padding:2px 7px;font-size:9.5px;font-weight:850;letter-spacing:.5px;text-transform:uppercase;
+  border-width:1px
+}
+.acc-skin .badge:before{width:4px;height:4px}
+
+/* ---------------- DASHBOARD ---------------- */
+/* Header/hero Dashboard sengaja TIDAK memakai skin Accurate (acc-skin):
+   dikembalikan ke banner merah asli (lihat blok "9. DASHBOARD" di atas)
+   sesuai referensi tampilan, tanpa memengaruhi tabel/KPI/chart lain
+   di halaman ini yang tetap memakai gaya Accurate. */
+.acc-skin .dwp{border-radius:6px;border-color:var(--acc-line)}
+.acc-skin .dwp-h{padding:8px 12px;border-bottom:1px solid var(--acc-line2);background:linear-gradient(180deg,#fff,#f8fafd)}
+.acc-skin .dwp-h h3{font-size:10.5px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;color:#41506b}
+.acc-skin .stats .card strong,.acc-skin .cards .card strong{font-size:17px}
+.acc-skin .quickgrid button{border-radius:6px;border-color:var(--acc-line)}
+.acc-skin .quickgrid button b{font-size:12px}
+.acc-skin .quickgrid button small{font-size:10px}
+
+/* ---------------- MODAL / FORM ---------------- */
+.acc-skin .modalbox{border-radius:6px;box-shadow:0 24px 60px -20px rgba(15,22,36,.55)}
+.acc-skin .modalhead{
+  padding:11px 16px;background:linear-gradient(180deg,#fff,#f5f8fc);border-bottom:1px solid var(--acc-line);
+  border-radius:6px 6px 0 0
+}
+.acc-skin .modalhead h2{font-size:13px;font-weight:850;letter-spacing:.2px}
+.acc-skin .modalhead h2:before{width:3px;height:15px;background:var(--red2)}
+.acc-skin .close{width:27px;height:27px;border-radius:4px;border-color:#c7d0de}
+.acc-skin #modalBody{padding:16px}
+.acc-skin #modalBody .formgrid{gap:11px 18px}
+.acc-skin .field label{font-size:10px;letter-spacing:.5px;font-weight:800;color:#6d7789;margin-bottom:4px}
+.acc-skin .field input,.acc-skin .field select,.acc-skin .field textarea{
+  height:30px;border-radius:3px;border-color:#c7d0de;font-size:12.5px;padding:0 9px
+}
+.acc-skin .field textarea{height:auto;padding:8px 9px}
+.acc-skin .field input:focus,.acc-skin .field select:focus,.acc-skin .field textarea:focus{box-shadow:0 0 0 2px var(--red-soft)}
+.acc-skin #modalBody h3,.acc-skin #modalBody h4{font-size:10.5px;letter-spacing:.8px;margin:16px 0 9px;padding-bottom:6px}
+.acc-skin .modalfoot{padding:11px 16px;margin:16px -16px -16px;background:#f7f9fc;border-top:1px solid var(--acc-line)}
+.acc-skin .modalfoot .primary,.acc-skin .modalfoot .secondary{height:31px;font-size:12px;border-radius:4px}
+
+/* ---------------- PENGATURAN ---------------- */
+.acc-skin .set-menu{border-radius:6px;border-color:var(--acc-line)}
+.acc-skin .set-mitem{padding:8px 11px;border-radius:4px;font-size:12px;font-weight:700}
+.acc-skin .set-mitem.active{background:var(--red-soft);color:var(--red2)}
+.acc-skin .set-tab{height:30px;font-size:11.5px;border-radius:4px 4px 0 0}
+.acc-skin .set-pane,.acc-skin .set-card{border-radius:6px;border-color:var(--acc-line)}
+
+/* ---------------- LOGIN ---------------- */
+/* Halaman login sengaja TIDAK memakai skin Accurate (acc-skin):
+   tampilannya dikembalikan ke desain bersih/modern sesuai referensi
+   (logo bulat merah + judul besar + form lega), lihat blok
+   "11. LOGIN" di atas. Ini tidak memengaruhi tampilan acc-skin
+   di halaman lain setelah login. */
+
+/* ---------------- RESPONSIF ---------------- */
+@media(max-width:1280px){
+  .acc-skin .wrap{padding:10px 11px 30px}
+  .acc-skin .title{display:none}
+}
+@media(max-width:1024px){
+  .acc-skin .hsearch{width:min(220px,26vw)}
+  .acc-skin .history-btn span{display:none}
+  .acc-skin .history-btn{padding:0 8px}
+  .accskin-chrome .acc-docbtns{margin-left:auto}
+}
+@media(max-width:860px){
+  .acc-skin .crumb .ch,.acc-skin .crumb .sep{display:none}
+  .acc-skin .accskin-chrome .acc-docbtns{width:100%;margin-left:0}
+  .acc-skin .wrap .toolbar{padding:8px}
+  .acc-skin .wrap .toolbar .input{min-width:0;flex:1}
+}
+</style>
+<script>
+/* ==========================================================================
+   SHAD FINANCE — LAPISAN TAMPILAN "ACCURATE ONLINE" (GLOBAL)
+   Hanya menambah elemen tampilan & kelas CSS. Tidak mengubah data,
+   fungsi bisnis, maupun koneksi Supabase.
+   ========================================================================== */
+(function(){
+  const VIEWS={
+    dashboard :['Dashboard','Ringkasan &rsaquo; Kinerja Keuangan','chart'],
+    customers :['Customer / Agent','Penjualan &rsaquo; Data Customer &amp; Agent','user'],
+    invoices  :['Invoice','Penjualan &rsaquo; Faktur Penjualan','doc'],
+    receivables:['Piutang','Piutang &rsaquo; Saldo Piutang Usaha','money'],
+    aging     :['Aging Piutang','Piutang &rsaquo; Umur Piutang Usaha','clock'],
+    reminders :['Monitoring Piutang','Piutang &rsaquo; Monitoring &amp; Reminder','bell'],
+    invreport :['Laporan','Laporan &rsaquo; Laporan Invoice &amp; Piutang','chart'],
+    import    :['Impor Data','Laporan &amp; Data &rsaquo; Impor Data','down'],
+    settings  :['Pengaturan','Sistem &rsaquo; Preferensi Aplikasi','gear']
+  };
+  const ICONS={
+    chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+    user :'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
+    doc  :'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>',
+    money:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    bell :'<path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+    down :'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/>',
+    gear :'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8 2 2 0 1 1-2.8 2.8 1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5 2 2 0 1 1-4 0 1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3 2 2 0 1 1-2.8-2.8 1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1 2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8 2 2 0 1 1 2.8-2.8 1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5 2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3 2 2 0 1 1 2.8 2.8 1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1 2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/>'
+  };
+  function svg(k){return '<svg viewBox="0 0 24 24">'+(ICONS[k]||ICONS.doc)+'</svg>'}
+
+  /* --- Bangun "window chrome" (tab + header dokumen) untuk tiap halaman --- */
+  function buildChrome(sec){
+    const id=sec.id;
+    if(id==='payments')return;                 // sudah memiliki chrome sendiri
+    if(sec.querySelector(':scope > .accskin-chrome'))return;
+    const meta=VIEWS[id];if(!meta)return;
+    const head=sec.querySelector(':scope > .heading');
+    const title=meta[0], crumb=meta[1];
+    const wrap=document.createElement('div');
+    wrap.className='accskin-chrome';
+    wrap.innerHTML=
+      '<div class="acc-topbar">'
+      +(id==='dashboard'?'':'<button type="button" class="acc-ttab" data-go="dashboard">Dashboard</button>')
+      +'<button type="button" class="acc-ttab active">'+title+(id==='dashboard'?'':' <span class="x" data-close="1">&#10005;</span>')+'</button>'
+      +'<span class="acc-tcount" data-count="'+id+'"></span>'
+      +'</div>'
+      +'<div class="acc-dochead">'
+        +'<div class="acc-doctitle"><span class="acc-docico">'+svg(meta[2])+'</span>'
+        +'<div><h2>'+title+'</h2><small>'+crumb+'</small></div></div>'
+        +'<div class="acc-docbtns" data-slot="btns"></div>'
+      +'</div>';
+    sec.insertBefore(wrap,sec.firstChild);
+    sec.classList.add('accskin-view');
+
+    wrap.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.go)));
+    wrap.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();showView('dashboard')}));
+
+    /* Pindahkan tombol aksi utama dari toolbar ke header dokumen (ala Accurate) */
+    const slot=wrap.querySelector('[data-slot="btns"]');
+    const bar=sec.querySelector(':scope > .toolbar, :scope > .panel > .panel-head .actions');
+    if(bar&&slot){
+      Array.from(bar.querySelectorAll('button.primary, button.btn-green')).forEach(btn=>{
+        btn.classList.remove('primary','btn-green');
+        btn.classList.add('acc-btn','primary');
+        slot.appendChild(btn);
+      });
+    }
+    if(head&&slot&&!slot.children.length)slot.classList.add('empty');
+  }
+
+  /* --- Nominal rata kanan + status badge di seluruh tabel --- */
+  const MONEY=/^-?\s*Rp\s?[\d.,]+$/;
+  const DAYS=/^-?\d+\s*(hari|days?)$/i;
+  function alignNumbers(root){
+    (root||document).querySelectorAll('.wrap table td').forEach(td=>{
+      if(td.dataset.accAligned)return;
+      const t=(td.textContent||'').trim();
+      if(MONEY.test(t)){td.classList.add('acc-cell-money');td.dataset.accAligned='1';}
+      else if(DAYS.test(t)){td.classList.add('acc-cell-c');td.dataset.accAligned='1';}
+    });
+  }
+  let alignTimer=null;
+  function scheduleAlign(){clearTimeout(alignTimer);alignTimer=setTimeout(()=>alignNumbers(),60)}
+
+  /* --- Baris tabel yang dipilih (selected row) --- */
+  function bindRowSelect(){
+    document.addEventListener('click',function(e){
+      const td=(e.target&&e.target.closest)?e.target.closest('.wrap table tbody td'):null;
+      if(!td)return;
+      if(e.target.closest('button,a,input,select,label'))return;
+      const tr=td.parentElement;
+      const tb=tr.parentElement;
+      tb.querySelectorAll('tr.acc-row-selected').forEach(r=>{if(r!==tr)r.classList.remove('acc-row-selected')});
+      tr.classList.toggle('acc-row-selected');
+    });
+  }
+
+  /* --- Jumlah data pada tab tiap halaman --- */
+  const COUNTERS={
+    customers :()=>(data.customers||[]).length,
+    invoices  :()=>(data.invoices||[]).length,
+    receivables:()=>(data.invoices||[]).filter(i=>(i.amount-i.paid)>0).length,
+    aging     :()=>(data.invoices||[]).filter(i=>(i.amount-i.paid)>0).length,
+    reminders :()=>(data.invoices||[]).filter(i=>(i.amount-i.paid)>0).length
+  };
+  function refreshCounts(){
+    document.querySelectorAll('[data-count]').forEach(el=>{
+      const fn=COUNTERS[el.dataset.count];
+      if(!fn){el.style.display='none';return;}
+      let n=0;try{n=fn()||0}catch(err){n=0}
+      const html='<b>'+n+'</b> Data';
+      if(el.innerHTML!==html)el.innerHTML=html;   // cegah loop MutationObserver
+    });
+  }
+
+  function decorate(){
+    document.querySelectorAll('main .view').forEach(buildChrome);
+    alignNumbers();
+    refreshCounts();
+  }
+
+  function start(){
+    document.body.classList.add('acc-skin');
+    decorate();
+    bindRowSelect();
+    const wrap=document.querySelector('.wrap');
+    if(wrap&&window.MutationObserver){
+      let busy=false;
+      const obs=new MutationObserver(()=>{
+        if(busy)return;busy=true;
+        scheduleAlign();
+        setTimeout(()=>{try{refreshCounts()}catch(e){}busy=false},80);
+      });
+      obs.observe(wrap,{childList:true,subtree:true});
+    }
+    /* Ikut menyegarkan saat pindah halaman, tanpa mengubah fungsi showView. */
+    if(typeof window.showView==='function'){
+      const orig=window.showView;
+      window.showView=function(v){const r=orig.apply(this,arguments);try{decorate()}catch(e){}return r};
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
+  else start();
+})();
 </script>
 </body>
 </html>
