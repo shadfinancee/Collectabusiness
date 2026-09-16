@@ -2161,10 +2161,17 @@ function invoicePnrAll(i){
   // Kumpulkan SEMUA kemungkinan sumber PNR (item tiket, field invoice,
   // dan field customer/agent), lalu gabungkan tanpa duplikat. Customer/agent
   // hanya punya satu field PNR yang gampang basi (tertimpa invoice lain untuk
-  // agent yang sama), jadi tidak boleh jadi satu-satunya sumber kebenaran.
+  // agent yang sama), jadi HANYA dipakai sebagai fallback terakhir ketika
+  // invoice ini sendiri sama sekali tidak punya PNR (baik di item tiket
+  // maupun di field invoice). Kalau tidak dibatasi begini, PNR milik agent
+  // yang sama dari invoice lain akan ikut tercampur ke invoice ini, sehingga
+  // filter/pencarian salah satu PNR ikut menampilkan invoice-invoice lain
+  // milik agent yang sama.
   const c=custByInvoice(i.id,i.customer);
   const itemPnrs=(i.items||[]).map(x=>x.pnr).filter(Boolean);
-  return [...new Set([...itemPnrs,i.pnr,c.pnr].filter(Boolean))];
+  const ownPnrs=[...new Set([...itemPnrs,i.pnr].filter(Boolean))];
+  if(ownPnrs.length)return ownPnrs;
+  return c.pnr?[c.pnr]:[];
 }
 function invoicePnr(i){
   // Untuk tampilan kolom: utamakan PNR milik invoice ini sendiri (item tiket),
