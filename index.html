@@ -897,7 +897,7 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
 <select class="input" id="invoiceFilter" onchange="renderInvoices()"><option value="">Semua Status</option><option>Belum Jatuh Tempo</option><option>Jatuh Tempo</option><option>Overdue</option><option>Lunas</option></select>
 <select class="input" id="invoiceMonth" onchange="renderInvoices()"></select>
 <select class="input" id="invoiceYear" onchange="renderInvoices()"></select>
-<span id="invoiceSortBox" style="display:flex;gap:6px"></span><button class="primary" onclick="openInvoice()">＋ Buat Invoice</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>AIRLINES</th><th>PIC</th><th>PNR</th><th>PAX</th><th>DEPT</th><th>PHONE</th><th>SALES</th><th>TANGGAL</th><th>JATUH TEMPO</th><th>TGL CLOSING</th><th>DAYS TO DUE</th><th>NILAI</th><th>TERBAYAR</th><th>SISA</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody id="invoiceRows"></tbody></table></div></div></section>
+<span id="invoiceSortBox" style="display:flex;gap:6px"></span><button class="primary" onclick="openInvoice()">＋ Buat Invoice</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>AIRLINES</th><th>PIC</th><th>PNR</th><th>PAX</th><th>DEPT</th><th>PHONE</th><th>SALES</th><th>TANGGAL</th><th>JATUH TEMPO</th><th>TGL CLOSING</th><th>DAYS TO DUE</th><th>FEE</th><th>NILAI</th><th>TERBAYAR</th><th>SISA</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody id="invoiceRows"></tbody></table></div></div></section>
 
 <section id="receivables" class="view"><div class="heading"><h1>Piutang</h1><p>Monitoring saldo piutang berdasarkan invoice.</p></div><div class="cards" id="receivableCards"></div><div class="toolbar"><input class="input" id="receivableSearch" placeholder="Cari invoice / customer..." oninput="renderReceivables()"><select class="input" id="receivableFilter" onchange="renderReceivables()"><option value="">Semua Status</option><option>Belum Jatuh Tempo</option><option>Jatuh Tempo</option><option>Overdue</option></select><select class="input" id="receivableDueMonth" onchange="renderReceivables()"></select><span id="receivableSortBox" style="display:flex;gap:6px"></span></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>SISA PIUTANG</th><th>JATUH TEMPO</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody id="receivableRows"></tbody></table></div></div></section>
 
@@ -2284,7 +2284,7 @@ function renderInvoices(){
   rows=sortRows(rows,'invoices',invoiceSortVal);
   const hasSpecificFilter=q||f||mf||yf||field!=='all';
   document.getElementById('invoiceRows').innerHTML=rows.map(rowHTML).join('')||
-    `<tr><td colspan="18" class="empty">${hasSpecificFilter?'Tidak ada invoice yang sesuai dengan filter.':'Tidak ada data.'}</td></tr>`;
+    `<tr><td colspan="19" class="empty">${hasSpecificFilter?'Tidak ada invoice yang sesuai dengan filter.':'Tidak ada data.'}</td></tr>`;
 }
 
 /* CUSTOMER / TRAVEL BARU */
@@ -3629,7 +3629,7 @@ function extractPDFInvoice(text, filename){
         qty:Number(m[4])||0,
         rate:noRate?0:pdfMoney(m[5]),
         amount:noRate?0:pdfMoney(m[6]),
-        disc:0
+        fee:0
       });
       return;
     }
@@ -3644,7 +3644,7 @@ function extractPDFInvoice(text, filename){
     }
   });
   if(looseFlights.length){
-    if(!items.length)items.push({desc:'',pnr:'',flights:looseFlights.join('\n'),qty:0,rate:0,amount:0,disc:0});
+    if(!items.length)items.push({desc:'',pnr:'',flights:looseFlights.join('\n'),qty:0,rate:0,amount:0,fee:0});
     else items[0].flights=[items[0].flights,looseFlights.join('\n')].filter(Boolean).join('\n');
   }
   if(!items.length)missing.push('Description / PNR / QTY / Rate');
@@ -3759,8 +3759,8 @@ async function importPDF(){
         continue;
       }
       try{await waSavePdf(inv.id,file)}catch(e){}
-      const items=(inv.items&&inv.items.length)?inv.items.map(x=>({desc:x.desc||'',pnr:x.pnr||'',flights:x.flights||'',qty:num(x.qty),rate:num(x.rate),disc:0}))
-        :[{desc:'',pnr:'',flights:'',qty:0,rate:0,disc:0}];
+      const items=(inv.items&&inv.items.length)?inv.items.map(x=>({desc:x.desc||'',pnr:x.pnr||'',flights:x.flights||'',qty:num(x.qty),rate:num(x.rate),fee:num(x.fee)}))
+        :[{desc:'',pnr:'',flights:'',qty:0,rate:0,fee:0}];
       /* Jika PDF hanya memuat AMOUNT (tanpa RATE per pax), turunkan rate dari amount apa adanya. */
       (inv.items||[]).forEach((src,n)=>{
         if(!items[n])return;
@@ -4109,9 +4109,7 @@ function longDate(s){if(!s)return '-';try{return new Date(s+'T00:00:00').toLocal
 (function migrate(){
   data.invoices.forEach(i=>{
     if(!i.items){
-      i.items=[{desc:'Ticket '+((custByInvoice(i.id,i.customer).airlines)||'Penerbangan'),pnr:custByInvoice(i.id,i.customer).pnr||'',flights:'',qty:custByInvoice(i.id,i.customer).pax||1,rate:(custByInvoice(i.id,i.customer).pax?Math.round(i.amount/custByInvoice(i.id,i.customer).pax):i.amount),disc:0}];
-      let sub=i.items.reduce((a,x)=>a+x.qty*x.rate-x.disc,0);
-      i.items[0].disc=Math.max(0,sub-i.amount);
+      i.items=[{desc:'Ticket '+((custByInvoice(i.id,i.customer).airlines)||'Penerbangan'),pnr:custByInvoice(i.id,i.customer).pnr||'',flights:'',qty:custByInvoice(i.id,i.customer).pax||1,rate:(custByInvoice(i.id,i.customer).pax?Math.round(i.amount/custByInvoice(i.id,i.customer).pax):i.amount),fee:0}];
     }
     if(i.bookingFee==null)i.bookingFee=0;
     if(i.taxPct==null)i.taxPct=0;
@@ -4130,6 +4128,14 @@ function longDate(s){if(!s)return '-';try{return new Date(s+'T00:00:00').toLocal
 function invoiceTypeOf(i){return ['Normal','Permintaan DP','Kekurangan DP'].includes(i?.invoiceType)?i.invoiceType:'Normal'}
 function itemRateDP(x){return num(x.rateDP!=null?x.rateDP:x.rate2)}
 function itemRateDasar(x){return num(x.rate)}
+function itemFee(x){return num(x.fee)}
+/* Jumlah per baris tiket: (Pax x Rate Dasar) + (Pax x Fee).
+   Untuk Permintaan DP, Jumlah tetap memakai Rate DP (di luar Fee). */
+function itemAmount(type,x){
+  const qty=num(x.qty);
+  if(type==='Permintaan DP')return qty*itemRateDP(x);
+  return (qty*itemRateDasar(x))+(qty*itemFee(x));
+}
 function calcNeedDeposit(i){
   if(invoiceTypeOf(i)==='Permintaan DP'){
     return (i.items||[]).reduce((a,x)=>a+(num(x.qty)*itemRateDP(x)),0);
@@ -4138,7 +4144,7 @@ function calcNeedDeposit(i){
 }
 function invCalc(i){
   let items=i.items||[];
-  let normalSubtotal=items.reduce((a,x)=>a+(num(x.qty)*itemRateDasar(x)-num(x.disc)),0);
+  let normalSubtotal=items.reduce((a,x)=>a+itemAmount('Normal',x),0);
   let dpTotal=calcNeedDeposit(i);
   let fee=0, tax=0;
   let subtotal=invoiceTypeOf(i)==='Normal'?normalSubtotal:dpTotal;
@@ -4176,10 +4182,14 @@ function badge(s){
 
 /* ---------- tombol aksi di tabel (override rowHTML) ---------- */
 function closingCell(i){let c=custByInvoice(i.id,i.customer);let cl=i.closing||c.closing;return cl?date(cl):'<span class="muted">-</span>'}
+function invoiceFeeTotal(i){
+  return (i.items||[]).reduce((a,x)=>a+num(x.fee),0);
+}
 function rowHTML(i){
   let c=custByInvoice(i.id,i.customer);
   let sisa=(i.amount||0)-(i.paid||0);
-  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(c.airlines||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(c.dept||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
+  let feeTotal=invoiceFeeTotal(i);
+  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(c.airlines||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(c.dept||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
   <td class="rowact">
   <button class="secondary" onclick="previewInvoice('${i.id}')" title="Preview / Cetak">👁</button>
   <button class="secondary" onclick="editInvoice('${i.id}')" title="Edit invoice">✎</button>
@@ -4241,9 +4251,9 @@ function openInvoice(id,copyOf){
   }else if(src){
     ivDraft=JSON.parse(JSON.stringify(src));ivDraft._editing=src.id;
   }else{
-    ivDraft={id:nextInvoiceNo(),customer:(data.customers[0]?.agentName)||'',client:'',phone:'',date:todayStr(),due:todayStr(),timeLimit:'16.00 WIB',docStatus:'Draft',items:[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,disc:0}],bookingFee:0,taxPct:0,paid:0,initialPaid:0,initialPaymentDate:todayStr(),additionalPayments:[],amount:0,note:'',_editing:''};
+    ivDraft={id:nextInvoiceNo(),customer:(data.customers[0]?.agentName)||'',client:'',phone:'',date:todayStr(),due:todayStr(),timeLimit:'16.00 WIB',docStatus:'Draft',items:[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0}],bookingFee:0,taxPct:0,paid:0,initialPaid:0,initialPaymentDate:todayStr(),additionalPayments:[],amount:0,note:'',_editing:''};
   }
-  if(!ivDraft.items||!ivDraft.items.length)ivDraft.items=[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,disc:0}];
+  if(!ivDraft.items||!ivDraft.items.length)ivDraft.items=[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0}];
   ivDraft.invoiceType=invoiceTypeOf(ivDraft);
   ivDraft.needDeposit=num(ivDraft.needDeposit||0);
   ivDraft.items.forEach(x=>{
@@ -4279,7 +4289,7 @@ function renderInvoiceForm(){
     <div class="field" id="ivNeedDepositField"><label id="ivNeedDepositLabel">Need Deposit / Kekurangan DP</label><input id="ivNeedDeposit" type="number" min="0" step="1" value="${num(i.needDeposit)}" placeholder="0" oninput="ivSet('needDeposit',this.value,1);ivTotals()"><small id="ivNeedDepositHelp" style="display:block;margin-top:5px;color:#777"></small></div>
   </div>
   <h3 style="margin:18px 0 8px">Detail Tiket</h3>
-  <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:18%">Deskripsi</th><th style="width:8%">PNR</th><th style="width:25%">Rute / Flight (1 baris 1 segmen)</th><th style="width:7%">Pax</th><th class="iv-ratedp-head" style="width:12%;display:none">Rate DP</th><th class="iv-ratedasar-head" style="width:12%">Rate Dasar</th><th style="width:11%">Diskon</th><th style="width:12%">Jumlah</th><th></th></tr></thead>
+  <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:18%">Deskripsi</th><th style="width:8%">PNR</th><th style="width:25%">Rute / Flight (1 baris 1 segmen)</th><th style="width:7%">Pax</th><th class="iv-ratedp-head" style="width:12%;display:none">Rate DP</th><th class="iv-ratedasar-head" style="width:12%">Rate Dasar</th><th style="width:11%">Fee</th><th style="width:12%">Jumlah</th><th></th></tr></thead>
   <tbody id="ivRows"></tbody></table></div>
   <button type="button" class="secondary" style="margin-top:8px" onclick="ivAddItem()">＋ Tambah Baris Tiket</button>
   <div class="formgrid" style="margin-top:16px">
@@ -4381,7 +4391,7 @@ function ivPickCustomer(name){
   if(cl)cl.value=ivDraft.client||'';if(ph)ph.value=ivDraft.phone||'';
   ivRenderItems();
 }
-function ivAddItem(){ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,disc:0});ivRenderItems()}
+function ivAddItem(){ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0});ivRenderItems()}
 function ivDelItem(n){if(ivDraft.items.length<=1){alert('Minimal satu baris tiket.');return}ivDraft.items.splice(n,1);ivRenderItems()}
 function ivItem(n,k,v,isNum){
   if(!ivDraft.items[n])return;
@@ -4397,11 +4407,7 @@ function ivItem(n,k,v,isNum){
 
   const type=invoiceTypeOf(ivDraft);
   const item=ivDraft.items[n];
-  const amount=type==='Normal'
-    ? num(item.qty)*num(item.rate)-num(item.disc)
-    : (type==='Permintaan DP'
-        ? num(item.qty)*num(item.rateDP)
-        : num(item.qty)*num(item.rate)-num(item.disc));
+  const amount=itemAmount(type,item);
 
   /* Update hanya angka Jumlah pada baris yang sedang diedit. */
   const amountEl=document.getElementById('ivAmt'+n);
@@ -4428,9 +4434,7 @@ function ivRenderItems(){
   box.innerHTML=ivDraft.items.map((x,n)=>{
     const dp=num(x.rateDP!=null?x.rateDP:x.rate2);
     const dasarRate=num(x.rate);
-    const amount=type==='Normal'
-      ? num(x.qty)*dasarRate-num(x.disc)
-      : (type==='Permintaan DP'?num(x.qty)*dp:num(x.qty)*dasarRate-num(x.disc));
+    const amount=itemAmount(type,x);
     return `<tr>
     <td><input value="${esc(x.desc)}" oninput="ivItem(${n},'desc',this.value)" placeholder="Ticket Qatar Airways"></td>
     <td><input value="${esc(x.pnr)}" oninput="ivItem(${n},'pnr',this.value)" placeholder="94ZIGQ"></td>
@@ -4438,7 +4442,7 @@ function ivRenderItems(){
     <td><input type="number" min="0" value="${num(x.qty)}" oninput="ivItem(${n},'qty',this.value,1)"></td>
     <td class="iv-ratedp-cell" style="${showDP?'':'display:none'}"><input type="number" min="0" value="${dp}" oninput="ivItem(${n},'rateDP',this.value,1)" placeholder="Rate DP"></td>
     <td><input type="number" min="0" value="${dasarRate}" oninput="ivItem(${n},'rate',this.value,1)" placeholder="Rate Dasar"></td>
-    <td><input type="number" min="0" value="${num(x.disc)}" oninput="ivItem(${n},'disc',this.value,1)"></td>
+    <td><input type="number" min="0" value="${num(x.fee)}" oninput="ivItem(${n},'fee',this.value,1)" placeholder="Fee per pax"></td>
     <td class="amt" id="ivAmt${n}">${rp(amount)}</td>
     <td><button type="button" class="secondary" style="color:#d71920" onclick="ivDelItem(${n})">🗑</button></td></tr>`;
   }).join('');
@@ -4476,7 +4480,7 @@ function submitInvoice(e){
   if(invalidPayment){alert('Tanggal dan nominal setiap pembayaran wajib diisi.');return}
   i.additionalPayments=(i.additionalPayments||[]).filter(p=>num(p.amount)>0);i.initialPaid=0;i.bookingFee=0;i.taxPct=0;
   i.invoiceType=invoiceTypeOf(i);
-  i.items=(i.items||[]).map(x=>({...x,rateDP:num(x.rateDP!=null?x.rateDP:x.rate2),rate2:num(x.rateDP!=null?x.rateDP:x.rate2),rate:num(x.rate)}));
+  i.items=(i.items||[]).map(x=>({...x,rateDP:num(x.rateDP!=null?x.rateDP:x.rate2),rate2:num(x.rateDP!=null?x.rateDP:x.rate2),rate:num(x.rate),fee:num(x.fee)}));
   if(i.invoiceType==='Permintaan DP'){
     i.needDeposit=calcNeedDeposit(i);
     if(i.needDeposit<=0){alert('Rate DP dan Pax wajib diisi untuk Invoice Permintaan DP.');return}
@@ -4562,7 +4566,7 @@ function invoiceSheetHTML(i){
   const printType=invoiceTypeOf(i);
   let rows=(i.items||[]).map((x,n)=>{
     const dp=num(x.rateDP!=null?x.rateDP:x.rate2), dasar=num(x.rate), qty=num(x.qty);
-    const amount=printType==='Normal'?qty*dasar-num(x.disc):(printType==='Permintaan DP'?qty*dp:qty*dasar-num(x.disc));
+    const amount=itemAmount(printType,x);
     const rateHtml=printType==='Normal'
       ? (dasar?rpSplit(dasar):'-')
       : `<div>${dp?rpSplit(dp):'-'}</div><div class="rate2-print">${dasar?rpSplit(dasar):'-'}</div>`;
@@ -4574,9 +4578,9 @@ function invoiceSheetHTML(i){
     <td class="r">${rateHtml}</td>
     <td class="r">${amount?rpSplit(amount):'-'}</td></tr>`;
   }).join('');
-  let discTotal=(i.items||[]).reduce((a,x)=>a+num(x.disc),0);
+  let feeTotal=(i.items||[]).reduce((a,x)=>a+(num(x.qty)*itemFee(x)),0);
   let extra='';
-  if(discTotal)extra+=`<tr><td colspan="5" class="r muted">Diskon</td><td class="r">${rpSplit(-discTotal)}</td></tr>`;
+  if(feeTotal)extra+=`<tr><td colspan="5" class="r muted">Fee</td><td class="r">${rpSplit(feeTotal)}</td></tr>`;
   if(c.fee)extra+=`<tr><td colspan="5" class="r muted">Booking Fee</td><td class="r">${rpSplit(c.fee)}</td></tr>`;
   if(c.tax)extra+=`<tr><td colspan="5" class="r muted">Pajak ${num(i.taxPct)}%</td><td class="r">${rpSplit(c.tax)}</td></tr>`;
   return `<div class="sheet">
