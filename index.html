@@ -616,6 +616,11 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
   .wrap{padding:0}
   body{background:#fff}
 }
+/* Hilangkan spinner/panah naik-turun pada semua input nominal (type=number)
+   di seluruh aplikasi, termasuk kolom Pax/Rate Dasar/Fee di Detail Tiket. */
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -1836,6 +1841,26 @@ function invoiceDept(i,c){
   if(!d)d=String((c||custByInvoice(i.id,i.customer)||{}).dept||'').trim();
   return d.toUpperCase();
 }
+/* SUMBER TUNGGAL untuk kolom AIRLINES di seluruh tabel/laporan/ekspor.
+   AIRLINES harus mengikuti Detail Tiket pada invoice ITU SENDIRI (baris
+   item pertama, format "Ticket <Nama Maskapai>"), BUKAN dari data
+   Customer/Agent — karena satu Customer/Agent bisa dipakai berkali-kali
+   untuk invoice dengan maskapai yang berbeda-beda (persis seperti logika
+   DEPT di atas). */
+function invoiceAirlines(i,c){
+  if(!i)return '';
+  // Prioritas utama: deskripsi baris tiket pertama pada Detail Tiket invoice
+  // ini sendiri (mis. "Ticket Qatar Airways" -> "Qatar Airways").
+  const firstDesc=(i.items&&i.items[0]&&i.items[0].desc)||'';
+  let air=String(firstDesc).replace(/^ticket\s*/i,'').trim();
+  // Fallback: field airlines level-invoice (mis. hasil impor PDF/Excel lama
+  // yang belum punya Detail Tiket).
+  if(!air)air=String(i.airlines||'').trim();
+  // Fallback terakhir: data Customer/Agent — hanya dipakai kalau invoice ini
+  // sendiri sama sekali tidak punya info maskapai.
+  if(!air)air=String((c||custByInvoice(i.id,i.customer)||{}).airlines||'').trim();
+  return air;
+}
 function custByInvoice(id,customerName){
 let c=data.customers.find(x=>x.invoice===id);
 if(!c)c=data.customers.find(x=>(x.agentName||'').toLowerCase()===(customerName||'').toLowerCase());
@@ -2177,7 +2202,7 @@ function renderDashboard(){
 const invoiceSortOptions=[['date','Tanggal'],['due','Jatuh Tempo'],['closing','Tgl Closing'],['id','No. Invoice'],['customer','Customer'],['amount','Nilai Invoice'],['paid','Terbayar'],['sisa','Sisa Piutang'],['airlines','Airlines'],['dept','DEPT']];
 function invoiceSortVal(i,key){
 if(key==='sisa')return i.amount-i.paid;
-if(key==='airlines')return custByInvoice(i.id,i.customer).airlines||'';
+if(key==='airlines')return invoiceAirlines(i);
 if(key==='dept')return invoiceDept(i);
 return i[key];
 }
@@ -2234,7 +2259,7 @@ function invoicePnr(i){
 }
 function rowHTML(i){
 let c=custByInvoice(i.id,i.customer);
-return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${c.airlines||'-'}</td><td>${c.pic||'-'}</td><td>${invoicePnr(i)||'-'}</td><td>${c.pax||0}</td><td>${invoiceDept(i,c)||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
+return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${invoiceAirlines(i,c)||'-'}</td><td>${c.pic||'-'}</td><td>${invoicePnr(i)||'-'}</td><td>${c.pax||0}</td><td>${invoiceDept(i,c)||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
 function deleteInvoice(id){
 if(currentRole==='viewer'){alert('Akun Viewer hanya dapat melihat data (read-only) dan tidak dapat menghapus data.');return;}
 if(!confirm('Apakah Anda yakin ingin menghapus Invoice ini?'))return;
@@ -2254,7 +2279,7 @@ function invoiceFilterValue(i,field){
   const values={
     id:i.id||'',
     customer:i.customer||'',
-    airlines:c.airlines||i.airlines||'',
+    airlines:invoiceAirlines(i,c),
     pic:i.client||c.pic||'',
     pnr:invoicePnrAll(i).join(' '),
     pax:c.pax??i.pax??'',
@@ -2302,22 +2327,28 @@ function renderInvoices(){
     const c=custByInvoice(i.id,i.customer);
     const matchesSearch=!q || (
       field==='all'
-        ? [i.id,i.customer,c.airlines||i.airlines,i.client||c.pic,invoicePnrAll(i).join(' '),c.pax??i.pax,invoiceDept(i,c),i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
+        ? [i.id,i.customer,invoiceAirlines(i,c),i.client||c.pic,invoicePnrAll(i).join(' '),c.pax??i.pax,invoiceDept(i,c),i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
             .join(' ').toLowerCase().includes(q)
         : (
             String(invoiceFilterValue(i,field)).toLowerCase().includes(q)
-            // Fallback: walaupun kolom filter diset (mis. DEPT), kode PNR tetap
-            // bisa dicari supaya kombinasi DEPT + Bulan + PNR tidak "kosong".
+            // Fallback: walaupun kolom filter diset (mis. DEPT — dipakai untuk
+            // menentukan kolom mana yang dibaca filter Bulan), pencarian teks
+            // tetap bisa menemukan invoice lewat PNR, No. Invoice, Customer,
+            // atau PIC. Tanpa ini, memilih kolom DEPT lalu mengetik nama
+            // customer/agent selalu menghasilkan "tidak ada invoice", padahal
+            // invoicenya ada — karena kolom DEPT hanya berisi kode tanggal
+            // (mis. 15OCT), bukan nama.
             || invoicePnrAll(i).join(' ').toLowerCase().includes(q)
+            || String(i.id||'').toLowerCase().includes(q)
+            || String(i.customer||'').toLowerCase().includes(q)
+            || String(i.client||c.pic||'').toLowerCase().includes(q)
           )
     );
 
-    // Filter BULAN & TAHUN untuk kolom DEPT harus membaca TANGGAL DEPT YANG
-    // SEBENARNYA (field i.deptDate, diisi lewat date picker "Tanggal DEPT"),
-    // bukan menebak dari tanggal invoice/due/closing. i.deptDate dibaca ulang
-    // setiap kali tabel ini dirender, jadi begitu Tanggal DEPT diedit (mis.
-    // dari 15/01/2027 menjadi 10/03/2027), baris tsb otomatis pindah dari
-    // filter Januari 2027 ke Maret 2027 tanpa perlu perubahan manual lain.
+    // Filter BULAN untuk kolom DEPT membaca format DEPT seperti:
+    // 28OCT, 17OCT, 14SEP, 13OCT.
+    // Jadi ketika kolom filter = DEPT dan Bulan = September,
+    // sistem akan mencari kode SEP pada kolom DEPT, bukan tanggal invoice/due/closing.
     const deptValue=invoiceDept(i,c);
     const deptMonthMap={
       JAN:'01', FEB:'02', MAR:'03', APR:'04',
@@ -2325,19 +2356,13 @@ function renderInvoices(){
       SEP:'09', OCT:'10', NOV:'11', DEC:'12'
     };
     const deptMonthCode=(deptValue.match(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)$/)||[])[1]||'';
-    // deptISO = tanggal DEPT sebenarnya (yyyy-mm-dd) kalau sudah diisi lewat
-    // "Tanggal DEPT". Ini satu-satunya sumber yang punya info bulan DAN tahun
-    // yang pasti benar. Kalau belum diisi, baru jatuh ke tebakan dari kode
-    // teks DEPT (mis. "15JAN") yang tidak membawa info tahun.
-    const deptISO=i.deptDate||'';
-    const deptMonth=deptISO?deptISO.slice(5,7):(deptMonthMap[deptMonthCode]||'');
-    const deptYear=deptISO?deptISO.slice(0,4):'';
+    const deptMonth=deptMonthMap[deptMonthCode]||'';
 
     let dateCandidates;
     if(field==='date') dateCandidates=[i.date||''];
     else if(field==='due') dateCandidates=[i.due||''];
     else if(field==='closing') dateCandidates=[i.closing||c.closing||''];
-    else if(field==='dept') dateCandidates=[]; // bulan/tahun khusus dibaca dari Tanggal DEPT / kode DEPT
+    else if(field==='dept') dateCandidates=[]; // bulan khusus dibaca dari kode DEPT
     else dateCandidates=[i.date||'',i.due||'',i.closing||c.closing||''];
 
     const matchesMonth=!mf || (
@@ -2345,24 +2370,15 @@ function renderInvoices(){
         ? deptMonth===mf
         : (field==='date'||field==='due'||field==='closing')
           ? dateCandidates.some(d=>d.slice(5,7)===mf)
-          // Kolom lain (PNR, Customer, dll): bulan cocok bila bulan DEPT
+          // Kolom lain (PNR, Customer, dll): bulan cocok bila kode bulan DEPT
           // ATAU salah satu tanggal invoice/jatuh tempo/closing cocok.
           : (deptMonth===mf || dateCandidates.some(d=>d.slice(5,7)===mf))
     );
 
-    // Tahun: kalau kolom filter = DEPT dan Tanggal DEPT sudah diisi, tahun
-    // WAJIB mengikuti Tanggal DEPT tsb (bukan tanggal invoice/due/closing),
-    // supaya invoice yang Tanggal DEPT-nya diedit ke tahun lain otomatis
-    // pindah filter tahun juga. Kalau Tanggal DEPT belum pernah diisi (DEPT
-    // lama masih berupa teks tanpa tahun, mis. hasil impor PDF lama), baru
-    // jatuh ke tebakan dari tanggal invoice/due/closing seperti sebelumnya
-    // supaya data lama tidak tiba-tiba hilang dari semua filter tahun.
+    // DEPT seperti 14SEP tidak memiliki informasi tahun, sehingga filter tahun
+    // tetap menggunakan tanggal invoice/due/closing agar tidak salah menebak tahun.
     const yearCandidates=[i.date||'',i.due||'',i.closing||c.closing||''];
-    const matchesYear=!yf || (
-      field==='dept'
-        ? (deptYear?deptYear===yf:yearCandidates.some(d=>d.slice(0,4)===yf))
-        : (deptYear===yf || yearCandidates.some(d=>d.slice(0,4)===yf))
-    );
+    const matchesYear=!yf || yearCandidates.some(d=>d.slice(0,4)===yf);
 
     return matchesSearch && (!f||status(i)===f) && matchesMonth && matchesYear;
   });
@@ -2450,9 +2466,13 @@ function paymentDept(p){
 }
 function paymentPNR(p){
   // PNR juga selalu mengikuti data Invoice/Customer terbaru.
+  // Gunakan invoicePnrAll() supaya PNR yang tersimpan di baris item tiket
+  // (hasil form Buat Invoice) ikut terbaca, bukan hanya field pnr tunggal
+  // di level Customer/Invoice.
   const inv=(data.invoices||[]).find(i=>i.id===p.invoice);
   const c=custByInvoice(p.invoice,p.customer);
-  return String(c?.pnr||inv?.pnr||'-').trim()||'-';
+  const list=inv?invoicePnrAll(inv):(c?.pnr?[c.pnr]:[]);
+  return list.join(', ')||'-';
 }
 /* ==========================================================================
    MENU PEMBAYARAN — GAYA ACCURATE ONLINE (SHAD FINANCE)
@@ -2816,7 +2836,7 @@ const NAMA_PERUSAHAAN='PT Shad Alfatih Indonesia';
 function invFlightInfo(i,c){
 let fl=(i.items||[]).map(x=>x.flights).filter(Boolean).join(' / ').replace(/\n+/g,' / ').trim();
 let dep=(i.dept||(c&&c.dept)||'').trim();
-let air=(i.airlines||(c&&c.airlines)||'').trim();
+let air=invoiceAirlines(i,c);
 let parts=[];
 if(fl)parts.push(fl);else if(air)parts.push(air);
 if(dep&&!(fl&&fl.includes(dep)))parts.push(dep);
@@ -3149,18 +3169,27 @@ function editPayment(paymentId){
 }
 
 function getPaymentPNRMatches(q){
+  // Cocokkan terhadap SEMUA sumber PNR invoice (item tiket, field invoice,
+  // maupun field customer/agent) lewat invoicePnrAll(), bukan hanya field
+  // pnr tunggal. Tanpa ini, PNR yang diisi lewat baris item tiket pada form
+  // "Buat Invoice" tidak akan pernah cocok di sini walau sudah tampil di
+  // menu Invoice. Mengembalikan pasangan {invoice, pnr} per PNR yang cocok
+  // supaya PNR persis yang ditemukan tetap bisa ditampilkan/dipilih.
   q=String(q||'').trim().toLowerCase();
   if(!q)return [];
   const seen=new Set();
-  return (data.invoices||[]).filter(x=>{
-    const c=custByInvoice(x.id,x.customer)||{};
-    const p=String(c.pnr||x.pnr||'').trim();
-    if(!p)return false;
-    const key=String(x.id)+'|'+p.toLowerCase();
-    if(seen.has(key))return false;
-    seen.add(key);
-    return p.toLowerCase().includes(q);
+  const out=[];
+  (data.invoices||[]).forEach(x=>{
+    invoicePnrAll(x).forEach(raw=>{
+      const p=String(raw||'').trim();
+      if(!p||!p.toLowerCase().includes(q))return;
+      const key=String(x.id)+'|'+p.toLowerCase();
+      if(seen.has(key))return;
+      seen.add(key);
+      out.push({invoice:x,pnr:p});
+    });
   });
+  return out;
 }
 
 function hidePNRSuggestions(){
@@ -3168,12 +3197,15 @@ function hidePNRSuggestions(){
   if(box)box.style.display='none';
 }
 
-function choosePaymentPNR(invoiceId){
+function choosePaymentPNR(invoiceId,pnrValue){
   const i=(data.invoices||[]).find(x=>x.id===invoiceId);
   if(!i)return;
   const c=custByInvoice(i.id,i.customer)||{};
   const name=c.agentName||i.customer||'-';
-  const p=String(c.pnr||i.pnr||'').trim();
+  const allPnrs=invoicePnrAll(i);
+  // pnrValue = PNR spesifik yang dipilih/cocok (bisa berasal dari item tiket),
+  // fallback ke PNR pertama yang tersedia bila tidak diberikan.
+  const p=String(pnrValue||allPnrs[0]||'').trim();
   const paidNow=(data.payments||[]).filter(x=>x.invoice===i.id).reduce((sum,x)=>sum+num(x.amount),0);
   const remaining=Math.max(0,num(i.amount)-paidNow);
 
@@ -3190,7 +3222,7 @@ function choosePaymentPNR(invoiceId){
   if(refEl)refEl.value=i.id;
   // Jangan mengubah field Jumlah saat PNR dipilih.
   // Nilai Jumlah yang sudah diketik/dipilih pengguna harus tetap.
-  if(statusEl)statusEl.textContent='Data ditemukan: '+name+' • Invoice '+i.id+' • PNR '+p;
+  if(statusEl)statusEl.textContent='Data ditemukan: '+name+' • Invoice '+i.id+' • PNR '+(allPnrs.join(', ')||p);
   hidePNRSuggestions();
   if(typeof renderPaymentInvoiceInfo==='function')renderPaymentInvoiceInfo(i.id);
   if(typeof updatePaymentAmountPreview==='function')updatePaymentAmountPreview();
@@ -3210,17 +3242,17 @@ function showPNRSuggestions(){
     return;
   }
 
-  box.innerHTML=matches.map(x=>{
+  box.innerHTML=matches.map(m=>{
+    const x=m.invoice,p=m.pnr;
     const c=custByInvoice(x.id,x.customer)||{};
-    const p=String(c.pnr||x.pnr||'').trim();
     const name=c.agentName||x.customer||'-';
-    return '<div class="pnr-autocomplete-item" data-invoice="'+String(x.id).replace(/"/g,'&quot;')+'"><strong>'+esc(p)+'</strong><small>'+esc(name)+' • Invoice '+esc(x.id)+'</small></div>';
+    return '<div class="pnr-autocomplete-item" data-invoice="'+String(x.id).replace(/"/g,'&quot;')+'" data-pnr="'+esc(p).replace(/"/g,'&quot;')+'"><strong>'+esc(p)+'</strong><small>'+esc(name)+' • Invoice '+esc(x.id)+'</small></div>';
   }).join('');
 
   box.querySelectorAll('.pnr-autocomplete-item[data-invoice]').forEach(el=>{
     el.addEventListener('mousedown',function(e){
       e.preventDefault();
-      choosePaymentPNR(this.getAttribute('data-invoice'));
+      choosePaymentPNR(this.getAttribute('data-invoice'),this.getAttribute('data-pnr'));
     });
   });
   box.style.display='block';
@@ -3248,24 +3280,26 @@ function updatePaymentByPNR(){
   }
 
   const matches=getPaymentPNRMatches(q);
-  let found=null;
+  // Hitung berdasarkan invoice unik (satu invoice bisa punya beberapa PNR
+  // dari item tiket berbeda) supaya beberapa item PNR pada invoice yang sama
+  // tidak dianggap "beberapa invoice cocok".
+  const uniqueInvoiceIds=[...new Set(matches.map(m=>m.invoice.id))];
+  let found=null,foundPnr=null;
 
   // Jika PNR tepat/unik, langsung isi otomatis.
-  const exact=matches.filter(x=>{
-    const c=custByInvoice(x.id,x.customer)||{};
-    return String(c.pnr||x.pnr||'').trim().toLowerCase()===q;
-  });
-  if(exact.length===1)found=exact[0];
-  else if(matches.length===1)found=matches[0];
+  const exact=matches.filter(m=>m.pnr.toLowerCase()===q);
+  const exactInvoiceIds=[...new Set(exact.map(m=>m.invoice.id))];
+  if(exactInvoiceIds.length===1){found=exact[0].invoice;foundPnr=exact[0].pnr;}
+  else if(uniqueInvoiceIds.length===1){found=matches[0].invoice;foundPnr=matches[0].pnr;}
 
   if(found){
-    choosePaymentPNR(found.id);
+    choosePaymentPNR(found.id,foundPnr);
   }else{
     customerEl.value='';
     invoiceEl.value='';
     refEl.value='';
     // Field Jumlah tetap pada nilai sebelumnya walaupun PNR belum cocok/unik.
-    if(statusEl)statusEl.textContent=matches.length>1
+    if(statusEl)statusEl.textContent=uniqueInvoiceIds.length>1
       ? 'Pilih PNR dari daftar agar Nama Customer dan No. Invoice terisi otomatis.'
       : 'PNR tidak ditemukan. Periksa kembali kode PNR.';
     if(typeof renderPaymentInvoiceInfo==='function')renderPaymentInvoiceInfo('');
@@ -3391,19 +3425,20 @@ const oldPay=editId ? (data.payments||[]).find(x=>x.id===editId) : null;
 const oldInvoiceId=oldPay?.invoice||'';
 
 // PNR menjadi acuan utama. Nama Customer dan No. Invoice diisi otomatis.
+// Cocokkan terhadap invoicePnrAll() supaya PNR yang hanya ada di baris item
+// tiket (form Buat Invoice) juga dikenali, bukan hanya field pnr tunggal.
 let candidates=(data.invoices||[]).filter(x=>{
-  const c=custByInvoice(x.id,x.customer)||{};
-  const pnr=String(c.pnr||x.pnr||'').trim().toLowerCase();
-  return pnrInput && (pnr===pnrInput || pnr.includes(pnrInput));
+  if(!pnrInput)return false;
+  const pnrs=invoicePnrAll(x).map(p=>p.toLowerCase());
+  return pnrs.some(p=>p===pnrInput||p.includes(pnrInput));
 });
 
 let i=null;
 if(selectedInvoice){
   const referenced=(data.invoices||[]).find(x=>x.id===selectedInvoice);
   if(referenced){
-    const c=custByInvoice(referenced.id,referenced.customer)||{};
-    const rp=String(c.pnr||referenced.pnr||'').trim().toLowerCase();
-    if(!pnrInput || rp===pnrInput || rp.includes(pnrInput)) i=referenced;
+    const pnrs=invoicePnrAll(referenced).map(p=>p.toLowerCase());
+    if(!pnrInput || pnrs.some(p=>p===pnrInput||p.includes(pnrInput))) i=referenced;
   }
 }
 if(!i && candidates.length===1){
@@ -3411,8 +3446,9 @@ if(!i && candidates.length===1){
   pReference.value=i.id;
 }else if(!i && candidates.length>1){
   const exactPNR=candidates.filter(x=>{
-    const c=custByInvoice(x.id,x.customer)||{};
-    return pnrInput && String(c.pnr||x.pnr||'').trim().toLowerCase()===pnrInput;
+    if(!pnrInput)return false;
+    const pnrs=invoicePnrAll(x).map(p=>p.toLowerCase());
+    return pnrs.includes(pnrInput);
   });
   if(exactPNR.length===1){
     i=exactPNR[0];
@@ -4038,6 +4074,9 @@ select option[style*='color:#d71920']{color:#d71920;font-weight:700}
 .rowact button{padding:5px 8px;margin-right:2px;flex:0 0 auto}
 table.ivitems td{padding:5px 6px;vertical-align:top}
 table.ivitems input,table.ivitems textarea{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:13px;resize:vertical}
+/* Rute / Flight: setiap baris penerbangan tetap dalam 1 baris ke samping
+   (tidak wrap turun ke bawah); jika terlalu panjang, scroll horizontal. */
+table.ivitems textarea.iv-flights{white-space:pre;overflow-x:auto;overflow-y:auto}
 table.ivitems td.amt{text-align:right;font-weight:700;white-space:nowrap}
 .ivtotals{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fafbfd;max-width:420px;margin-left:auto}
 .ivtotals div{display:flex;justify-content:space-between;gap:20px;padding:4px 0;font-size:13px}
@@ -4055,6 +4094,10 @@ table.ivitems td.amt{text-align:right;font-weight:700;white-space:nowrap}
   display:flex;flex-direction:column;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.25);
   font-family:Arial,Helvetica,sans-serif;font-size:11px}
 .sheet img{display:block}.sheet .r{background:#fff!important;color:#171b25!important}
+/* Kolom Rate & Amount pada baris Refund (Detail Tiket) harus tetap merah;
+   selector di atas (.sheet .r) lebih umum tapi juga !important, jadi perlu
+   selector lebih spesifik di sini supaya menang dan tidak tertimpa hitam. */
+.sheet tr.refund-print-row td.r,.sheet td.r.refund-amount{color:#d71920!important;font-weight:700!important}
 .rp-cell{display:flex;justify-content:space-between;align-items:center;width:100%}
 .rp-cur{flex:none;margin-right:4px}
 .rp-num{flex:none;text-align:right}
@@ -4236,14 +4279,21 @@ function longDate(s){if(!s)return '-';try{return new Date(s+'T00:00:00').toLocal
 })();
 
 /* ---------- hitung ---------- */
-function invoiceTypeOf(i){return ['Normal','Permintaan DP','Kekurangan DP'].includes(i?.invoiceType)?i.invoiceType:'Normal'}
+function invoiceTypeOf(i){return ['Normal','Permintaan DP','Kekurangan DP','Refund'].includes(i?.invoiceType)?i.invoiceType:'Normal'}
 function itemRateDP(x){return num(x.rateDP!=null?x.rateDP:x.rate2)}
 function itemRateDasar(x){return num(x.rate)}
 function itemFee(x){return num(x.fee)}
+/* Baris Detail Tiket yang ditandai Refund selalu dihitung sebagai
+   pengurang (nilai negatif), apapun Jenis Invoice-nya, dan Fee tidak
+   berlaku untuk baris Refund. Nilai Rate Dasar Refund yang diketik user
+   selalu dipaksa negatif (user tidak perlu mengetik tanda minus). */
+function itemRefundRate(x){return -Math.abs(num(x.rate))}
 /* Jumlah per baris tiket: (Pax x Rate Dasar) + (Pax x Fee).
-   Untuk Permintaan DP, Jumlah tetap memakai Rate DP (di luar Fee). */
+   Untuk Permintaan DP, Jumlah tetap memakai Rate DP (di luar Fee).
+   Untuk baris Refund, Jumlah = Pax x Rate Dasar Refund (negatif). */
 function itemAmount(type,x){
   const qty=num(x.qty);
+  if(x&&x.refund)return qty*itemRefundRate(x);
   if(type==='Permintaan DP')return qty*itemRateDP(x);
   return (qty*itemRateDasar(x))+(qty*itemFee(x));
 }
@@ -4300,7 +4350,7 @@ function rowHTML(i){
   let c=custByInvoice(i.id,i.customer);
   let sisa=(i.amount||0)-(i.paid||0);
   let feeTotal=invoiceFeeTotal(i);
-  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(c.airlines||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(invoiceDept(i,c)||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
+  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(invoiceAirlines(i,c)||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(invoiceDept(i,c)||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
   <td class="rowact">
   <button class="secondary" onclick="previewInvoice('${i.id}')" title="Preview / Cetak">👁</button>
   <button class="secondary" onclick="editInvoice('${i.id}')" title="Edit invoice">✎</button>
@@ -4362,9 +4412,9 @@ function openInvoice(id,copyOf){
   }else if(src){
     ivDraft=JSON.parse(JSON.stringify(src));ivDraft._editing=src.id;
   }else{
-    ivDraft={id:nextInvoiceNo(),customer:(data.customers[0]?.agentName)||'',client:'',phone:'',date:todayStr(),due:todayStr(),timeLimit:'16.00 WIB',docStatus:'Draft',items:[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0}],bookingFee:0,taxPct:0,paid:0,initialPaid:0,initialPaymentDate:todayStr(),additionalPayments:[],amount:0,note:'',_editing:''};
+    ivDraft={id:nextInvoiceNo(),customer:(data.customers[0]?.agentName)||'',client:'',phone:'',date:todayStr(),due:todayStr(),timeLimit:'16.00 WIB',docStatus:'Draft',items:[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0,refund:false}],bookingFee:0,taxPct:0,paid:0,initialPaid:0,initialPaymentDate:todayStr(),additionalPayments:[],amount:0,note:'',_editing:''};
   }
-  if(!ivDraft.items||!ivDraft.items.length)ivDraft.items=[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0}];
+  if(!ivDraft.items||!ivDraft.items.length)ivDraft.items=[{desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0,refund:false}];
   ivDraft.invoiceType=invoiceTypeOf(ivDraft);
   ivDraft.needDeposit=num(ivDraft.needDeposit||0);
   ivDraft.items.forEach(x=>{
@@ -4372,7 +4422,13 @@ function openInvoice(id,copyOf){
     if(x.rate2==null)x.rate2=num(x.rateDP);
     if(x.rateDP==null)x.rateDP=0;
     if(x.rate2==null)x.rate2=0;
+    if(x.refund==null)x.refund=false;
+    if(x.refund)x.rate=itemRefundRate(x);
   });
+  /* Jenis Invoice Refund selalu punya minimal satu baris Refund. */
+  if(ivDraft.invoiceType==='Refund'&&!ivDraft.items.some(x=>x.refund)){
+    ivDraft.items.push({desc:'Refund',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0,refund:true});
+  }
   if(ivDraft.initialPaid==null)ivDraft.initialPaid=num(ivDraft.paid);
   migratePayments(ivDraft);
   renderInvoiceForm();
@@ -4397,11 +4453,11 @@ function renderInvoiceForm(){
     <div class="field"><label>Sales</label><input id="ivSales" value="${esc(i.sales||'')}" placeholder="Nama sales penanggung jawab" oninput="ivSet('sales',this.value)"></div>
   </div>
   <div class="formgrid" style="margin-top:12px">
-    <div class="field"><label>Jenis Invoice</label><select id="ivType" onchange="ivSetInvoiceType(this.value)"><option value="Normal" ${i.invoiceType==='Normal'?'selected':''}>Normal</option><option value="Permintaan DP" ${i.invoiceType==='Permintaan DP'?'selected':''}>Permintaan DP</option><option value="Kekurangan DP" ${i.invoiceType==='Kekurangan DP'?'selected':''}>Kekurangan DP</option></select><small id="ivTypeHelp" style="display:block;margin-top:5px;color:#777"></small></div>
+    <div class="field"><label>Jenis Invoice</label><select id="ivType" onchange="ivSetInvoiceType(this.value)"><option value="Normal" ${i.invoiceType==='Normal'?'selected':''}>Normal</option><option value="Permintaan DP" ${i.invoiceType==='Permintaan DP'?'selected':''}>Permintaan DP</option><option value="Kekurangan DP" ${i.invoiceType==='Kekurangan DP'?'selected':''}>Kekurangan DP</option><option value="Refund" style="color:#d71920;font-weight:700" ${i.invoiceType==='Refund'?'selected':''}>Refund</option></select><small id="ivTypeHelp" style="display:block;margin-top:5px;color:#777"></small></div>
     <div class="field" id="ivNeedDepositField"><label id="ivNeedDepositLabel">Need Deposit / Kekurangan DP</label><input id="ivNeedDeposit" type="text" inputmode="numeric" autocomplete="off" value="${num(i.needDeposit)?Number(num(i.needDeposit)).toLocaleString('id-ID'):''}" placeholder="0" oninput="ivFieldMoneyInput(this,'needDeposit')"><small id="ivNeedDepositHelp" style="display:block;margin-top:5px;color:#777"></small></div>
   </div>
   <h3 style="margin:18px 0 8px">Detail Tiket</h3>
-  <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:18%">Deskripsi</th><th style="width:8%">PNR</th><th style="width:25%">Rute / Flight (1 baris 1 segmen)</th><th style="width:7%">Pax</th><th class="iv-ratedp-head" style="width:12%;display:none">Rate DP</th><th class="iv-ratedasar-head" style="width:12%">Rate Dasar</th><th style="width:11%">Fee</th><th style="width:12%">Jumlah</th><th></th></tr></thead>
+  <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:13%">Deskripsi</th><th style="width:9%">PNR</th><th style="width:31%">Rute / Flight (1 baris 1 segmen)</th><th style="width:6%">Pax</th><th class="iv-ratedp-head" style="width:10%;display:none">Rate DP</th><th class="iv-ratedasar-head" style="width:10%">Rate Dasar</th><th style="width:9%">Fee</th><th style="width:10%">Jumlah</th><th></th></tr></thead>
   <tbody id="ivRows"></tbody></table></div>
   <button type="button" class="secondary" style="margin-top:8px" onclick="ivAddItem()">＋ Tambah Baris Tiket</button>
   <div class="formgrid" style="margin-top:16px">
@@ -4453,21 +4509,34 @@ function ivSetInvoiceType(type){
   ivDraft.invoiceType=invoiceTypeOf({...ivDraft,invoiceType:type});
   if(ivDraft.invoiceType==='Normal')ivDraft.needDeposit=0;
   if(ivDraft.invoiceType==='Permintaan DP')ivDraft.needDeposit=calcNeedDeposit(ivDraft);
+  if(ivDraft.invoiceType==='Refund'){
+    ivDraft.needDeposit=0;
+    /* Tambahkan otomatis 1 baris Detail Tiket Refund bila belum ada. */
+    if(!ivDraft.items.some(x=>x.refund)){
+      ivDraft.items.push({desc:'Refund',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0,refund:true});
+    }
+  }else{
+    /* Saat Jenis Invoice diubah dari Refund kembali ke jenis lain (mis.
+       Normal), baris Detail Tiket bertanda Refund yang dibuat otomatis
+       harus ikut hilang secara otomatis, bukan tersisa dengan nilai 0. */
+    ivDraft.items=ivDraft.items.filter(x=>!x.refund);
+    if(!ivDraft.items.length)ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0,refund:false});
+  }
   ivRenderItems();
   ivUpdateTypeFields();
   ivTotals();
 }
 function ivUpdateTypeFields(){
   const type=invoiceTypeOf(ivDraft);
-  const isDP=type==='Permintaan DP', isShort=type==='Kekurangan DP';
+  const isDP=type==='Permintaan DP', isShort=type==='Kekurangan DP', isRefund=type==='Refund';
   const field=document.getElementById('ivNeedDepositField');
   const label=document.getElementById('ivNeedDepositLabel');
   const input=document.getElementById('ivNeedDeposit');
   const help=document.getElementById('ivNeedDepositHelp');
   const typeHelp=document.getElementById('ivTypeHelp');
-  if(field)field.style.display=type==='Normal'?'none':'block';
+  if(field)field.style.display=(type==='Normal'||isRefund)?'none':'block';
   if(label)label.textContent=isDP?'Need Deposit':isShort?'Kekurangan DP':'Need Deposit / Kekurangan DP';
-  if(typeHelp)typeHelp.textContent=isDP?'Permintaan DP: nominal DP dihitung otomatis dari Rate DP × Pax.':isShort?'Kekurangan DP: isi nominal kekurangan DP secara manual. Nilai tagihan invoice tetap mengikuti Rate Dasar pada Detail Tiket.':'Invoice Normal: menggunakan Rate Dasar sebagai nilai tagihan.';
+  if(typeHelp)typeHelp.textContent=isDP?'Permintaan DP: nominal DP dihitung otomatis dari Rate DP × Pax.':isShort?'Kekurangan DP: isi nominal kekurangan DP secara manual. Nilai tagihan invoice tetap mengikuti Rate Dasar pada Detail Tiket.':isRefund?'Refund: baris Detail Tiket bertanda Refund otomatis dibuat, dicetak merah, dan nilainya (Pax × Rate Dasar Refund) otomatis negatif serta mengurangi Total Bill.':'Invoice Normal: menggunakan Rate Dasar sebagai nilai tagihan.';
   if(help)help.textContent=isDP?'Otomatis mengikuti Rate DP dan Pax pada detail tiket.':isShort?'Nominal ini hanya catatan kekurangan DP, tidak mengubah nilai total invoice.':'';
   if(input){
     input.readOnly=isDP;
@@ -4517,10 +4586,25 @@ function ivPickCustomer(name){
   if(cl)cl.value=ivDraft.client||'';if(ph)ph.value=ivDraft.phone||'';
   ivRenderItems();
 }
-function ivAddItem(){ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0});ivRenderItems()}
+function ivAddItem(){ivDraft.items.push({desc:'Ticket ',pnr:'',flights:'',qty:1,rate:0,rateDP:0,rate2:0,fee:0,refund:false});ivRenderItems()}
 function ivDelItem(n){if(ivDraft.items.length<=1){alert('Minimal satu baris tiket.');return}ivDraft.items.splice(n,1);ivRenderItems()}
 function ivItem(n,k,v,isNum){
   if(!ivDraft.items[n])return;
+
+  /* Menandai/melepas centang "Refund?" pada suatu baris: baris ini
+     harus dirender ulang (deskripsi berwarna merah, Fee dinonaktifkan,
+     Rate Dasar dipaksa negatif), jadi rebuild tabel di sini aman karena
+     dipicu oleh klik checkbox, bukan sedang mengetik. */
+  if(k==='refund'){
+    ivDraft.items[n].refund=!!v;
+    if(ivDraft.items[n].refund){
+      ivDraft.items[n].rate=itemRefundRate(ivDraft.items[n]);
+      ivDraft.items[n].fee=0;
+      if(!String(ivDraft.items[n].desc||'').trim())ivDraft.items[n].desc='Refund';
+    }
+    ivRenderItems();
+    return;
+  }
 
   /* Jangan render ulang seluruh tabel saat user sedang mengetik.
      Render ulang di sini akan menghancurkan input yang sedang aktif,
@@ -4530,6 +4614,9 @@ function ivItem(n,k,v,isNum){
 
   if(k==='rateDP')ivDraft.items[n].rate2=ivDraft.items[n].rateDP;
   if(k==='rate2')ivDraft.items[n].rateDP=ivDraft.items[n].rate2;
+  /* Rate Dasar Refund: user cukup mengetik angka positif, sistem
+     otomatis menyimpannya sebagai nilai negatif (pengurang tagihan). */
+  if(k==='rate'&&ivDraft.items[n].refund)ivDraft.items[n].rate=itemRefundRate(ivDraft.items[n]);
 
   const type=invoiceTypeOf(ivDraft);
   const item=ivDraft.items[n];
@@ -4559,17 +4646,22 @@ function ivRenderItems(){
   const dasar=document.querySelector('.iv-ratedasar-head');if(dasar)dasar.textContent=type==='Normal'?'Rate Dasar':'Rate Dasar';
   box.innerHTML=ivDraft.items.map((x,n)=>{
     const dp=num(x.rateDP!=null?x.rateDP:x.rate2);
-    const dasarRate=num(x.rate);
+    const isRefund=!!x.refund;
+    /* Untuk baris Refund, tampilkan nominal apa adanya (positif) di form
+       supaya user tidak perlu mengetik tanda minus; nilai sebenarnya
+       (negatif) dipakai saat menghitung Jumlah / Total Bill. */
+    const dasarRate=isRefund?Math.abs(num(x.rate)):num(x.rate);
     const amount=itemAmount(type,x);
-    return `<tr>
-    <td><input value="${esc(x.desc)}" oninput="ivItem(${n},'desc',this.value)" placeholder="Ticket Qatar Airways"></td>
+    const amtStyle=isRefund?'color:#d71920;font-weight:700':'';
+    return `<tr class="${isRefund?'iv-refund-row':''}">
+    <td><input value="${esc(x.desc)}" oninput="ivItem(${n},'desc',this.value)" placeholder="Ticket Qatar Airways" style="${isRefund?'color:#d71920;font-weight:700':''}"></td>
     <td><input value="${esc(x.pnr)}" oninput="ivItem(${n},'pnr',this.value)" placeholder="94ZIGQ"></td>
-    <td><textarea rows="3" oninput="ivItem(${n},'flights',this.value)" placeholder="QR 959 27NOV CGKDOH 0845 1305">${esc(x.flights)}</textarea></td>
+    <td><textarea class="iv-flights" rows="3" oninput="ivItem(${n},'flights',this.value)" placeholder="QR 959 27NOV CGKDOH 0845 1305">${esc(x.flights)}</textarea></td>
     <td><input type="number" min="0" value="${num(x.qty)}" oninput="ivItem(${n},'qty',this.value,1)"></td>
     <td class="iv-ratedp-cell" style="${showDP?'':'display:none'}"><input type="number" min="0" value="${dp}" oninput="ivItem(${n},'rateDP',this.value,1)" placeholder="Rate DP"></td>
-    <td><input type="number" min="0" value="${dasarRate}" oninput="ivItem(${n},'rate',this.value,1)" placeholder="Rate Dasar"></td>
-    <td><input type="number" min="0" value="${num(x.fee)}" oninput="ivItem(${n},'fee',this.value,1)" placeholder="Fee per pax"></td>
-    <td class="amt" id="ivAmt${n}">${rp(amount)}</td>
+    <td><input type="number" min="0" value="${dasarRate}" oninput="ivItem(${n},'rate',this.value,1)" placeholder="${isRefund?'Rate Dasar Refund':'Rate Dasar'}" style="${amtStyle}"></td>
+    <td><input type="number" min="0" value="${num(x.fee)}" oninput="ivItem(${n},'fee',this.value,1)" placeholder="Fee per pax" ${isRefund?'disabled title="Fee tidak berlaku untuk baris Refund"':''}></td>
+    <td class="amt" id="ivAmt${n}" style="${amtStyle}">${rp(amount)}</td>
     <td><button type="button" class="secondary" style="color:#d71920" onclick="ivDelItem(${n})">🗑</button></td></tr>`;
   }).join('');
   ivUpdateTypeFields();
@@ -4602,11 +4694,16 @@ function submitInvoice(e){
   i.id=document.getElementById('ivId').value.trim();
   i.customer=document.getElementById('ivCustomer')?.value||i.customer;
   if(!i.id){alert('Nomor invoice wajib diisi.');return}
-  let invalidPayment=(i.additionalPayments||[]).some(p=>num(p.amount)>0&&!p.date);
+  /* Pembayaran dengan nominal negatif (Jenis Pembayaran = Refund / Koreksi)
+     harus tetap divalidasi dan disimpan, bukan hanya pembayaran positif. */
+  let invalidPayment=(i.additionalPayments||[]).some(p=>num(p.amount)!==0&&!p.date);
   if(invalidPayment){alert('Tanggal dan nominal setiap pembayaran wajib diisi.');return}
-  i.additionalPayments=(i.additionalPayments||[]).filter(p=>num(p.amount)>0);i.initialPaid=0;i.bookingFee=0;i.taxPct=0;
+  i.additionalPayments=(i.additionalPayments||[]).filter(p=>num(p.amount)!==0);i.initialPaid=0;i.bookingFee=0;i.taxPct=0;
   i.invoiceType=invoiceTypeOf(i);
-  i.items=(i.items||[]).map(x=>({...x,rateDP:num(x.rateDP!=null?x.rateDP:x.rate2),rate2:num(x.rateDP!=null?x.rateDP:x.rate2),rate:num(x.rate),fee:num(x.fee)}));
+  i.items=(i.items||[]).map(x=>{
+    const refund=!!x.refund;
+    return {...x,refund,rateDP:num(x.rateDP!=null?x.rateDP:x.rate2),rate2:num(x.rateDP!=null?x.rateDP:x.rate2),rate:refund?itemRefundRate(x):num(x.rate),fee:refund?0:num(x.fee)};
+  });
   if(i.invoiceType==='Permintaan DP'){
     i.needDeposit=calcNeedDeposit(i);
     if(i.needDeposit<=0){alert('Rate DP dan Pax wajib diisi untuk Invoice Permintaan DP.');return}
@@ -4623,14 +4720,24 @@ function submitInvoice(e){
      dipakai (c.total) sudah otomatis mengikuti jenis invoice: untuk
      Kekurangan DP nilainya = nominal Kekurangan DP, dan c.paid sudah
      menjumlahkan seluruh pembayaran yang tercatat pada invoice ini
-     (termasuk pembayaran lama sebelum invoice ini diedit). */
+     (termasuk pembayaran lama sebelum invoice ini diedit).
+     Refund (Jenis Invoice = Refund ATAU ada baris Detail Tiket bertanda
+     Refund) adalah TRANSAKSI PENGURANG Total Bill, bukan pembayaran baru.
+     Total Bill Setelah Refund = Total Bill Awal - Total Refund, dan Sisa
+     Tagihan = Total Bill Setelah Refund - Total Pembayaran Masuk. Karena
+     itu, saat pembayaran yang SUDAH MASUK sebelumnya menjadi lebih besar
+     daripada Total Bill setelah dikurangi Refund, itu bukan error —
+     itu artinya ada kelebihan pembayaran/credit (Sisa Tagihan negatif),
+     dan Refund tetap harus bisa disimpan. Validasi "pembayaran melebihi
+     total" hanya relevan untuk invoice TANPA Refund. */
   const totalRp=Math.round(c.total);
   const paidRp=Math.round(c.paid);
-  if(paidRp>totalRp){
+  const hasRefund=i.invoiceType==='Refund'||(i.items||[]).some(x=>x.refund);
+  if(!hasRefund&&totalRp>=0&&paidRp>totalRp){
     alert('Pembayaran ('+rp(paidRp)+') tidak boleh melebihi total invoice ('+rp(totalRp)+').');
     return;
   }
-  if(c.total<=0&&i.docStatus!=='Draft'){alert('Total invoice masih 0. Lengkapi detail tiket atau simpan sebagai Draft.');return}
+  if(c.total<=0&&i.docStatus!=='Draft'&&i.invoiceType!=='Refund'&&!i.items.some(x=>x.refund)){alert('Total invoice masih 0. Lengkapi detail tiket atau simpan sebagai Draft.');return}
   let old=i._editing;
   if(!old&&data.invoices.some(x=>x.id===i.id)){alert('Nomor invoice sudah dipakai.');return}
   if(old&&old!==i.id&&data.invoices.some(x=>x.id===i.id)){alert('Nomor invoice sudah dipakai.');return}
@@ -4645,7 +4752,9 @@ function submitInvoice(e){
    */
   if(!Array.isArray(data.payments))data.payments=[];
   const oldInvoiceId=old||rec.id;
-  const desired=(i.additionalPayments||[]).filter(p=>num(p.amount)>0);
+  /* Pembayaran Refund (nominal negatif) harus ikut disimpan sebagai
+     transaksi Refund, bukan dibuang seolah pembayaran masuk biasa. */
+  const desired=(i.additionalPayments||[]).filter(p=>num(p.amount)!==0);
   const desiredIds=new Set(desired.map(p=>p.id).filter(Boolean));
   if(oldInvoiceId!==rec.id){
     data.payments.forEach(p=>{if(p.invoice===oldInvoiceId)p.invoice=rec.id});
@@ -4668,6 +4777,11 @@ function submitInvoice(e){
   });
   rec.paid=data.payments.filter(p=>p.invoice===rec.id).reduce((sum,p)=>sum+num(p.amount),0);
   rec.additionalPayments=data.payments.filter(p=>p.invoice===rec.id).map(p=>({id:p.id,label:p.method||p.label||'Pembayaran',date:p.date,amount:num(p.amount),note:p.note||''}));
+  /* Tanggal Invoice harus otomatis mengikuti tanggal pembayaran TERAKHIR
+     (sama seperti saat pembayaran ditambah/dihapus lewat menu Pembayaran),
+     termasuk saat pembayaran ditambah/diedit langsung di form Edit Invoice ini. */
+  const lastPayDateOnSave=latestPaymentDate(rec.id);
+  if(lastPayDateOnSave)rec.date=lastPayDateOnSave;
   if(rec.amount-rec.paid>0)rec.closing=rec.closing||'';else if(rec.amount>0)rec.closing=rec.closing||todayStr();
   if(old){
     let n=data.invoices.findIndex(x=>x.id===old);
@@ -4703,19 +4817,24 @@ function invoiceSheetHTML(i){
   let c=invCalc(i), pays=invoicePayments(i), cust=data.customers.find(x=>x.agentName===i.customer)||{};
   const printType=invoiceTypeOf(i);
   let rows=(i.items||[]).map((x,n)=>{
-    const dp=num(x.rateDP!=null?x.rateDP:x.rate2), dasar=num(x.rate), qty=num(x.qty);
+    const dp=num(x.rateDP!=null?x.rateDP:x.rate2), qty=num(x.qty);
+    const isRefundRow=!!x.refund;
+    const dasar=isRefundRow?itemRefundRate(x):num(x.rate);
     const amount=itemAmount(printType,x);
-    const dasarPlusFee=dasar+itemFee(x);
-    const rateHtml=printType==='Permintaan DP'
+    /* Kolom Rate pada baris Refund ditampilkan tanpa tanda minus (nilai
+       mutlak) supaya lebih mudah dibaca; kolom Amount tetap negatif
+       karena itu yang benar-benar mengurangi Total Bill. */
+    const dasarPlusFee=isRefundRow?Math.abs(dasar):dasar+itemFee(x);
+    const rateHtml=(printType==='Permintaan DP'&&!isRefundRow)
       ? `<div>${dp?rpSplit(dp):'-'}</div><div class="rate2-print">${dasarPlusFee?rpSplit(dasarPlusFee):'-'}</div>`
       : (dasarPlusFee?rpSplit(dasarPlusFee):'-');
-    return `<tr>
+    return `<tr class="${isRefundRow?'refund-print-row':''}">
     <td class="c">${n+1}</td>
     <td class="desc"><b>${esc(x.desc||'-')}</b>${x.flights?'<div class="fl">'+esc(x.flights).split('\n').filter(Boolean).map(f=>'<span>'+f+'</span>').join('')+'</div>':''}</td>
     <td class="c">${esc(x.pnr||'-')}</td>
     <td class="c">${qty||'-'}</td>
-    <td class="r">${rateHtml}</td>
-    <td class="r">${amount?rpSplit(amount):'-'}</td></tr>`;
+    <td class="r ${isRefundRow?'refund-amount':''}">${rateHtml}</td>
+    <td class="r ${isRefundRow?'refund-amount':''}">${amount?rpSplit(amount):'-'}</td></tr>`;
   }).join('');
   let extra='';
   if(c.fee)extra+=`<tr><td colspan="5" class="r muted">Booking Fee</td><td class="r">${rpSplit(c.fee)}</td></tr>`;
@@ -5355,19 +5474,14 @@ function irData(){
     const amount=num(i.amount),paid=num(i.paid);
     const days=i.due?Math.ceil((new Date(i.due+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000):null;
     return {id:v('id')||'-',customer:v('customer')||'-',airlines:v('airlines')||'-',pic:v('pic')||'-',
-      pnr:invoicePnr(i)||'-',pax:num(c.pax??i.pax),dept:v('dept')||'-',deptISO:i.deptDate||'',phone:v('phone')||'-',sales:v('sales')||'-',
+      pnr:invoicePnr(i)||'-',pax:num(c.pax??i.pax),dept:v('dept')||'-',phone:v('phone')||'-',sales:v('sales')||'-',
       date:v('date'),due:v('due'),closing:v('closing'),days,
       amount,paid,sisa:amount-paid,status:status(i)};
   });
 }
-// Ubah DEPT menjadi tanggal YYYY-MM-DD supaya bisa difilter From - To.
-// Prioritas utama: r.deptISO, yaitu Tanggal DEPT sebenarnya yang diisi lewat
-// date picker "Tanggal DEPT" pada invoice (sudah punya tahun yang pasti benar
-// dan otomatis ikut berubah begitu Tanggal DEPT diedit). Hanya kalau Tanggal
-// DEPT belum pernah diisi, baru jatuh ke tebakan lama: kode teks DEPT (mis.
-// "28OCT") dikombinasikan dengan tahun dari tanggal invoice/jatuh tempo/closing.
+// Ubah DEPT (mis. 28OCT) menjadi tanggal YYYY-MM-DD memakai tahun dari
+// tanggal invoice / jatuh tempo / closing, supaya bisa difilter From - To.
 function irDeptDate(r){
-  if(r.deptISO)return r.deptISO;
   const m=String(r.dept||'').toUpperCase().match(/(\d{1,2})\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/);
   if(!m)return '';
   const MM={JAN:'01',FEB:'02',MAR:'03',APR:'04',MAY:'05',JUN:'06',JUL:'07',AUG:'08',SEP:'09',OCT:'10',NOV:'11',DEC:'12'}[m[2]];
