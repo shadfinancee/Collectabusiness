@@ -1808,11 +1808,25 @@ return `<option value="${v}" ${selected===v?'selected':''}>${name}</option>`;
 }).join('');
 return `<option value="">Semua Bulan</option>${opts}`;
 }
+/* Konversi tanggal ISO (yyyy-mm-dd) ke format "DDMON" (mis. 15OCT) yang
+   sudah dipakai konsisten di seluruh tabel/laporan/ekspor DEPT. */
+function deptFromISO(iso){
+  if(!iso)return '';
+  const dt=new Date(iso+'T00:00:00');
+  if(isNaN(dt.getTime()))return '';
+  const MONABR=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return String(dt.getDate())+MONABR[dt.getMonth()];
+}
 function invoiceDept(i,c){
   // DEPT harus mengikuti tanggal keberangkatan pada invoice ITU SENDIRI.
   // Data customer dipakai hanya sebagai cadangan terakhir, karena satu customer
   // bisa punya banyak invoice dengan tanggal berangkat berbeda.
   if(!i)return '';
+  // Prioritas utama: Tanggal DEPT yang diisi manual lewat date picker.
+  if(i.deptDate){
+    const manual=deptFromISO(i.deptDate);
+    if(manual)return manual.toUpperCase();
+  }
   const MON='JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC';
   let d=String(i.dept||'').trim();
   if(!d){
@@ -2298,10 +2312,12 @@ function renderInvoices(){
           )
     );
 
-    // Filter BULAN untuk kolom DEPT membaca format DEPT seperti:
-    // 28OCT, 17OCT, 14SEP, 13OCT.
-    // Jadi ketika kolom filter = DEPT dan Bulan = September,
-    // sistem akan mencari kode SEP pada kolom DEPT, bukan tanggal invoice/due/closing.
+    // Filter BULAN & TAHUN untuk kolom DEPT harus membaca TANGGAL DEPT YANG
+    // SEBENARNYA (field i.deptDate, diisi lewat date picker "Tanggal DEPT"),
+    // bukan menebak dari tanggal invoice/due/closing. i.deptDate dibaca ulang
+    // setiap kali tabel ini dirender, jadi begitu Tanggal DEPT diedit (mis.
+    // dari 15/01/2027 menjadi 10/03/2027), baris tsb otomatis pindah dari
+    // filter Januari 2027 ke Maret 2027 tanpa perlu perubahan manual lain.
     const deptValue=invoiceDept(i,c);
     const deptMonthMap={
       JAN:'01', FEB:'02', MAR:'03', APR:'04',
@@ -2309,13 +2325,19 @@ function renderInvoices(){
       SEP:'09', OCT:'10', NOV:'11', DEC:'12'
     };
     const deptMonthCode=(deptValue.match(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)$/)||[])[1]||'';
-    const deptMonth=deptMonthMap[deptMonthCode]||'';
+    // deptISO = tanggal DEPT sebenarnya (yyyy-mm-dd) kalau sudah diisi lewat
+    // "Tanggal DEPT". Ini satu-satunya sumber yang punya info bulan DAN tahun
+    // yang pasti benar. Kalau belum diisi, baru jatuh ke tebakan dari kode
+    // teks DEPT (mis. "15JAN") yang tidak membawa info tahun.
+    const deptISO=i.deptDate||'';
+    const deptMonth=deptISO?deptISO.slice(5,7):(deptMonthMap[deptMonthCode]||'');
+    const deptYear=deptISO?deptISO.slice(0,4):'';
 
     let dateCandidates;
     if(field==='date') dateCandidates=[i.date||''];
     else if(field==='due') dateCandidates=[i.due||''];
     else if(field==='closing') dateCandidates=[i.closing||c.closing||''];
-    else if(field==='dept') dateCandidates=[]; // bulan khusus dibaca dari kode DEPT
+    else if(field==='dept') dateCandidates=[]; // bulan/tahun khusus dibaca dari Tanggal DEPT / kode DEPT
     else dateCandidates=[i.date||'',i.due||'',i.closing||c.closing||''];
 
     const matchesMonth=!mf || (
@@ -2323,15 +2345,24 @@ function renderInvoices(){
         ? deptMonth===mf
         : (field==='date'||field==='due'||field==='closing')
           ? dateCandidates.some(d=>d.slice(5,7)===mf)
-          // Kolom lain (PNR, Customer, dll): bulan cocok bila kode bulan DEPT
+          // Kolom lain (PNR, Customer, dll): bulan cocok bila bulan DEPT
           // ATAU salah satu tanggal invoice/jatuh tempo/closing cocok.
           : (deptMonth===mf || dateCandidates.some(d=>d.slice(5,7)===mf))
     );
 
-    // DEPT seperti 14SEP tidak memiliki informasi tahun, sehingga filter tahun
-    // tetap menggunakan tanggal invoice/due/closing agar tidak salah menebak tahun.
+    // Tahun: kalau kolom filter = DEPT dan Tanggal DEPT sudah diisi, tahun
+    // WAJIB mengikuti Tanggal DEPT tsb (bukan tanggal invoice/due/closing),
+    // supaya invoice yang Tanggal DEPT-nya diedit ke tahun lain otomatis
+    // pindah filter tahun juga. Kalau Tanggal DEPT belum pernah diisi (DEPT
+    // lama masih berupa teks tanpa tahun, mis. hasil impor PDF lama), baru
+    // jatuh ke tebakan dari tanggal invoice/due/closing seperti sebelumnya
+    // supaya data lama tidak tiba-tiba hilang dari semua filter tahun.
     const yearCandidates=[i.date||'',i.due||'',i.closing||c.closing||''];
-    const matchesYear=!yf || yearCandidates.some(d=>d.slice(0,4)===yf);
+    const matchesYear=!yf || (
+      field==='dept'
+        ? (deptYear?deptYear===yf:yearCandidates.some(d=>d.slice(0,4)===yf))
+        : (deptYear===yf || yearCandidates.some(d=>d.slice(0,4)===yf))
+    );
 
     return matchesSearch && (!f||status(i)===f) && matchesMonth && matchesYear;
   });
@@ -4361,6 +4392,7 @@ function renderInvoiceForm(){
     <div class="field"><label>Tanggal Invoice</label><input id="ivDate" type="date" required value="${i.date}" onchange="ivSet('date',this.value)"></div>
     <div class="field"><label>Jatuh Tempo</label><input id="ivDue" type="date" required value="${i.due}" onchange="ivSet('due',this.value)"></div>
     <div class="field"><label>Tanggal Closing</label><input id="ivClosing" type="date" value="${i.closing||''}" onchange="ivSet('closing',this.value)"></div>
+    <div class="field"><label>Tanggal DEPT</label><input id="ivDeptDate" type="date" value="${i.deptDate||''}" onchange="ivSet('deptDate',this.value)"><small style="display:block;margin-top:5px;color:#777">Kosongkan agar DEPT tetap otomatis mengikuti tanggal penerbangan pada Detail Tiket.</small></div>
     <div class="field"><label>Time Limit</label><input id="ivTL" value="${esc(i.timeLimit||'')}" oninput="ivSet('timeLimit',this.value)"></div>
     <div class="field"><label>Sales</label><input id="ivSales" value="${esc(i.sales||'')}" placeholder="Nama sales penanggung jawab" oninput="ivSet('sales',this.value)"></div>
   </div>
@@ -5323,14 +5355,19 @@ function irData(){
     const amount=num(i.amount),paid=num(i.paid);
     const days=i.due?Math.ceil((new Date(i.due+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000):null;
     return {id:v('id')||'-',customer:v('customer')||'-',airlines:v('airlines')||'-',pic:v('pic')||'-',
-      pnr:invoicePnr(i)||'-',pax:num(c.pax??i.pax),dept:v('dept')||'-',phone:v('phone')||'-',sales:v('sales')||'-',
+      pnr:invoicePnr(i)||'-',pax:num(c.pax??i.pax),dept:v('dept')||'-',deptISO:i.deptDate||'',phone:v('phone')||'-',sales:v('sales')||'-',
       date:v('date'),due:v('due'),closing:v('closing'),days,
       amount,paid,sisa:amount-paid,status:status(i)};
   });
 }
-// Ubah DEPT (mis. 28OCT) menjadi tanggal YYYY-MM-DD memakai tahun dari
-// tanggal invoice / jatuh tempo / closing, supaya bisa difilter From - To.
+// Ubah DEPT menjadi tanggal YYYY-MM-DD supaya bisa difilter From - To.
+// Prioritas utama: r.deptISO, yaitu Tanggal DEPT sebenarnya yang diisi lewat
+// date picker "Tanggal DEPT" pada invoice (sudah punya tahun yang pasti benar
+// dan otomatis ikut berubah begitu Tanggal DEPT diedit). Hanya kalau Tanggal
+// DEPT belum pernah diisi, baru jatuh ke tebakan lama: kode teks DEPT (mis.
+// "28OCT") dikombinasikan dengan tahun dari tanggal invoice/jatuh tempo/closing.
 function irDeptDate(r){
+  if(r.deptISO)return r.deptISO;
   const m=String(r.dept||'').toUpperCase().match(/(\d{1,2})\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/);
   if(!m)return '';
   const MM={JAN:'01',FEB:'02',MAR:'03',APR:'04',MAY:'05',JUN:'06',JUL:'07',AUG:'08',SEP:'09',OCT:'10',NOV:'11',DEC:'12'}[m[2]];
