@@ -4227,7 +4227,7 @@ function invCalc(i){
   let normalSubtotal=items.reduce((a,x)=>a+itemAmount('Normal',x),0);
   let dpTotal=calcNeedDeposit(i);
   let fee=0, tax=0;
-  let subtotal=invoiceTypeOf(i)==='Normal'?normalSubtotal:dpTotal;
+  let subtotal=invoiceTypeOf(i)==='Permintaan DP'?dpTotal:normalSubtotal;
   let total=subtotal+fee+tax;
   let central=(i!==ivDraft&&i.id&&Array.isArray(data.payments))?data.payments.filter(p=>p.invoice===i.id):[];
   let hasCentral=central.length>0;
@@ -4366,7 +4366,7 @@ function renderInvoiceForm(){
   </div>
   <div class="formgrid" style="margin-top:12px">
     <div class="field"><label>Jenis Invoice</label><select id="ivType" onchange="ivSetInvoiceType(this.value)"><option value="Normal" ${i.invoiceType==='Normal'?'selected':''}>Normal</option><option value="Permintaan DP" ${i.invoiceType==='Permintaan DP'?'selected':''}>Permintaan DP</option><option value="Kekurangan DP" ${i.invoiceType==='Kekurangan DP'?'selected':''}>Kekurangan DP</option></select><small id="ivTypeHelp" style="display:block;margin-top:5px;color:#777"></small></div>
-    <div class="field" id="ivNeedDepositField"><label id="ivNeedDepositLabel">Need Deposit / Kekurangan DP</label><input id="ivNeedDeposit" type="number" min="0" step="1" value="${num(i.needDeposit)}" placeholder="0" oninput="ivSet('needDeposit',this.value,1);ivTotals()"><small id="ivNeedDepositHelp" style="display:block;margin-top:5px;color:#777"></small></div>
+    <div class="field" id="ivNeedDepositField"><label id="ivNeedDepositLabel">Need Deposit / Kekurangan DP</label><input id="ivNeedDeposit" type="text" inputmode="numeric" autocomplete="off" value="${num(i.needDeposit)?Number(num(i.needDeposit)).toLocaleString('id-ID'):''}" placeholder="0" oninput="ivFieldMoneyInput(this,'needDeposit')"><small id="ivNeedDepositHelp" style="display:block;margin-top:5px;color:#777"></small></div>
   </div>
   <h3 style="margin:18px 0 8px">Detail Tiket</h3>
   <div class="table-wrap"><table class="ivitems"><thead><tr><th style="width:18%">Deskripsi</th><th style="width:8%">PNR</th><th style="width:25%">Rute / Flight (1 baris 1 segmen)</th><th style="width:7%">Pax</th><th class="iv-ratedp-head" style="width:12%;display:none">Rate DP</th><th class="iv-ratedasar-head" style="width:12%">Rate Dasar</th><th style="width:11%">Fee</th><th style="width:12%">Jumlah</th><th></th></tr></thead>
@@ -4404,6 +4404,19 @@ function renderInvoiceForm(){
   ivUpdateTypeFields();
 }
 function ivSet(k,v,isNum){ivDraft[k]=isNum?num(v):v;ivTotals()}
+/* Input uang bebas ketik untuk field non-tabel (misal Kekurangan DP).
+   Nama fungsi dibuat unik (bukan ivMoneyInput) agar TIDAK bentrok dengan
+   fungsi ivMoneyInput(el,n) milik baris Pembayaran di bawah.
+   Parsing hanya mengambil digit (buang semua titik/spasi/"Rp") sehingga
+   tidak pernah salah dibaca sebagai desimal meski sudah diformat sebelumnya. */
+function ivFieldMoneyInput(el,k){
+  const digits=String(el.value||'').replace(/[^\d]/g,'');
+  const raw=digits?Number(digits):0;
+  el.value=raw?raw.toLocaleString('id-ID'):'';
+  el.setSelectionRange(el.value.length,el.value.length);
+  ivDraft[k]=raw;
+  ivTotals();
+}
 function ivSetInvoiceType(type){
   ivDraft.invoiceType=invoiceTypeOf({...ivDraft,invoiceType:type});
   if(ivDraft.invoiceType==='Normal')ivDraft.needDeposit=0;
@@ -4422,12 +4435,13 @@ function ivUpdateTypeFields(){
   const typeHelp=document.getElementById('ivTypeHelp');
   if(field)field.style.display=type==='Normal'?'none':'block';
   if(label)label.textContent=isDP?'Need Deposit':isShort?'Kekurangan DP':'Need Deposit / Kekurangan DP';
-  if(typeHelp)typeHelp.textContent=isDP?'Permintaan DP: nominal DP dihitung otomatis dari Rate DP × Pax.':isShort?'Kekurangan DP: isi nominal kekurangan DP secara manual.':'Invoice Normal: menggunakan Rate Dasar sebagai nilai tagihan.';
-  if(help)help.textContent=isDP?'Otomatis mengikuti Rate DP dan Pax pada detail tiket.':isShort?'Nominal diisi manual dan menjadi nilai invoice.':'';
+  if(typeHelp)typeHelp.textContent=isDP?'Permintaan DP: nominal DP dihitung otomatis dari Rate DP × Pax.':isShort?'Kekurangan DP: isi nominal kekurangan DP secara manual. Nilai tagihan invoice tetap mengikuti Rate Dasar pada Detail Tiket.':'Invoice Normal: menggunakan Rate Dasar sebagai nilai tagihan.';
+  if(help)help.textContent=isDP?'Otomatis mengikuti Rate DP dan Pax pada detail tiket.':isShort?'Nominal ini hanya catatan kekurangan DP, tidak mengubah nilai total invoice.':'';
   if(input){
     input.readOnly=isDP;
     input.style.background=isDP?'#f4f5f8':'#fff';
-    input.value=isDP?calcNeedDeposit(ivDraft):num(ivDraft.needDeposit);
+    const val=isDP?calcNeedDeposit(ivDraft):num(ivDraft.needDeposit);
+    input.value=val?Number(val).toLocaleString('id-ID'):'';
   }
 }
 function ivSetNeedDepositDefault(){ivUpdateTypeFields();ivTotals()}
@@ -4498,7 +4512,7 @@ function ivItem(n,k,v,isNum){
     if(type==='Permintaan DP'){
       ivDraft.needDeposit=calcNeedDeposit(ivDraft);
       const nd=document.getElementById('ivNeedDeposit');
-      if(nd)nd.value=num(ivDraft.needDeposit);
+      if(nd)nd.value=ivDraft.needDeposit?Number(ivDraft.needDeposit).toLocaleString('id-ID'):'';
     }
   }
 
@@ -4508,7 +4522,7 @@ function ivItem(n,k,v,isNum){
 function ivRenderItems(){
   let box=document.getElementById('ivRows');if(!box)return;
   const type=invoiceTypeOf(ivDraft);
-  const showDP=type!=='Normal';
+  const showDP=type==='Permintaan DP';
   const head=document.querySelector('.iv-ratedp-head');if(head)head.style.display=showDP?'table-cell':'none';
   const dasar=document.querySelector('.iv-ratedasar-head');if(dasar)dasar.textContent=type==='Normal'?'Rate Dasar':'Rate Dasar';
   box.innerHTML=ivDraft.items.map((x,n)=>{
@@ -4571,7 +4585,19 @@ function submitInvoice(e){
     i.needDeposit=0;
   }
   let c=invCalc(i);i.paid=c.paid;
-  if(c.paid>c.total){alert('Pembayaran tidak boleh melebihi total invoice.');return}
+  /* Bandingkan dalam satuan rupiah bulat (integer) supaya validasi tidak
+     salah pending akibat sisa desimal hasil pembulatan/konversi angka
+     (mis. 50000000.0000000002 dibaca "melebihi" 50000000). Total yang
+     dipakai (c.total) sudah otomatis mengikuti jenis invoice: untuk
+     Kekurangan DP nilainya = nominal Kekurangan DP, dan c.paid sudah
+     menjumlahkan seluruh pembayaran yang tercatat pada invoice ini
+     (termasuk pembayaran lama sebelum invoice ini diedit). */
+  const totalRp=Math.round(c.total);
+  const paidRp=Math.round(c.paid);
+  if(paidRp>totalRp){
+    alert('Pembayaran ('+rp(paidRp)+') tidak boleh melebihi total invoice ('+rp(totalRp)+').');
+    return;
+  }
   if(c.total<=0&&i.docStatus!=='Draft'){alert('Total invoice masih 0. Lengkapi detail tiket atau simpan sebagai Draft.');return}
   let old=i._editing;
   if(!old&&data.invoices.some(x=>x.id===i.id)){alert('Nomor invoice sudah dipakai.');return}
@@ -4648,9 +4674,9 @@ function invoiceSheetHTML(i){
     const dp=num(x.rateDP!=null?x.rateDP:x.rate2), dasar=num(x.rate), qty=num(x.qty);
     const amount=itemAmount(printType,x);
     const dasarPlusFee=dasar+itemFee(x);
-    const rateHtml=printType==='Normal'
-      ? (dasarPlusFee?rpSplit(dasarPlusFee):'-')
-      : `<div>${dp?rpSplit(dp):'-'}</div><div class="rate2-print">${dasarPlusFee?rpSplit(dasarPlusFee):'-'}</div>`;
+    const rateHtml=printType==='Permintaan DP'
+      ? `<div>${dp?rpSplit(dp):'-'}</div><div class="rate2-print">${dasarPlusFee?rpSplit(dasarPlusFee):'-'}</div>`
+      : (dasarPlusFee?rpSplit(dasarPlusFee):'-');
     return `<tr>
     <td class="c">${n+1}</td>
     <td class="desc"><b>${esc(x.desc||'-')}</b>${x.flights?'<div class="fl">'+esc(x.flights).split('\n').filter(Boolean).map(f=>'<span>'+f+'</span>').join('')+'</div>':''}</td>
