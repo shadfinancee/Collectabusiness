@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Finance PT Shad Al Fatih Indonesia</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#b90d13">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-512.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ==========================================================================
@@ -669,13 +675,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 <style>
 #cloudStatus{position:fixed;right:16px;bottom:16px;z-index:90;background:#fff;border:1px solid #dfe3ea;border-radius:9px;padding:9px 12px;font-size:11px;font-weight:700;box-shadow:0 5px 18px #0001;display:flex;align-items:center;gap:7px}.cloud-dot{width:9px;height:9px;border-radius:50%;background:#999}.cloud-online .cloud-dot{background:#35a853}.cloud-sync .cloud-dot{background:#e5a500}.cloud-error .cloud-dot{background:#d71920}
 </style>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#b90d13">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Collecta Business">
-<link rel="apple-touch-icon" href="./icon-192.png">
 </head>
 <body>
 
@@ -2786,24 +2785,7 @@ function printPayments(){
  <table><thead><tr><th>NO</th><th>TANGGAL</th><th>NO. INVOICE</th><th>CUSTOMER</th><th>PNR</th><th>DEPT</th><th>JUMLAH</th><th>METODE</th><th>CATATAN</th></tr></thead>
  <tbody>${trs}</tbody>
  <tfoot><tr><th class="lbl" colspan="6">TOTAL</th><th>${rp(total)}</th><th colspan="2"></th></tr></tfoot></table>
- 
-<script>
-/* Collecta Business — PWA */
-(function () {
-  if (!("serviceWorker" in navigator)) return;
-  window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./sw.js", { scope: "./" })
-      .then(function (reg) {
-        console.log("Collecta Business PWA aktif:", reg.scope);
-      })
-      .catch(function (err) {
-        console.warn("PWA Service Worker gagal didaftarkan:", err);
-      });
-  });
-})();
-</script>
-
-</body></html>`);
+ </body></html>`);
  w.document.close();
  setTimeout(()=>{try{w.focus();w.print()}catch(err){}},350);
 }
@@ -7480,6 +7462,15 @@ body.acc-skin{--acc-line:#d3dae6;--acc-line2:#e8edf4;--acc-head:#f6f8fb;font-siz
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
   else start();
 })();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+            .then(() => console.log("Service Worker aktif"))
+            .catch(err => console.error("Service Worker gagal:", err));
+    });
+}
 </script>
 </body>
 </html>
