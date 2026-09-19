@@ -2257,6 +2257,17 @@ function invoicePnr(i){
   const list=invoicePnrAll(i);
   return list.join(', ');
 }
+function invoicePax(i){
+  // PAX WAJIB mengikuti sumber yang sama dengan menu Invoice: jumlahkan qty
+  // dari seluruh baris Detail Tiket (items) bila ada, baru fallback ke field
+  // PAX tunggal di Customer/Invoice. Sebelumnya Laporan Invoice hanya membaca
+  // field PAX tunggal itu, sehingga invoice yang PAX-nya diisi lewat baris
+  // tiket (bukan field manual) tampil kosong ("-") di Laporan meski PAX-nya
+  // sudah benar dan terlihat di menu Invoice.
+  const c=custByInvoice(i.id,i.customer);
+  if(i.items&&i.items.length)return i.items.reduce((a,x)=>a+num(x.qty),0);
+  return num(c.pax??i.pax);
+}
 function rowHTML(i){
 let c=custByInvoice(i.id,i.customer);
 return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${invoiceAirlines(i,c)||'-'}</td><td>${c.pic||'-'}</td><td>${invoicePnr(i)||'-'}</td><td>${c.pax||0}</td><td>${invoiceDept(i,c)||'-'}</td><td>${c.phone||'-'}</td><td>${i.sales||c.sales||'-'}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(i.amount-i.paid)}</td><td>${badge(status(i))}</td><td><button class="secondary" style="padding:5px 8px" onclick="editInvoice('${i.id}')" title="Edit manual">⋮</button> <button class="secondary" style="padding:5px 8px;color:#128C7E" onclick="kirimJatuhTempo('${i.id}')" title="Kirim Jatuh Tempo via WhatsApp">💬</button> <button class="secondary" style="padding:5px 8px;color:#d71920" onclick="deleteInvoice('${i.id}')" title="Hapus">🗑</button></td></tr>`}
@@ -2282,7 +2293,7 @@ function invoiceFilterValue(i,field){
     airlines:invoiceAirlines(i,c),
     pic:i.client||c.pic||'',
     pnr:invoicePnrAll(i).join(' '),
-    pax:c.pax??i.pax??'',
+    pax:invoicePax(i),
     dept:invoiceDept(i,c),
     phone:i.phone||c.phone||'',
     sales:i.sales||c.sales||'',
@@ -2327,7 +2338,7 @@ function renderInvoices(){
     const c=custByInvoice(i.id,i.customer);
     const matchesSearch=!q || (
       field==='all'
-        ? [i.id,i.customer,invoiceAirlines(i,c),i.client||c.pic,invoicePnrAll(i).join(' '),c.pax??i.pax,invoiceDept(i,c),i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
+        ? [i.id,i.customer,invoiceAirlines(i,c),i.client||c.pic,invoicePnrAll(i).join(' '),invoicePax(i),invoiceDept(i,c),i.phone||c.phone,i.sales||c.sales,i.date,i.due,i.closing||c.closing]
             .join(' ').toLowerCase().includes(q)
         : (
             String(invoiceFilterValue(i,field)).toLowerCase().includes(q)
@@ -3723,12 +3734,53 @@ function pdfDateAny(s){
   if(m){let yr=m[3].length===2?('20'+m[3]):m[3];return `${yr}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`}
   return dateFromDDMonYY(t)||dateFromIndo(t)||'';
 }
+// Tebak baris Syarat & Kondisi mana yang perlu disorot kuning: pola standar
+// perusahaan menyorot baris yang memuat batas waktu (H-30, H-21, dsb) atau
+// persentase (mis. 80%), berapa pun angkanya — supaya tetap terdeteksi walau
+// nilainya berbeda dari invoice ke invoice.
+function guessTermHighlight(text){
+  return /H-\s?\d{1,3}\b/i.test(text)||/\b\d{1,3}\s*%/.test(text);
+}
+// Buang teks nama/jabatan penandatangan yang tidak sengaja ikut "menempel"
+// di akhir baris Syarat & Kondisi. Ini terjadi karena readPDFText menyusun
+// ulang teks per BARIS (posisi Y) tanpa memisahkan kolom kiri/kanan — kalau
+// baris blok tanda tangan (kanan) kebetulan sejajar tinggi dengan salah satu
+// baris Syarat & Kondisi (kiri), keduanya tergabung jadi satu baris teks.
+function stripSignerBleed(text){
+  let t=String(text||'');
+  [SIGNER.name,SIGNER.title].forEach(v=>{
+    if(!v)return;
+    const rx=v.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    t=t.replace(new RegExp('\\s*'+rx+'\\s*$','i'),'');
+  });
+  return t.trim();
+}
+// Baca bagian "SYARAT DAN KONDISI" dari teks PDF invoice (hasil readPDFText,
+// sudah tersusun per baris sesuai posisi visual). Mengembalikan array baris
+// (tanpa nomor urut) atau null bila bagian ini tidak ditemukan di PDF.
+function extractTermsFromPDF(lines){
+  const startIdx=lines.findIndex(l=>/SYARAT\s*DAN\s*KONDISI/i.test(l));
+  if(startIdx<0)return null;
+  const out=[];
+  for(let k=startIdx+1;k<lines.length;k++){
+    const ln=lines[k].trim();
+    if(!ln)continue;
+    const m=ln.match(/^(\d{1,2})[.)]\s*(.+)$/);
+    if(m){out.push(m[2].trim());continue}
+    // Baris lanjutan (wrap) dari poin bernomor sebelumnya — masih bagian dari
+    // syarat yang sama selama belum masuk ke blok tanda tangan/kontak/alamat.
+    if(out.length && ln.length<140 && !/^(Yogyakarta|Jakarta|Email|Alamat|Ruko|Jl\.|@|www\.|Mnr\.|No\.\s*\d)/i.test(ln)){
+      out[out.length-1]+=' '+ln;continue;
+    }
+    if(out.length)break; // sudah keluar dari blok Syarat & Kondisi
+  }
+  return out.length?out.map(stripSignerBleed):null;
+}
 function extractPDFInvoice(text, filename){
   const clean=text.replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
   const one=clean.replace(/\n/g,' ');
   const lines=clean.split('\n').map(s=>s.trim()).filter(Boolean);
   const missing=[];
-
   /* No Invoice */
   const id=(one.match(/No\s*:?\s*(INV[\/-][A-Z0-9\/-]+)/i)||[])[1]
     || (filename.match(/(INV[^.]+)(?:\.pdf)?$/i)||[])[1] || '';
@@ -3832,6 +3884,7 @@ function extractPDFInvoice(text, filename){
   const airline=(items[0]?.desc||'').replace(/^ticket\s*/i,'').trim();
   const dept=(items.map(x=>x.flights).join('\n').match(/\b\d{1,2}[A-Z]{3}\b/)||[])[0]||'';
   const customer=(corp||client||'').trim();
+  const terms=extractTermsFromPDF(lines);
 
   return {
     id:String(id).trim(),
@@ -3844,6 +3897,7 @@ function extractPDFInvoice(text, filename){
     paid:Math.min(paid,amount||paid),
     items,
     payments,
+    terms,
     airlines:airline,
     agentName:customer,
     pic:client,
@@ -3932,6 +3986,12 @@ async function importPDF(){
         airlines:inv.airlines||'',
         pdfMissing:inv.missing||[]
       };
+      // Syarat & Kondisi disinkronkan dari isi PDF aslinya sendiri, bukan
+      // bawaan aplikasi. Kalau bagiannya tidak terbaca di file ini (mis.
+      // format PDF berbeda), field ini sengaja TIDAK diisi (bukan ditimpa
+      // kosong) supaya Syarat & Kondisi hasil edit/impor sebelumnya untuk
+      // invoice yang sama tidak hilang saat diimpor ulang.
+      if(inv.terms&&inv.terms.length)rec.terms=inv.terms.map(t=>({text:t,hl:guessTermHighlight(t)}));
       const calc=invCalc(rec);
       /* Total Bill dari PDF tetap diutamakan bila berbeda dengan hasil kali qty x rate. */
       if(inv.amount&&Math.abs(calc.total-inv.amount)>1&&rec.items.length===1&&num(rec.items[0].qty)){
@@ -4161,11 +4221,11 @@ table.bank td{padding:1px 6px 1px 0;font-size:10.5px}
 .sh-foot .terms ol{margin:0;padding-left:15px}
 .sh-foot .terms li{font-size:9.5px;line-height:1.5}
 .sh-foot .terms li.term-important{background:#fff200;font-weight:700}
-#termsEditor .term-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
-#termsEditor .term-no{min-width:22px;padding-top:9px;color:#64748b;font-size:13px}
-#termsEditor textarea{flex:1;padding:8px 10px;border:1px solid #dce1e8;border-radius:6px;resize:vertical}
-#termsEditor .term-hl{display:flex;align-items:center;gap:5px;padding-top:9px;font-size:12px;white-space:nowrap}
-#termsEditor .term-del{border:1px solid #f0d3d5;background:#fff;color:#d71920;border-radius:6px;padding:7px 10px}
+#ivTermsEditor .term-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+#ivTermsEditor .term-no{min-width:22px;padding-top:9px;color:#64748b;font-size:13px}
+#ivTermsEditor textarea{flex:1;width:100%;min-width:0;padding:8px 10px;border:1px solid #dce1e8;border-radius:6px;resize:vertical;box-sizing:border-box;font:inherit}
+#ivTermsEditor .term-hl{display:flex;align-items:center;gap:5px;padding-top:9px;font-size:12px;white-space:nowrap}
+#ivTermsEditor .term-del{border:1px solid #f0d3d5;background:#fff;color:#d71920;border-radius:6px;padding:7px 10px}
 .sh-foot .terms .note{font-size:9.5px;margin:5px 0 0;font-style:italic}
 .sh-foot .sign{flex:0 0 215px;text-align:center;font-size:10.5px}
 .sh-foot .sign p{margin:0}
@@ -4245,12 +4305,32 @@ const TERMS_DEFAULT=COMPANY_TERMS.map((t,n)=>({text:t,hl:n>=4&&n<=6}));
 let TERMS=TERMS_DEFAULT.map(t=>({text:t.text,hl:t.hl}));
 try{const _t=JSON.parse(localStorage.getItem(TERMS_KEY)||'null');if(Array.isArray(_t))TERMS=_t.map(x=>({text:String((x&&x.text!==undefined)?x.text:x),hl:!!(x&&x.hl)}))}catch(e){}
 function saveTerms(){localStorage.setItem(TERMS_KEY,JSON.stringify(TERMS))}
-function renderTermsEditor(){document.querySelectorAll('#termsEditor,#ivTermsEditor').forEach(function(w){w.innerHTML=termsEditorHTML()});}
-function termsEditorHTML(){return TERMS.map((t,n)=>'<div class="term-row"><span class="term-no">'+(n+1)+'.</span><textarea rows="2" oninput="TERMS['+n+'].text=this.value" >'+esc(t.text)+'</textarea><label class="term-hl"><input type="checkbox" '+(t.hl?'checked':'')+' onchange="TERMS['+n+'].hl=this.checked"> Sorot</label><button class="term-del" onclick="delTerm('+n+')" title="Hapus">&#10005;</button></div>').join('')||'<p class="muted">Belum ada syarat &amp; kondisi.</p>';}
-function addTerm(){TERMS.push({text:'',hl:false});renderTermsEditor()}
-function delTerm(n){TERMS.splice(n,1);renderTermsEditor()}
-function saveTermsEditor(){TERMS=TERMS.filter(t=>String(t.text).trim()!=='');saveTerms();renderTermsEditor();alert('Syarat & Kondisi tersimpan.')}
-function resetTerms(){if(!confirm('Kembalikan ke syarat & kondisi awal?'))return;TERMS=TERMS_DEFAULT.map(t=>({text:t.text,hl:t.hl}));saveTerms();renderTermsEditor()}
+// Syarat & Kondisi WAJIB per-invoice: utamakan Syarat & Kondisi milik invoice
+// itu sendiri (hasil baca otomatis dari file PDF saat Impor PDF, atau hasil
+// edit manual di menu Edit Invoice). Kalau invoice belum pernah punya Syarat
+// & Kondisi sendiri (dibuat manual dan belum pernah disentuh), baru pakai
+// bawaan perusahaan (TERMS_DEFAULT). Ini menggantikan perilaku lama yang
+// selalu memakai SATU setting global yang sama untuk semua invoice, sehingga
+// tampilan cetak invoice tidak pernah benar-benar sesuai isi PDF aslinya.
+function invoiceTerms(i){
+  const list=(i&&i.terms&&i.terms.length)?i.terms:TERMS_DEFAULT;
+  // Bersihkan juga saat ditampilkan (bukan cuma saat impor), supaya invoice
+  // yang sudah terlanjur tersimpan dengan nama/jabatan penandatangan yang
+  // tidak sengaja ikut menempel (lihat stripSignerBleed) langsung tampil
+  // bersih tanpa perlu diimpor ulang.
+  return list.map(t=>({text:stripSignerBleed(t.text),hl:t.hl}));
+}
+function renderTermsEditor(){
+  if(!ivDraft)return;
+  if(!ivDraft.terms||!ivDraft.terms.length)ivDraft.terms=TERMS_DEFAULT.map(t=>({text:t.text,hl:t.hl}));
+  else ivDraft.terms=ivDraft.terms.map(t=>({text:stripSignerBleed(t.text),hl:t.hl}));
+  document.querySelectorAll('#ivTermsEditor').forEach(function(w){w.innerHTML=termsEditorHTML(ivDraft.terms)});
+}
+function termsEditorHTML(list){return (list||[]).map((t,n)=>'<div class="term-row"><span class="term-no">'+(n+1)+'.</span><textarea rows="2" oninput="ivDraft.terms['+n+'].text=this.value" >'+esc(t.text)+'</textarea><label class="term-hl"><input type="checkbox" '+(t.hl?'checked':'')+' onchange="ivDraft.terms['+n+'].hl=this.checked"> Sorot</label><button class="term-del" onclick="delTerm('+n+')" title="Hapus">&#10005;</button></div>').join('')||'<p class="muted">Belum ada syarat &amp; kondisi.</p>';}
+function addTerm(){if(!ivDraft)return;ivDraft.terms=ivDraft.terms||[];ivDraft.terms.push({text:'',hl:false});renderTermsEditor()}
+function delTerm(n){if(!ivDraft||!ivDraft.terms)return;ivDraft.terms.splice(n,1);renderTermsEditor()}
+function saveTermsEditor(){if(!ivDraft)return;ivDraft.terms=(ivDraft.terms||[]).filter(t=>String(t.text).trim()!=='');renderTermsEditor();alert('Syarat & Kondisi untuk invoice ini diperbarui. Klik "Simpan Invoice" agar tersimpan permanen.')}
+function resetTerms(){if(!ivDraft)return;if(!confirm('Kembalikan Syarat & Kondisi invoice ini ke bawaan perusahaan?'))return;ivDraft.terms=TERMS_DEFAULT.map(t=>({text:t.text,hl:t.hl}));renderTermsEditor()}
 const BANKS=[["Bank Mandiri","1370022788604"],["Bank BSI","7253834042"]];
 const SIGNER={name:"Rizky Noviarini S.Gz., M.P.H.",title:"Mnr. Finance"};
 
@@ -4350,7 +4430,7 @@ function rowHTML(i){
   let c=custByInvoice(i.id,i.customer);
   let sisa=(i.amount||0)-(i.paid||0);
   let feeTotal=invoiceFeeTotal(i);
-  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(invoiceAirlines(i,c)||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${(i.items?i.items.reduce((a,x)=>a+num(x.qty),0):c.pax)||0}</td><td>${esc(invoiceDept(i,c)||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
+  return `<tr><td class="inv">${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(invoiceAirlines(i,c)||'-')}</td><td>${esc(c.pic||i.client||'-')}</td><td>${esc((i.items&&i.items[0]&&i.items[0].pnr)||c.pnr||'-')}</td><td>${invoicePax(i)||0}</td><td>${esc(invoiceDept(i,c)||'-')}</td><td>${esc(c.phone||i.phone||'-')}</td><td>${esc(i.sales||c.sales||'-')}</td><td>${date(i.date)}</td><td>${date(i.due)}</td><td>${closingCell(i)}</td><td>${dtdCell(i)}</td><td>${rp(feeTotal)}</td><td>${rp(i.amount)}</td><td>${rp(i.paid)}</td><td>${rp(sisa)}</td><td>${badge(status(i))}</td>
   <td class="rowact">
   <button class="secondary" onclick="previewInvoice('${i.id}')" title="Preview / Cetak">👁</button>
   <button class="secondary" onclick="editInvoice('${i.id}')" title="Edit invoice">✎</button>
@@ -4875,7 +4955,7 @@ function invoiceSheetHTML(i){
       </div>
     </div>
     <div class="sh-foot">
-      <div class="terms"><h4>SYARAT DAN KONDISI :</h4><ol>${TERMS.map(t=>'<li class="'+(t.hl?'term-important':'')+'">'+esc(t.text)+'</li>').join('')}</ol>${i.note?'<p class="note">Catatan: '+esc(i.note)+'</p>':''}</div>
+      <div class="terms"><h4>SYARAT DAN KONDISI :</h4><ol>${invoiceTerms(i).map(t=>'<li class="'+(t.hl?'term-important':'')+'">'+esc(t.text)+'</li>').join('')}</ol>${i.note?'<p class="note">Catatan: '+esc(i.note)+'</p>':''}</div>
       <div class="sign">
         <p>${esc((data.settings&&data.settings.city)||'Yogyakarta')}, ${longDate(i.date)}</p>
         <div class="signarea"><img class="stamp" src="${INVIMG.stamp}" alt="Stempel"><img class="ttd" src="${INVIMG.sign}" alt="Tanda tangan"></div>
@@ -5474,14 +5554,24 @@ function irData(){
     const amount=num(i.amount),paid=num(i.paid);
     const days=i.due?Math.ceil((new Date(i.due+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000):null;
     return {id:v('id')||'-',customer:v('customer')||'-',airlines:v('airlines')||'-',pic:v('pic')||'-',
-      pnr:invoicePnr(i)||'-',pax:num(c.pax??i.pax),dept:v('dept')||'-',phone:v('phone')||'-',sales:v('sales')||'-',
+      pnr:invoicePnr(i)||'-',pax:invoicePax(i),dept:v('dept')||'-',
+      // Tanggal DEPT asli (yyyy-mm-dd) yang diisi manual lewat date picker di
+      // menu Invoice. Ini SUMBER UTAMA untuk filter From-To DEPT, supaya
+      // tidak perlu menebak tahun dari tanggal lain dan hasilnya selalu
+      // sinkron dengan apa yang sudah diset di menu Invoice.
+      deptDateRaw:i.deptDate||'',
+      phone:v('phone')||'-',sales:v('sales')||'-',
       date:v('date'),due:v('due'),closing:v('closing'),days,
       amount,paid,sisa:amount-paid,status:status(i)};
   });
 }
-// Ubah DEPT (mis. 28OCT) menjadi tanggal YYYY-MM-DD memakai tahun dari
-// tanggal invoice / jatuh tempo / closing, supaya bisa difilter From - To.
+// Ubah DEPT (mis. 28OCT) menjadi tanggal YYYY-MM-DD.
+// Prioritas: pakai Tanggal DEPT asli (r.deptDateRaw) yang sudah diisi manual
+// di menu Invoice — ini sumber paling akurat dan sudah pasti sinkron dengan
+// menu Invoice. Baru kalau tidak ada (DEPT masih otomatis dari tiket), tebak
+// tahunnya dari tanggal invoice / jatuh tempo / closing seperti sebelumnya.
 function irDeptDate(r){
+  if(r.deptDateRaw)return r.deptDateRaw;
   const m=String(r.dept||'').toUpperCase().match(/(\d{1,2})\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)/);
   if(!m)return '';
   const MM={JAN:'01',FEB:'02',MAR:'03',APR:'04',MAY:'05',JUN:'06',JUL:'07',AUG:'08',SEP:'09',OCT:'10',NOV:'11',DEC:'12'}[m[2]];
