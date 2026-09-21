@@ -2375,26 +2375,40 @@ function renderInvoices(){
     const deptMonthCode=(deptValue.match(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)$/)||[])[1]||'';
     const deptMonth=deptMonthMap[deptMonthCode]||'';
 
+    // Filter BULAN/TAHUN untuk kolom INVOICE membaca angka bulan/tahun yang
+    // tertanam langsung di nomor invoice, mis. "INV/TIK/2026/09/001" -> tahun
+    // 2026, bulan 09 (September). Nomor invoice adalah sumber kebenaran untuk
+    // "bulan invoice", bukan kolom TANGGAL, karena TANGGAL bisa diisi manual
+    // dan kadang tidak sinkron dengan nomor urut invoice-nya.
+    const idMatch=String(i.id||'').match(/(\d{4})\/(\d{2})\/\d+\s*$/);
+    const idYear=idMatch?idMatch[1]:'';
+    const idMonth=idMatch?idMatch[2]:'';
+
     let dateCandidates;
     if(field==='date') dateCandidates=[i.date||''];
     else if(field==='due') dateCandidates=[i.due||''];
     else if(field==='closing') dateCandidates=[i.closing||c.closing||''];
     else if(field==='dept') dateCandidates=[]; // bulan khusus dibaca dari kode DEPT
-    else dateCandidates=[i.date||'',i.due||'',i.closing||c.closing||''];
+    else if(field==='id') dateCandidates=[]; // bulan khusus dibaca dari nomor invoice
+    // Kolom lain (PNR, Customer, dll): filter Bulan/Tahun mengacu HANYA ke
+    // TANGGAL invoice (i.date), bukan gabungan TANGGAL/JATUH TEMPO/CLOSING.
+    else dateCandidates=[i.date||''];
 
     const matchesMonth=!mf || (
       field==='dept'
         ? deptMonth===mf
-        : (field==='date'||field==='due'||field==='closing')
-          ? dateCandidates.some(d=>d.slice(5,7)===mf)
-          // Kolom lain (PNR, Customer, dll): bulan cocok bila kode bulan DEPT
-          // ATAU salah satu tanggal invoice/jatuh tempo/closing cocok.
-          : (deptMonth===mf || dateCandidates.some(d=>d.slice(5,7)===mf))
+        : field==='id'
+          // Kalau nomor invoice tidak mengikuti pola YYYY/MM/NNN (mis. nomor
+          // lama/manual), fallback ke TANGGAL supaya invoice itu tidak
+          // hilang begitu saja dari daftar.
+          ? (idMatch ? idMonth===mf : (i.date||'').slice(5,7)===mf)
+          : dateCandidates.some(d=>d.slice(5,7)===mf)
     );
 
     // DEPT seperti 14SEP tidak memiliki informasi tahun, sehingga filter tahun
     // tetap menggunakan tanggal invoice/due/closing agar tidak salah menebak tahun.
-    const yearCandidates=[i.date||'',i.due||'',i.closing||c.closing||''];
+    // Untuk kolom INVOICE, tahun juga dibaca dari nomor invoice (idYear) bila ada.
+    const yearCandidates=(field==='id'&&idMatch)?[idYear]:[i.date||'',i.due||'',i.closing||c.closing||''];
     const matchesYear=!yf || yearCandidates.some(d=>d.slice(0,4)===yf);
 
     return matchesSearch && (!f||status(i)===f) && matchesMonth && matchesYear;
