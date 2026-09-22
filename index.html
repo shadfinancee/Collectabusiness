@@ -4264,6 +4264,20 @@ table.bank td{padding:1px 6px 1px 0;font-size:10.5px}
   body.inv-print #preview{display:block!important;position:static;padding:0;background:#fff;overflow:visible}
   body.inv-print #preview .previewbar{display:none!important}
   body.inv-print .sheet{box-shadow:none;margin:0;width:794px;min-height:1122px}
+  /* PERBAIKAN: sebelumnya .sh-footimg memakai margin-top:auto (trik flexbox
+     "menempel di bawah") supaya tampilannya rapi di layar. Saat dicetak,
+     kalau isi invoice (mis. daftar Syarat & Kondisi yang panjang) membuat
+     tinggi total sedikit melebihi 1 halaman A4, trik ini justru mendorong
+     gambar footer sampai ke ujung bawah area yang sudah melewati batas
+     halaman 1 -- dan karena gambar tidak bisa terpotong separuh, browser
+     melempar SELURUH gambar itu ke halaman 2, menyisakan area kosong besar
+     di halaman 1. Untuk cetak, gambar footer dibuat mengalir langsung
+     setelah konten (tanpa jarak otomatis), sehingga posisinya mengikuti
+     akhir konten yang sebenarnya, bukan dipaksa menempel di bawah.
+     .sh-foot (Syarat & Kondisi + tanda tangan) juga dijaga agar tidak
+     terpotong di tengah antar halaman. */
+  body.inv-print .sheet .sh-footimg{margin-top:6px!important}
+  body.inv-print .sheet .sh-foot{page-break-inside:avoid;break-inside:avoid}
   body.inv-print .sheet table.pr th,body.inv-print .sheet table.pr td,
   body.inv-print .sheet table.ip th,body.inv-print .sheet table.ip td,
   body.inv-print .sheet table.sh-items th,body.inv-print .sheet table.sh-items td{border-color:#9b1519!important}
@@ -4987,6 +5001,36 @@ function invoiceSheetHTML(i){
   </div>`;
 }
 let previewingId=null;
+// PERBAIKAN: invoice ini dirancang untuk selalu muat di 1 halaman A4 (header,
+// isi, syarat & kondisi, tanda tangan, dan gambar kontak semuanya jadi satu
+// kesatuan). Masalah "kepotong" yang dilaporkan (gambar footer melompat
+// sendirian ke halaman 2 dengan area kosong besar, lalu tabel PAYMENT
+// RECORD/INFORMATION PAYMENT muncul lagi tergandakan) disebabkan oleh bug
+// lawas Chrome saat mencetak layout flexbox yang terpaksa terbelah ke 2
+// halaman -- ini muncul saat daftar Syarat & Kondisi cukup panjang sehingga
+// tinggi invoice sedikit melebihi 1 halaman A4.
+// Solusinya: setelah invoice dirender, ukur tinggi aslinya. Kalau melebihi
+// tinggi 1 halaman A4 (1122px), invoice diskalakan otomatis secara vertikal
+// supaya selalu pas di 1 halaman -- sehingga TIDAK PERNAH ada halaman ke-2,
+// dan bug print di atas tidak bisa terjadi lagi.
+function fitInvoiceSheetToPage(){
+  const printArea=document.getElementById('printArea');
+  const sheet=printArea&&printArea.querySelector('.sheet');
+  if(!sheet)return;
+  sheet.style.transform='';
+  sheet.style.transformOrigin='';
+  printArea.style.height='';
+  printArea.style.overflow='';
+  const PAGE_H=1122; // tinggi 1 halaman A4 dalam px CSS @96dpi, sama seperti yang dipakai CSS @page cetak
+  const naturalH=sheet.scrollHeight;
+  if(naturalH>PAGE_H){
+    const scale=PAGE_H/naturalH;
+    sheet.style.transform='scaleY('+scale+')';
+    sheet.style.transformOrigin='top';
+    printArea.style.height=PAGE_H+'px';
+    printArea.style.overflow='hidden';
+  }
+}
 function previewInvoice(id){
   let i=data.invoices.find(x=>x.id===id);
   if(!i){alert('Invoice tidak ditemukan.');return}
@@ -4996,10 +5040,14 @@ function previewInvoice(id){
   let miss=(i.pdfMissing||[]);
   document.getElementById('previewTitle').textContent='Preview Invoice — '+i.id+(miss.length?'  •  belum terbaca: '+miss.join(', '):'');
   document.getElementById('preview').classList.add('open');document.body.classList.add('inv-print');
+  requestAnimationFrame(fitInvoiceSheetToPage);
 }
 function editPreviewInvoice(){if(!previewingId)return;let id=previewingId;closePreview();editInvoice(id)}
 function closePreview(){document.getElementById('preview').classList.remove('open');document.body.classList.remove('inv-print')}
-function printInvoice(){window.print()}
+function printInvoice(){fitInvoiceSheetToPage();window.print()}
+// Jaga-jaga kalau user mencetak lewat Ctrl+P (bukan tombol "Print Invoice"),
+// tetap dipastikan invoice muat di 1 halaman sebelum dialog cetak muncul.
+window.addEventListener('beforeprint',fitInvoiceSheetToPage);
 window.addEventListener('keydown',e=>{if(e.key==='Escape')closePreview()});
 
 renderTermsEditor();
