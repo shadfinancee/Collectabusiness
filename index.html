@@ -4304,24 +4304,29 @@ table.bank td{padding:1px 6px 1px 0;font-size:10.5px}
   @page{size:A4;margin:0}
   html,body,body.inv-print,body.inv-print #preview,body.inv-print .sheet,
   body.inv-print .sheet *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  html,body.inv-print{background:#fff;width:794px;min-width:0;margin:0;padding:0}
+  /* Lebar/tinggi halaman cetak dipakai dalam satuan FISIK (mm), bukan px.
+     Sebelumnya pakai 794px (asumsi 96dpi = lebar A4), tapi sebagian WebView
+     di HP Android menghitung konversi px->fisik berbeda saat window.print()
+     dipanggil dari halaman yang punya <meta name="viewport" width=device-width>,
+     sehingga seluruh halaman ikut mengecil/menyusut ke tengah kertas dengan
+     sisa area putih di sekelilingnya. Satuan mm memaksa ukuran fisik yang
+     pasti, sama seperti @page{size:A4} di bawah, sehingga tidak tergantung
+     pada asumsi dpi/skala WebView. */
+  html,body.inv-print{background:#fff;width:210mm;min-height:297mm;min-width:0;margin:0;padding:0}
   body.inv-print>*{display:none!important}
   body.inv-print #preview{display:block!important;position:static;padding:0;background:#fff;overflow:visible}
   body.inv-print #preview .previewbar{display:none!important}
-  body.inv-print .sheet{box-shadow:none;margin:0;width:794px;min-height:1122px}
-  /* PERBAIKAN: sebelumnya .sh-footimg memakai margin-top:auto (trik flexbox
-     "menempel di bawah") supaya tampilannya rapi di layar. Saat dicetak,
-     kalau isi invoice (mis. daftar Syarat & Kondisi yang panjang) membuat
-     tinggi total sedikit melebihi 1 halaman A4, trik ini justru mendorong
-     gambar footer sampai ke ujung bawah area yang sudah melewati batas
-     halaman 1 -- dan karena gambar tidak bisa terpotong separuh, browser
-     melempar SELURUH gambar itu ke halaman 2, menyisakan area kosong besar
-     di halaman 1. Untuk cetak, gambar footer dibuat mengalir langsung
-     setelah konten (tanpa jarak otomatis), sehingga posisinya mengikuti
-     akhir konten yang sebenarnya, bukan dipaksa menempel di bawah.
-     .sh-foot (Syarat & Kondisi + tanda tangan) juga dijaga agar tidak
-     terpotong di tengah antar halaman. */
-  body.inv-print .sheet .sh-footimg{margin-top:6px!important}
+  body.inv-print .sheet{box-shadow:none;margin:0;width:210mm;min-height:297mm}
+  /* PENTING: .sh-footimg memakai margin-top:auto (trik flexbox "menempel di
+     bawah") supaya invoice yang isinya pendek tetap tampil PENUH 1 halaman
+     A4 -- footer nempel di ujung bawah, bukan menggantung di tengah dengan
+     sisa area kosong di bawahnya (ini yang menyebabkan invoice tampak kecil
+     saat dicetak/preview dari HP). Aturan ini HANYA dicabut (footer mengalir
+     langsung setelah konten) ketika JS (fitInvoiceSheetToPage) mendeteksi isi
+     invoice lebih panjang dari 1 halaman A4 dan menandai .sheet dengan class
+     "sheet-tall" -- supaya gambar footer tidak terdorong ke halaman 2 dan
+     menyisakan area kosong besar di halaman 1. */
+  body.inv-print .sheet.sheet-tall .sh-footimg{margin-top:6px!important}
   body.inv-print .sheet .sh-foot{page-break-inside:avoid;break-inside:avoid}
   body.inv-print .sheet table.pr th,body.inv-print .sheet table.pr td,
   body.inv-print .sheet table.ip th,body.inv-print .sheet table.ip td,
@@ -5122,9 +5127,17 @@ function fitInvoiceSheetToPage(){
   sheet.style.transformOrigin='';
   printArea.style.height='';
   printArea.style.overflow='';
+  // Reset dulu ke kondisi "muat 1 halaman" (footer nempel di bawah, invoice
+  // tampil penuh 1 halaman A4) sebelum diukur ulang.
+  sheet.classList.remove('sheet-tall');
   const PAGE_H=1122; // tinggi 1 halaman A4 dalam px CSS @96dpi, sama seperti yang dipakai CSS @page cetak
   const naturalH=sheet.scrollHeight;
   if(naturalH>PAGE_H){
+    // Isi invoice lebih panjang dari 1 halaman A4: tandai .sheet supaya
+    // footer mengalir langsung setelah konten (bukan dipaksa nempel di
+    // bawah), lalu skalakan seluruh invoice supaya tetap muat rapi di 1
+    // halaman cetak.
+    sheet.classList.add('sheet-tall');
     const scale=PAGE_H/naturalH;
     sheet.style.transform='scaleY('+scale+')';
     sheet.style.transformOrigin='top';
