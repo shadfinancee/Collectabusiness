@@ -1776,7 +1776,30 @@ const date=s=>new Date(s+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',
    sehingga jam 07:00 ke bawah / malam hari bisa meleset satu hari. */
 function isoLocal(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`}
 function todayStr(){return isoLocal(new Date())}
-function status(i){let s=i.amount-i.paid;if(s<=0)return'Lunas';let d=Math.ceil((new Date(i.due)-new Date())/86400000);if(d<0)return'Overdue';if(d===0)return'Jatuh Tempo';return'Belum Jatuh Tempo'}
+/* ---------- util selisih hari terpadu (dipakai SEMUA menu: Invoice,
+   Monitoring, Piutang, Aging, Laporan, Reminder WA) ----------
+   Sebelumnya ada beberapa fungsi hitung "hari lagi" yang tersebar dan
+   tidak konsisten: sebagian mem-parsing tanggal jatuh tempo dengan
+   `new Date(i.due)` (dibaca sebagai UTC tengah malam), lalu dibandingkan
+   dengan `new Date(todayStr()+'T00:00:00')` atau `new Date()` (dibaca
+   sebagai waktu LOKAL). Karena WIB = UTC+7, selisih 7 jam itu bisa
+   menyebabkan Math.ceil membulatkan ke atas sehingga invoice yang jatuh
+   tempo HARI INI terbaca "1 hari lagi". Menu Monitoring kebetulan sudah
+   memakai pola parsing yang benar (waDateOnly), makanya hasilnya beda
+   dengan menu Invoice. Sekarang semua menu memakai 2 fungsi ini supaya
+   hasilnya selalu sama persis. */
+function parseLocalDateOnly(s){
+  if(!s)return null;
+  const d=new Date(String(s).slice(0,10)+'T00:00:00');
+  return isNaN(d)?null:d;
+}
+function daysUntil(dateStr){
+  const d=parseLocalDateOnly(dateStr);
+  if(!d)return null;
+  const t=parseLocalDateOnly(todayStr());
+  return Math.round((d-t)/86400000);
+}
+function status(i){let s=i.amount-i.paid;if(s<=0)return'Lunas';let d=daysUntil(i.due);if(d===null)return'Belum Jatuh Tempo';if(d<0)return'Overdue';if(d===0)return'Jatuh Tempo';return'Belum Jatuh Tempo'}
 function badge(s){return `<span class="badge ${s==='Lunas'?'bb':s==='Overdue'?'br':s==='Jatuh Tempo'?'by':'bg'}">${s}</span>`}
 
 /* SORT & FILTER INFRASTRUCTURE */
@@ -2223,7 +2246,7 @@ rows=sortRows(rows,'dashboard',invoiceSortVal);
 document.getElementById('dashRows').innerHTML=rows.slice(0,8).map(rowHTML).join('')||`<tr><td colspan="18" class="empty">${mf?'Tidak ada invoice dengan jatuh tempo pada bulan ini.':'Belum ada invoice.'}</td></tr>`
 }
 /* ---------- days to due ---------- */
-function daysToDue(i){return Math.ceil((new Date(i.due)-new Date(todayStr()+'T00:00:00'))/86400000)}
+function daysToDue(i){return daysUntil(i.due)}
 function dtdCell(i){
   let st=status(i);
   if(st==='Lunas')return '<span class="badge bb">Lunas</span>';
@@ -2839,7 +2862,7 @@ save();refreshAll();
 logActivity('Hapus','Pembayaran','Menghapus pembayaran '+(p.method||'')+' sebesar '+rp(Math.abs(p.amount))+' pada invoice '+(p.invoice||'-'));
 }
 
-function aging(i){let s=i.amount-i.paid;if(s<=0)return 0;return Math.max(0,Math.floor((new Date()-new Date(i.due))/86400000))}
+function aging(i){let s=i.amount-i.paid;if(s<=0)return 0;let d=daysUntil(i.due);return d===null?0:Math.max(0,-d)}
 function agingBuckets(){
 let open=data.invoices.filter(i=>i.amount-i.paid>0),ranges=[[0,30,'0 - 30 Hari','#54ad68'],[31,60,'31 - 60 Hari','#f6b719'],[61,90,'61 - 90 Hari','#f78c0b'],[91,99999,'> 90 Hari','#e1433d']];
 return ranges.map(r=>({label:r[2],color:r[3],value:open.filter(i=>{let a=aging(i);return a>=r[0]&&a<=r[1]}).reduce((x,i)=>x+i.amount-i.paid,0)}));
@@ -2898,9 +2921,9 @@ function addDays(base,n){let x=new Date(base);x.setDate(x.getDate()+n);return x}
 function fmtD(x){return x.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'})}
 function fuOff(i,no){let v=no===1?i.fuOff1:i.fuOff2;v=parseInt(v);return isNaN(v)||v<0?(no===1?7:3):v}
 function fuDates(i){
-let due=new Date(i.due);
-if(isNaN(due))return null;
-let d=Math.ceil((due-new Date())/86400000);
+let due=parseLocalDateOnly(i.due);
+if(!due)return null;
+let d=daysUntil(i.due);
 let o1=fuOff(i,1),o2=fuOff(i,2);
 let f1=addDays(due,-o1);
 let f2=addDays(due,-o2);
@@ -2916,7 +2939,7 @@ save();renderReminders();
 }
 function fuBadge(fuDate,done){
 if(done)return '<span class="badge bg">Selesai</span>';
-let dd=Math.ceil((fuDate-new Date())/86400000);
+let dd=Math.round((fuDate-parseLocalDateOnly(todayStr()))/86400000);
 if(dd<0)return `<span class="badge br">Terlewat ${Math.abs(dd)} hari</span>`;
 if(dd===0)return '<span class="badge by">Follow-up hari ini</span>';
 return `<span class="badge bb">${dd} hari lagi</span>`;
@@ -4437,7 +4460,8 @@ function status(i){
   if(i.docStatus==='Draft')return 'Draft';
   let sisa=(i.amount||0)-(i.paid||0);
   if(sisa<=0)return 'Lunas';
-  let d=Math.ceil((new Date(i.due)-new Date(todayStr()+'T00:00:00'))/86400000);
+  let d=daysUntil(i.due);
+  if(d===null)return 'Terbit';
   if(d<0)return 'Overdue';
   if(d===0)return 'Jatuh Tempo';
   if((i.paid||0)>0)return 'Sebagian Dibayar';
@@ -5317,7 +5341,7 @@ ${d.sisa<=0?'<div class="notice">Invoice sudah LUNAS. Reminder berikutnya otomat
 }
 function waSuggestType(d){
 const due=waDateOnly(d.due);if(!due)return 'H';
-const dd=Math.ceil((due-new Date())/86400000);
+const dd=Math.round((due-parseLocalDateOnly(todayStr()))/86400000);
 let best=WA_TYPES[0];
 WA_TYPES.forEach(t=>{if(Math.abs(t.off-(-dd))<Math.abs(best.off-(-dd)))best=t});
 return best.key;
