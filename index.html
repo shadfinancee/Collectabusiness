@@ -652,6 +652,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .acct-list div:last-child{border-bottom:0}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<!-- Untuk PEMBUATAN PDF INVOICE OTOMATIS di menu Monitoring: html2canvas
+     merender tampilan invoice (sama persis dengan Preview/Print Invoice)
+     menjadi gambar, lalu jsPDF membungkusnya jadi file PDF asli (bukan
+     screenshot) berukuran A4 yang siap diunduh/dicetak langsung. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 /* Autocomplete PNR pada form Catat Pembayaran */
@@ -2860,6 +2866,7 @@ data.payments=data.payments.filter(x=>x.id!==id);
 if(inv)syncInvoicePaymentData(inv);
 save();refreshAll();
 logActivity('Hapus','Pembayaran','Menghapus pembayaran '+(p.method||'')+' sebesar '+rp(Math.abs(p.amount))+' pada invoice '+(p.invoice||'-'));
+if(typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(p.invoice);
 }
 
 function aging(i){let s=i.amount-i.paid;if(s<=0)return 0;let d=daysUntil(i.due);return d===null?0:Math.max(0,-d)}
@@ -3577,6 +3584,11 @@ syncInvoicePaymentData(i);
 const payActionType=oldPay?'Edit':'Tambah';
 save();closeModal();refreshAll();
 logActivity(payActionType,'Pembayaran',(payActionType==='Tambah'?'Mencatat':'Mengubah')+' pembayaran invoice '+i.id+' sebesar '+rp(Math.abs(amt))+(amt<0?' (pengurangan/refund)':''));
+// PDF INVOICE OTOMATIS: pembayaran ikut mengubah Total Payment/sisa tagihan
+// yang tampil di PDF, jadi PDF invoice terkait harus dibangun ulang supaya
+// tidak pernah menampilkan data lama dibanding menu Invoice/Pembayaran.
+if(oldInvoiceId&&oldInvoiceId!==i.id&&typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(oldInvoiceId);
+if(typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(i.id);
 }
 
 function setNav(k){
@@ -3990,7 +4002,7 @@ async function importPDF(){
   if(!files.length){alert('Pilih satu atau beberapa file PDF invoice terlebih dahulu.');return}
   const preview=document.getElementById('importPreview');
   preview.innerHTML='<div class="notice">⏳ Sedang membaca PDF dan menyusun ulang invoice...</div>';
-  let addedInv=0, updatedInv=0, addedCust=0, failed=[];
+  let addedInv=0, updatedInv=0, addedCust=0, failed=[], pdfFailed=[];
   const imported=[];
   for(const file of files){
     try{
@@ -4000,7 +4012,17 @@ async function importPDF(){
         failed.push(file.name+' (No Invoice tidak terbaca)');
         continue;
       }
-      try{await waSavePdf(inv.id,file)}catch(e){}
+      // PENTING: sebelumnya kegagalan menyimpan PDF di sini ditelan diam-diam
+      // (waSavePdf tidak pernah melempar error / tidak mengembalikan status),
+      // sehingga sebuah invoice bisa berhasil dibuat di menu Invoice TAPI
+      // PDF aslinya gagal tersimpan -- akibatnya di menu Monitoring invoice
+      // itu tampil "belum ada PDF" tanpa ada peringatan apa pun ke user.
+      // Sekarang keberhasilannya dicek lewat nilai balik waSavePdf, dan
+      // kegagalannya dicatat lalu ditampilkan di ringkasan hasil impor,
+      // supaya user tahu invoice mana yang PDF-nya perlu diunggah ulang
+      // (bisa langsung dari tombol "Unggah PDF" di menu Monitoring).
+      const pdfOk=await waSavePdf(inv.id,file);
+      if(!pdfOk)pdfFailed.push(inv.id+' ('+file.name+')');
       const items=(inv.items&&inv.items.length)?inv.items.map(x=>({desc:x.desc||'',pnr:x.pnr||'',flights:x.flights||'',qty:num(x.qty),rate:num(x.rate),fee:num(x.fee)}))
         :[{desc:'',pnr:'',flights:'',qty:0,rate:0,fee:0}];
       /* Jika PDF hanya memuat AMOUNT (tanpa RATE per pax), turunkan rate dari amount apa adanya. */
@@ -4118,7 +4140,7 @@ async function importPDF(){
       </div>
     </div>`;
   }).join('');
-  preview.innerHTML=`<div class="notice"><b>Impor PDF selesai.</b> ${addedInv} invoice baru, ${updatedInv} invoice diperbarui, ${addedCust} customer/travel baru.${failed.length?'<br><b>File tidak terbaca:</b> '+esc(failed.join(', ')):''}</div>${cards}`;
+  preview.innerHTML=`<div class="notice"><b>Impor PDF selesai.</b> ${addedInv} invoice baru, ${updatedInv} invoice diperbarui, ${addedCust} customer/travel baru.${failed.length?'<br><b>File tidak terbaca:</b> '+esc(failed.join(', ')):''}${pdfFailed.length?'<br><b>⚠ PDF gagal disimpan (invoice tetap dibuat, tapi PDF-nya belum tersimpan):</b> '+esc(pdfFailed.join(', '))+'. Unggah ulang PDF-nya dari menu Monitoring.':''}</div>${cards}`;
   if(imported.length)previewInvoice(imported[0].rec.id);
 }
 
@@ -4320,7 +4342,55 @@ table.bank td{padding:1px 6px 1px 0;font-size:10.5px}
   body.inv-print .sheet .signarea .ttd{position:absolute!important;display:block!important;width:128px!important;max-width:none!important;left:10px!important;bottom:-2px!important;z-index:1!important}
   body.inv-print .sheet .signarea .stamp{position:absolute!important;display:block!important;width:105px!important;right:25px!important;bottom:-9px!important;z-index:2!important}
 }
-@media(max-width:860px){.sheet{transform:scale(.62);transform-origin:top center;margin-bottom:-380px}}
+/* ===== PREVIEW INVOICE — RESPONSIVE MOBILE (screen only) =====
+   Sebelumnya versi mobile memakai transform:scale() pada .sheet yang masih
+   berukuran tetap 794px (lebar A4). transform tidak mengubah ukuran kotak
+   pada layout, jadi .preview yang overflow:auto akan tetap menyediakan area
+   selebar 794px dan memaksa user scroll ke kanan (persis seperti pada
+   screenshot laporan). Diganti dengan layout responsif sungguhan: lebar
+   .sheet mengikuti layar (width:100%, max-width:794px), padding/ukuran font
+   diperkecil bertahap, dan blok yang tadinya berdampingan (sh-top, sh-mid,
+   sh-foot) ditumpuk vertikal supaya tidak ada elemen yang keluar dari layar.
+   Dibungkus "@media screen" (bukan sekadar @media(max-width:...)) supaya
+   SAMA SEKALI tidak memengaruhi @media print / cetak A4 di atas maupun
+   tampilan desktop (yang hanya aktif di atas 860px). */
+@media screen and (max-width:860px){
+  .preview{padding:12px 0;overflow-x:hidden}
+  .previewbar{max-width:100%;margin:0 auto 12px;flex-wrap:wrap;padding:10px 12px;border-radius:0}
+  .previewbar h2{flex:1 1 100%;order:-1;margin-bottom:6px}
+  #printArea{width:100%;display:flex;justify-content:center;overflow-x:hidden;box-sizing:border-box}
+  .sheet{
+    width:100%;
+    max-width:794px;
+    min-height:0;
+    box-shadow:0 4px 18px rgba(0,0,0,.2);
+    box-sizing:border-box;
+  }
+  .sh-body{padding:14px 14px 10px;box-sizing:border-box}
+  .sh-title h1{font-size:19px;letter-spacing:1.5px}
+  .sh-title p{font-size:9.5px}
+  .sh-stat{position:static;display:inline-block;margin:6px 0 0}
+  .sh-top{flex-direction:column;gap:10px}
+  .sh-top .billto,.sh-top .duebox{width:100%}
+  table.sh-items{font-size:9.5px}
+  table.sh-items th,table.sh-items td{padding:5px 4px;font-size:9.5px;word-break:break-word}
+  table.sh-items td.r,table.sh-items .desc .fl span{white-space:normal!important}
+  .sh-mid{flex-direction:column;gap:10px}
+  .sh-mid .infobox{flex:1 1 auto;width:100%;min-width:0}
+  table.pr th,table.pr td,table.ip th,table.ip td{font-size:9px;padding:4px 5px;word-break:break-word}
+  table.pr .r,table.ip .r{white-space:normal!important}
+  .sh-foot{flex-direction:column;gap:12px}
+  .sh-foot .sign{flex:1 1 auto;width:100%}
+  .signarea{height:78px}
+  .signarea .ttd{width:100px}
+  .signarea .stamp{width:82px}
+}
+@media screen and (max-width:420px){
+  .sh-title h1{font-size:16px;letter-spacing:1px}
+  table.sh-items th,table.sh-items td{font-size:8.7px;padding:4px 3px}
+  table.pr th,table.pr td,table.ip th,table.ip td{font-size:8.3px;padding:3px 4px}
+  .sh-foot .terms li{font-size:8.7px}
+}
 .sheet table{min-width:0!important;table-layout:fixed}
 .sheet table.bank,.sheet .sh-top table{table-layout:auto}
 .sheet table.ip{table-layout:fixed}
@@ -4935,6 +5005,13 @@ function submitInvoice(e){
   const invActionType=old?'Edit':'Tambah';
   save();closeModal();refreshAll();
   logActivity(invActionType,'Invoice',(invActionType==='Tambah'?'Membuat':'Mengubah')+' invoice '+rec.id+' untuk '+(rec.customer||'-')+' sebesar '+rp(rec.amount));
+  // PDF INVOICE OTOMATIS: setiap invoice disimpan (baru maupun diedit),
+  // langsung buatkan ulang file PDF-nya dari data invoice TERBARU supaya
+  // menu Monitoring selalu punya PDF yang siap dilihat/diunduh tanpa perlu
+  // diunggah manual. force:true supaya PDF lama (termasuk hasil impor/
+  // unggah manual sebelumnya, kalau ada) ikut DIGANTIKAN mengikuti
+  // perubahan invoice ini -- bukan menumpuk jadi beberapa file.
+  if(typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(rec.id);
 }
 function refreshAll(){
   renderDashboard();renderInvoices();renderReceivables();renderPayments();renderAging();renderReminders();renderCustomers();
@@ -5157,7 +5234,23 @@ WA_TYPES.forEach(t=>{if(data.waSettings.enabled[t.key]===undefined)data.waSettin
 }
 waInit();
 
-/* ---------- Penyimpanan file PDF invoice (IndexedDB) ---------- */
+/* ---------- Penyimpanan file PDF invoice (cache lokal IndexedDB + Supabase Storage) ---------- */
+// PERBAIKAN PENTING: sebelumnya file PDF HANYA disimpan di IndexedDB, yaitu
+// penyimpanan LOKAL milik satu browser/komputer saja. Sementara itu data
+// invoice (data.waPdfIndex dkk) ikut tersinkron ke Supabase bersama seluruh
+// data lain lewat save()->pushCloudState(). Akibatnya: invoice yang dibuat
+// atau di-generate PDF-nya di komputer A akan tercatat "sudah punya PDF" di
+// SEMUA perangkat (karena data-nya sinkron), padahal berkas PDF aslinya
+// hanya ada di IndexedDB komputer A -- begitu dibuka dari komputer/HP lain,
+// sistem gagal menemukan berkasnya dan menampilkan "PDF belum tersedia,
+// silakan unggah manual" walau invoicenya sendiri ada dan lengkap.
+// Sekarang setiap PDF yang dibuat juga diunggah ke Supabase Storage (bucket
+// SUPABASE_PDF_BUCKET) dan path-nya disimpan di data.invoicePdf[noInvoice]
+// -- field ini ikut tersinkron cloud seperti data lain, sehingga PDF bisa
+// diambil ulang dari perangkat manapun. IndexedDB tetap dipakai sebagai
+// cache lokal supaya buka PDF yang sudah pernah dibuka tetap cepat & bisa
+// offline.
+const SUPABASE_PDF_BUCKET='invoice-pdfs';
 let waDbP=null;
 function waDb(){
 if(waDbP)return waDbP;
@@ -5170,32 +5263,323 @@ return waDbP;
 }
 function waPdfKey(id){return String(id||'').trim().toUpperCase()}
 function waPdfName(id){return String(id||'invoice').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')+'.pdf'}
-async function waSavePdf(id,file){
-if(!id||!file)return;
+// Path Supabase Storage untuk PDF invoice ini. Memakai NOMOR INVOICE (bukan
+// nama file) sebagai identitas unik, persis seperti diminta -- jadi satu
+// invoice = satu path tetap, walau nama file tampilannya berubah (mis.
+// setelah PNR diketahui).
+function waPdfCloudPath(id){return 'invoices/'+encodeURIComponent(waPdfKey(id))+'.pdf'}
+async function waSaveLocalPdf(id,file){
 try{
 const db=await waDb();
 const buf=await file.arrayBuffer();
 await new Promise((res,rej)=>{const tx=db.transaction('pdf','readwrite');tx.objectStore('pdf').put({name:file.name||waPdfName(id),type:'application/pdf',size:buf.byteLength,buf},waPdfKey(id));tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
+return true;
+}catch(e){console.warn('Gagal menyimpan PDF invoice ke cache lokal',e);return false}
+}
+async function waSaveCloudPdf(id,file){
+try{
+const sb=getSupabaseClient();
+if(!sb)return false;
+const path=waPdfCloudPath(id);
+const {error}=await sb.storage.from(SUPABASE_PDF_BUCKET).upload(path,file,{upsert:true,contentType:'application/pdf',cacheControl:'3600'});
+if(error)throw error;
+if(!data.invoicePdf)data.invoicePdf={};
+data.invoicePdf[waPdfKey(id)]={path,name:file.name||waPdfName(id),updatedAt:new Date().toISOString()};
+return true;
+}catch(e){console.warn('Gagal mengunggah PDF invoice ke Supabase Storage (bucket "'+SUPABASE_PDF_BUCKET+'" mungkin belum dibuat)',e);return false}
+}
+async function waSavePdf(id,file){
+if(!id||!file)return false;
+// PERBAIKAN: sebelumnya fungsi ini menelan error tanpa mengembalikan status
+// apa pun, sehingga pemanggilnya (Impor PDF maupun Unggah PDF manual) TIDAK
+// PERNAH tahu kalau penyimpanan gagal. Sekarang mengembalikan true/false,
+// dan mencoba menyimpan ke cache lokal DAN ke cloud secara paralel supaya
+// PDF tetap bisa diakses dari perangkat lain walau salah satunya gagal.
+const [localOk,cloudOk]=await Promise.all([waSaveLocalPdf(id,file),waSaveCloudPdf(id,file)]);
+if(localOk||cloudOk){
 if(!data.waPdfIndex)data.waPdfIndex={};
 data.waPdfIndex[waPdfKey(id)]=file.name||waPdfName(id);
 save();
-}catch(e){console.warn('Gagal menyimpan PDF invoice',e)}
 }
-async function waGetPdf(id){
+return localOk||cloudOk;
+}
+async function waGetLocalPdf(id){
 try{
 const db=await waDb();
 return await new Promise((res,rej)=>{const tx=db.transaction('pdf','readonly');const q=tx.objectStore('pdf').get(waPdfKey(id));q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)});
 }catch(e){return null}
 }
-function waHasPdf(id){return !!(data.waPdfIndex&&data.waPdfIndex[waPdfKey(id)])}
-async function waDownloadPdf(id){
-const rec=await waGetPdf(id);
-if(!rec){alert('File PDF invoice belum tersedia untuk '+id+'. Silakan unggah PDF invoice terlebih dahulu.');return false}
+async function waFetchCloudPdf(id){
+try{
+const sb=getSupabaseClient();
+if(!sb)return null;
+const info=data.invoicePdf&&data.invoicePdf[waPdfKey(id)];
+const path=info&&info.path?info.path:waPdfCloudPath(id);
+const {data:blobData,error}=await sb.storage.from(SUPABASE_PDF_BUCKET).download(path);
+if(error||!blobData)return null;
+const buf=await blobData.arrayBuffer();
+const rec={name:(info&&info.name)||waPdfName(id),type:'application/pdf',size:buf.byteLength,buf};
+waSaveLocalPdf(id,new File([buf],rec.name,{type:'application/pdf'})); // simpan salinan cache lokal, tanpa menunggu
+return rec;
+}catch(e){console.warn('Gagal mengambil PDF invoice dari Supabase Storage',e);return null}
+}
+// Ambil PDF invoice: coba cache lokal dulu (cepat), kalau tidak ada (mis.
+// invoice ini dibuat/di-generate di komputer atau HP lain) ambil dari
+// Supabase Storage berdasarkan NOMOR INVOICE.
+async function waGetPdf(id){
+const local=await waGetLocalPdf(id);
+if(local)return local;
+return await waFetchCloudPdf(id);
+}
+function waHasPdf(id){
+const k=waPdfKey(id);
+return !!(data.waPdfIndex&&data.waPdfIndex[k])||!!(data.invoicePdf&&data.invoicePdf[k]);
+}
+// Ganti nama file PDF yang SUDAH tersimpan (tanpa perlu membuat ulang isi
+// PDF-nya) -- dipakai untuk merapikan PDF lama yang masih memakai nama
+// format lama ("...TIK...") begitu PNR asli invoicenya sudah diketahui.
+async function waRenameStoredPdf(id,newName){
+let ok=false;
+try{
+const db=await waDb();
+const rec=await new Promise((res,rej)=>{const tx=db.transaction('pdf','readonly');const q=tx.objectStore('pdf').get(waPdfKey(id));q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)});
+if(rec){
+rec.name=newName;
+await new Promise((res,rej)=>{const tx=db.transaction('pdf','readwrite');tx.objectStore('pdf').put(rec,waPdfKey(id));tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
+ok=true;
+}
+}catch(e){}
+if(data.invoicePdf&&data.invoicePdf[waPdfKey(id)]){data.invoicePdf[waPdfKey(id)].name=newName;ok=true}
+if(!ok)return false;
+if(!data.waPdfIndex)data.waPdfIndex={};
+data.waPdfIndex[waPdfKey(id)]=newName;
+save();
+return true;
+}
+async function waDownloadPdf(id,opts){
+opts=opts||{};
+let rec=await waGetPdf(id);
+if(!rec){
+// PERBAIKAN: sebelumnya kalau catatan PDF (index lokal ATAU cloud) masih
+// mencatat invoice ini "punya PDF" padahal berkas aslinya sudah tidak
+// dapat ditemukan (mis. cache lokal kosong & Storage belum sempat
+// terunggah), tombol PDF tetap tampil normal tapi begitu diklik selalu
+// gagal dengan alert "belum tersedia, silakan unggah manual" -- padahal
+// datanya sendiri ADA di menu Invoice. Sekarang sebelum menyerah, coba
+// buat ulang PDF-nya secara OTOMATIS langsung dari data invoice terbaru
+// (sama seperti saat invoice pertama kali disimpan), baru kalau itu pun
+// tetap gagal (mis. datanya memang belum lengkap) tampilkan pesan unggah
+// manual.
+const ok=await autoBuildInvoicePdf(id,{force:true});
+if(ok)rec=await waGetPdf(id);
+}
+if(!rec){alert('File PDF invoice belum tersedia untuk '+id+' dan gagal dibuat otomatis. Silakan unggah PDF invoice terlebih dahulu.');return false}
 const blob=new Blob([rec.buf],{type:'application/pdf'});
 const url=URL.createObjectURL(blob);
+if(opts.mode==='view'){
+window.open(url,'_blank');
+setTimeout(()=>URL.revokeObjectURL(url),60000);
+}else{
 const a=document.createElement('a');a.href=url;a.download=rec.name||waPdfName(id);document.body.appendChild(a);a.click();a.remove();
 setTimeout(()=>URL.revokeObjectURL(url),4000);
+}
 return true;
+}
+// Tombol "Lihat PDF": buka PDF invoice langsung di tab baru. Kalau sudah ada
+// di Supabase Storage, pakai signed URL (cepat, tidak perlu unduh penuh ke
+// memori dulu); kalau belum (mis. cloud belum terkonfigurasi/belum sempat
+// terunggah), pakai salinan lokal atau buat ulang otomatis lewat waDownloadPdf.
+async function waViewPdf(id){
+const info=data.invoicePdf&&data.invoicePdf[waPdfKey(id)];
+if(info&&info.path){
+try{
+const sb=getSupabaseClient();
+if(sb){
+const {data:signed,error}=await sb.storage.from(SUPABASE_PDF_BUCKET).createSignedUrl(info.path,3600);
+if(!error&&signed&&signed.signedUrl){window.open(signed.signedUrl,'_blank');return true}
+}
+}catch(e){console.warn('Gagal membuat signed URL PDF, coba salinan lokal/generate ulang',e)}
+}
+return waDownloadPdf(id,{mode:'view'});
+}
+
+// Nama file PDF invoice: sebelumnya mengikuti apa adanya No. Invoice
+// (contoh No. Invoice "INV/TIK/2026/09/016" -> "INV_TIK_2026_09_016.pdf",
+// dengan "TIK" hanya kode tetap jenis invoice, BUKAN nomor PNR asli).
+// Sekarang segmen kedua itu diganti dengan PNR SEBENARNYA dari invoice
+// (mis. "884HSU"), sehingga hasilnya "INV_884HSU_2026_09_016.pdf" --
+// tahun/bulan/nomor urut tetap sama seperti No. Invoice aslinya, HANYA
+// kode "TIK" yang diganti PNR. Ini hanya memengaruhi NAMA FILE PDF, No.
+// Invoice yang tersimpan di sistem tidak berubah.
+function waPdfDisplayName(inv){
+const rawId=String((inv&&inv.id)||'');
+const pnrRaw=(typeof invoicePnrAll==='function'?(invoicePnrAll(inv)[0]||''):'')||(inv&&inv.items&&inv.items[0]&&inv.items[0].pnr)||'';
+const pnr=String(pnrRaw).trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+const parts=rawId.split('/').filter(Boolean);
+if(parts.length>=2&&/^INV$/i.test(parts[0])){
+if(pnr)parts[1]=pnr;
+return 'INV_'+parts.slice(1).join('_')+'.pdf';
+}
+const base=rawId.replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')||'invoice';
+return (pnr?'INV_'+pnr+'_':'')+base+'.pdf';
+}
+
+/* ---------- PEMBUATAN PDF INVOICE OTOMATIS ---------- */
+// Ide: setiap kali invoice ditambah/diedit di menu Invoice, sistem langsung
+// merender ulang tampilan invoice (persis seperti Preview/Print Invoice)
+// menjadi file PDF asli (bukan screenshot biasa -- tetap bisa di-zoom dan
+// tetap rapi saat dicetak) lalu menyimpannya ke penyimpanan PDF yang sama
+// dipakai menu Monitoring. Dengan begitu menu Monitoring TIDAK PERLU lagi
+// menunggu PDF diunggah manual -- kolom "FILE INVOICE PDF" otomatis terisi
+// dan siap dilihat/diunduh langsung dari invoice terbaru.
+// PERBAIKAN UTAMA: sebelumnya PDF dibuat dari salinan tampilan invoice yang
+// terpisah (elemen tersembunyi sendiri), sehingga bisa terlihat SEDIKIT
+// berbeda dari tampilan "Preview Invoice" asli di menu Invoice (mis. warna
+// merah header, garis tabel, posisi tanda tangan/stempel). Sekarang PDF
+
+// dibuat dengan cara memakai ULANG elemen #printArea & #preview yang PERSIS
+// SAMA dipakai tombol "Preview Invoice" -- hanya ditempatkan jauh di luar
+// layar (tidak terlihat user) selagi difoto -- sehingga hasil PDF dijamin
+// 100% identik dengan yang tampil di menu Invoice. fitInvoiceSheetToPage()
+// (fungsi yang sama dipakai Preview/Print Invoice) juga tetap dipanggil
+// supaya invoice yang panjang tetap otomatis pas dalam 1 halaman A4, sama
+// seperti saat di-preview/print manual.
+async function _generateInvoicePdfBlobImpl(inv){
+if(!window.html2canvas||!window.jspdf||!window.jspdf.jsPDF)throw new Error('Pustaka pembuat PDF belum termuat (periksa koneksi internet).');
+if(typeof syncInvoiceAmount==='function')syncInvoiceAmount(inv);
+const previewEl=document.getElementById('preview');
+const printArea=document.getElementById('printArea');
+if(!previewEl||!printArea)throw new Error('Area cetak invoice tidak ditemukan.');
+// Simpan kondisi tampilan Preview Invoice yang sedang berjalan (kalau user
+// kebetulan sedang membuka Preview Invoice secara manual di saat bersamaan)
+// supaya bisa dikembalikan persis seperti semula setelah PDF selesai dibuat.
+const prevHTML=printArea.innerHTML;
+const prevWasOpen=previewEl.classList.contains('open');
+const prevStyleAttr=previewEl.getAttribute('style');
+try{
+printArea.innerHTML=invoiceSheetHTML(inv);
+// Tampilkan #preview memakai style yang sama seperti kelas "open", TAPI
+// digeser jauh ke luar layar supaya user tidak melihat kedipan apa pun.
+previewEl.style.cssText='display:block!important;position:fixed;left:-10050px;top:0;right:auto;background:none;padding:22px 12px;overflow:visible;z-index:-1';
+const sheet=printArea.querySelector('.sheet');
+if(!sheet)throw new Error('Tampilan invoice tidak ditemukan.');
+const imgs=Array.from(sheet.querySelectorAll('img'));
+await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=img.onerror=res})));
+await new Promise(res=>requestAnimationFrame(()=>requestAnimationFrame(res)));
+if(typeof fitInvoiceSheetToPage==='function')fitInvoiceSheetToPage();
+// scale 3 + PNG (lossless) supaya hasil PDF tajam/HD, bukan buram seperti JPEG kualitas rendah
+const canvas=await html2canvas(sheet,{scale:3,useCORS:true,backgroundColor:'#ffffff'});
+const imgData=canvas.toDataURL('image/png');
+const {jsPDF}=window.jspdf;
+const pdf=new jsPDF({unit:'mm',format:'a4',orientation:'portrait',compress:true});
+pdf.addImage(imgData,'PNG',0,0,210,297,undefined,'FAST');
+return pdf.output('blob');
+}finally{
+// Kembalikan #printArea & #preview persis seperti sebelum PDF dibuat.
+printArea.innerHTML=prevHTML;
+if(prevStyleAttr===null)previewEl.removeAttribute('style');else previewEl.setAttribute('style',prevStyleAttr);
+previewEl.classList.toggle('open',prevWasOpen);
+}
+}
+// Antrean supaya pembuatan PDF berjalan SATU PER SATU. #printArea/#preview
+// dipakai bersama untuk semua invoice, jadi kalau beberapa PDF dibuat
+// otomatis dalam waktu bersamaan (mis. saat pertama kali membuka menu
+// Monitoring dengan banyak invoice lama yang belum punya PDF), prosesnya
+// harus antre supaya tidak saling menimpa tampilan satu sama lain.
+let _pdfGenQueue=Promise.resolve();
+function generateInvoicePdfBlob(inv){
+const run=()=>_generateInvoicePdfBlobImpl(inv);
+const result=_pdfGenQueue.then(run,run);
+_pdfGenQueue=result.then(()=>{},()=>{});
+return result;
+}
+// Set penanda proses berjalan/gagal supaya Monitoring tidak berulang kali
+// mencoba membuat PDF yang sama di setiap render, dan supaya user bisa
+// menekan "Coba lagi otomatis" kalau pembuatannya sempat gagal (mis. PC
+// sedang offline saat invoice disimpan).
+const waPdfAutoInFlight=new Set();
+const waPdfAutoFailed=new Set();
+const waPdfRenamePending=new Set();
+// PERBAIKAN: verifikasi proaktif untuk invoice yang index-nya (data.waPdfIndex)
+// mencatat "sudah punya PDF" padahal berkas aslinya sebenarnya sudah hilang
+// dari penyimpanan (mis. INV/TIK/2026/09/015 -- tombol PDF tampil tapi saat
+// diklik selalu gagal). waPdfVerified: id yang sudah dipastikan berkasnya
+// benar-benar ada. waPdfIndexStale: id yang ketahuan indexnya "bohong" dan
+// sedang/​sudah dibangun ulang otomatis dari data invoice terbaru.
+const waPdfVerified=new Set();
+const waPdfVerifying=new Set();
+const waPdfIndexStale=new Set();
+function waVerifyPdfPresence(id){
+if(waPdfVerified.has(id)||waPdfVerifying.has(id)||waPdfIndexStale.has(id))return;
+waPdfVerifying.add(id);
+waGetPdf(id).then(rec=>{
+waPdfVerifying.delete(id);
+if(rec){waPdfVerified.add(id);return}
+// Index bilang ada tapi berkasnya tidak ditemukan (baik di cache lokal
+// maupun di Supabase Storage) -> hapus catatan index yang salah, lalu
+// bangun ulang PDF-nya OTOMATIS dari invoice terbaru (menu Invoice) persis
+// seperti invoice yang belum pernah punya PDF.
+if(data.waPdfIndex)delete data.waPdfIndex[waPdfKey(id)];
+if(data.invoicePdf)delete data.invoicePdf[waPdfKey(id)];
+save();
+waPdfIndexStale.add(id);
+autoBuildInvoicePdf(id,{force:true}).then(ok=>{
+waPdfIndexStale.delete(id);
+if(ok)waPdfVerified.add(id);else waPdfAutoFailed.add(id);
+if(typeof renderWaReminder==='function')renderWaReminder();
+});
+if(typeof renderWaReminder==='function')renderWaReminder();
+});
+}
+async function autoBuildInvoicePdf(id,opts){
+opts=opts||{};
+const inv=data.invoices.find(x=>x.id===id);
+if(!inv)return false;
+if(!opts.force&&waHasPdf(id))return true;
+try{
+const blob=await generateInvoicePdfBlob(inv);
+const file=new File([blob],waPdfDisplayName(inv),{type:'application/pdf'});
+// waSavePdf menyimpan dengan KEY/PATH yang sama persis (Nomor Invoice),
+// baik di cache lokal (IndexedDB put) maupun Supabase Storage (upload
+// upsert:true) -- sehingga PDF LAMA (termasuk hasil impor/unggah manual
+// sebelumnya) OTOMATIS TERGANTI oleh PDF baru ini, bukan menumpuk jadi
+// beberapa file untuk invoice yang sama.
+const ok=await waSavePdf(id,file);
+return ok;
+}catch(e){
+console.warn('Gagal membuat PDF otomatis untuk invoice',id,e);
+return false;
+}
+}
+// Titik panggil TUNGGAL untuk memicu pembuatan ulang PDF di latar belakang
+// setiap kali data yang memengaruhi isi invoice berubah -- bukan hanya saat
+// invoice ditambah/diedit di menu Invoice, tapi juga saat pembayaran
+// ditambah/diedit/dihapus lewat menu Pembayaran (sebelumnya PDF TIDAK ikut
+// diperbarui pada kasus ini, sehingga PDF di Monitoring bisa menampilkan
+// Total Payment/sisa tagihan yang sudah kedaluwarsa dibanding menu Invoice).
+// force:true supaya PDF lama (apa pun sumbernya) selalu digantikan dengan
+// versi terbaru dari data invoice saat ini.
+function queueAutoInvoicePdfRebuild(id){
+if(!id)return;
+waPdfAutoFailed.delete(id);
+waPdfVerified.delete(id);
+if(waPdfAutoInFlight.has(id))return;
+waPdfAutoInFlight.add(id);
+autoBuildInvoicePdf(id,{force:true}).then(ok=>{
+waPdfAutoInFlight.delete(id);
+if(!ok)waPdfAutoFailed.add(id);else waPdfVerified.add(id);
+if(typeof renderWaReminder==='function')renderWaReminder();
+}).catch(()=>{waPdfAutoInFlight.delete(id);waPdfAutoFailed.add(id)});
+}
+function waRetryAutoPdf(id){
+waPdfAutoFailed.delete(id);
+if(waPdfAutoInFlight.has(id))return;
+waPdfAutoInFlight.add(id);
+autoBuildInvoicePdf(id,{force:true}).then(ok=>{
+waPdfAutoInFlight.delete(id);
+if(!ok){waPdfAutoFailed.add(id);alert('Gagal membuat PDF otomatis untuk invoice '+id+'. Pastikan data invoice sudah lengkap, atau unggah PDF secara manual.');}
+if(typeof renderWaReminder==='function')renderWaReminder();
+});
 }
 
 /* ---------- Data invoice untuk reminder ---------- */
@@ -5215,7 +5599,7 @@ keberangkatan:invFlightInfo(i,c),
 sisa,sisaText:rp(sisa),
 due:i.due,dueText:i.due?date(i.due):'-',
 status:status(i),
-pdfName:(data.waPdfIndex&&data.waPdfIndex[waPdfKey(i.id)])||waPdfName(i.id),
+pdfName:(data.waPdfIndex&&data.waPdfIndex[waPdfKey(i.id)])||(data.invoicePdf&&data.invoicePdf[waPdfKey(i.id)]&&data.invoicePdf[waPdfKey(i.id)].name)||waPdfName(i.id),
 hasPdf:waHasPdf(i.id)
 };
 }
@@ -5352,8 +5736,21 @@ navigator.clipboard.writeText(waBuildMessage(waCurrent.id,waCurrent.type)).then(
 async function waUploadPdf(id){
 const f=document.getElementById('waPdfInput')?.files?.[0];
 if(!f)return;
-await waSavePdf(id,f);
+const ok=await waSavePdf(id,f);
+if(!ok)alert('Gagal menyimpan PDF invoice. Coba unggah ulang.');
 openWaReminder(id,waCurrent.type);
+}
+// Unggah cepat PDF invoice langsung dari tabel Monitoring (tanpa perlu buka
+// modal reminder dulu). Dipakai oleh tombol "Unggah PDF" pada baris yang
+// masih menampilkan "belum ada PDF" -- ini biasanya terjadi kalau invoice
+// dibuat manual (bukan dari Impor PDF) atau proses impor PDF-nya gagal
+// menyimpan file (lihat catatan pada waSavePdf/importPdfFile).
+async function waQuickUploadPdf(id,inputEl){
+const f=inputEl&&inputEl.files&&inputEl.files[0];
+if(!f)return;
+const ok=await waSavePdf(id,f);
+if(!ok)alert('Gagal menyimpan PDF invoice. Coba unggah ulang.');
+if(typeof renderWaReminder==='function')renderWaReminder();
 }
 async function waSend(id){
 const d=waInvoiceInfo(id);
@@ -5493,7 +5890,7 @@ function waDaysToDue(due){const d=waDateOnly(due);if(!d)return null;const t=waDa
 function waDueInfo(i){
 const sisa=(i.amount||0)-(i.paid||0);
 const dd=waDaysToDue(i.due);
-if(sisa<=0)return {key:'LUNAS',label:'LUNAS',type:'',days:dd,info:'Sudah dibayar penuh',cls:'bb',stop:true};
+if(sisa<=0)return {key:'LUNAS',label:'LUNAS',type:'',days:dd,info:'',cls:'bb',stop:true};
 if(dd===null)return {key:'',label:'Tanpa Jatuh Tempo',type:'H',days:null,info:'Tanggal jatuh tempo belum diisi',cls:'bgray',stop:false};
 if(dd<0){
 const late=Math.abs(dd);
@@ -5548,14 +5945,71 @@ return `<tr>
 <td>${d.phone?'+'+d.phone:'<span style="color:var(--red2)">belum ada</span>'}</td>
 <td>${rp((i.amount||0)-(i.paid||0))}</td>
 <td>${i.due?date(i.due):'-'}</td>
-<td><span class="badge ${du.cls}">${du.label}</span><div class="muted" style="font-size:11px;margin-top:3px">${du.info}</div></td>
-<td>${du.stop?'<span class="badge bgray">Dihentikan</span><div class="muted" style="font-size:11px;margin-top:3px">Invoice lunas</div>':waStatusBadge(rem.status==='Belum Dikirim'?'Pending':rem.status)+(rem.status==='Belum Dikirim'?'<div class="muted" style="font-size:11px;margin-top:3px">Belum dikirim</div>':'')}</td>
-<td>${d.hasPdf?`<button class="secondary" onclick="waDownloadPdf('${i.id}')" title="Unduh PDF invoice">📎 ${esc(d.pdfName)}</button>`:'<span class="muted">belum ada PDF</span>'}</td>
+<td><span class="badge ${du.cls}">${du.label}</span></td>
+<td>${du.stop?'<span class="badge bgray">Dihentikan</span>':waStatusBadge(rem.status==='Belum Dikirim'?'Pending':rem.status)}</td>
+<td>${(()=>{
+if(d.hasPdf&&!waPdfIndexStale.has(i.id)){
+waVerifyPdfPresence(i.id);
+const desiredName=waPdfDisplayName(i);
+if(desiredName&&desiredName!==d.pdfName&&!waPdfRenamePending.has(i.id)){
+waPdfRenamePending.add(i.id);
+waRenameStoredPdf(i.id,desiredName).finally(()=>{
+waPdfRenamePending.delete(i.id);
+if(typeof renderWaReminder==='function')renderWaReminder();
+});
+}
+return `<div style="display:flex;gap:6px;flex-wrap:nowrap;align-items:center">
+<button class="secondary" onclick="waDownloadPdf('${i.id}')" title="Unduh PDF invoice">⬇ ${esc(d.pdfName)}</button><button class="secondary" style="font-size:11px" onclick="waRebuildOnePdf('${i.id}')" title="Buat ulang PDF ini dari data Invoice terbaru (mengganti PDF lama/hasil impor manual sebelumnya)">↻</button>
+</div>`;
+}
+// Belum ada PDF: PDF-nya sedang/akan dibuat OTOMATIS dari data invoice
+// terbaru (tidak perlu diunggah manual lagi) -- lihat autoBuildInvoicePdf().
+if(waPdfIndexStale.has(i.id)){
+return '<span class="muted" style="font-size:11px">⏳ Membuat ulang PDF otomatis...</span>';
+}
+if(!waPdfAutoInFlight.has(i.id)&&!waPdfAutoFailed.has(i.id)){
+waPdfAutoInFlight.add(i.id);
+autoBuildInvoicePdf(i.id).then(ok=>{
+waPdfAutoInFlight.delete(i.id);
+if(!ok)waPdfAutoFailed.add(i.id);
+if(typeof renderWaReminder==='function')renderWaReminder();
+});
+}
+if(waPdfAutoInFlight.has(i.id)){
+return '<span class="muted" style="font-size:11px">⏳ Membuat PDF otomatis...</span>';
+}
+return `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start">
+<span class="muted" style="font-size:11px;color:var(--red2)">⚠ PDF otomatis gagal dibuat</span>
+<button class="secondary" style="font-size:11px" onclick="waRetryAutoPdf('${esc(i.id)}')" title="Coba buat ulang PDF otomatis dari invoice ini">↻ Coba lagi otomatis</button>
+<label class="secondary" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-size:11px" title="Unggah PDF invoice untuk ${esc(i.id)}">⇧ Unggah manual<input type="file" accept="application/pdf" style="display:none" onchange="waQuickUploadPdf('${esc(i.id)}',this)"></label>
+</div>`;
+})()}</td>
 <td class="rowact">${btn}</td>
 </tr>`}).join('')||'<tr><td colspan="11" class="empty">Tidak ada invoice pada filter jatuh tempo ini.</td></tr>';
 return `<div class="wa-tabs" style="margin-bottom:10px">${chips}</div>
-<div class="panel"><div class="panel-head"><h3>Monitoring Jatuh Tempo</h3><p class="muted" style="margin:0"></p></div>
+<div class="panel"><div class="panel-head"><h3>Monitoring Jatuh Tempo</h3><div class="actions"><button class="secondary" style="font-size:12px" onclick="waRebuildAllPdf()" title="Ganti SEMUA file PDF invoice (termasuk hasil impor/unggah manual lama) dengan PDF baru yang dibuat otomatis dari data Invoice saat ini. Data invoice TIDAK dihapus/diubah, hanya file PDF-nya.">🔄 Buat Ulang Semua PDF dari Data Invoice</button></div></div>
 <div class="table-wrap"><table><thead><tr><th>NO. INVOICE</th><th>CUSTOMER / TRAVEL</th><th>NAMA PIC</th><th>NOMOR WHATSAPP</th><th>SISA PEMBAYARAN</th><th>TANGGAL JATUH TEMPO</th><th>STATUS JATUH TEMPO</th><th>STATUS REMINDER</th><th>FILE INVOICE PDF</th><th>KIRIM</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+// Ganti PDF satu invoice dengan versi terbaru hasil generate otomatis dari
+// data Invoice saat ini -- dipakai tombol "↻" per baris di Monitoring.
+// HANYA mengganti file PDF (lokal & Supabase Storage), TIDAK menyentuh data
+// invoice/pembayaran sama sekali.
+function waRebuildOnePdf(id){
+queueAutoInvoicePdfRebuild(id);
+if(typeof renderWaReminder==='function')renderWaReminder();
+}
+// Ganti SEMUA file PDF invoice (termasuk PDF lama hasil impor/unggah manual)
+// dengan PDF baru yang di-generate otomatis dari data Invoice terkini,
+// satu per satu (antrean sudah diatur di generateInvoicePdfBlob). Hanya
+// menghapus/mengganti file PDF -- data.invoices/data.payments sama sekali
+// tidak disentuh.
+function waRebuildAllPdf(){
+const ids=(data.invoices||[]).map(x=>x.id).filter(Boolean);
+if(!ids.length)return;
+if(!confirm('Buat ulang PDF untuk '+ids.length+' invoice dari data Invoice saat ini?\n\nPDF LAMA (termasuk hasil impor/unggah manual sebelumnya) akan DIGANTIKAN. Data invoice, pembayaran, dan lainnya TIDAK akan diubah/dihapus.'))return;
+ids.forEach(id=>queueAutoInvoicePdfRebuild(id));
+if(typeof renderWaReminder==='function')renderWaReminder();
+alert('Proses pembuatan ulang '+ids.length+' PDF dimulai di latar belakang. Kolom FILE INVOICE PDF akan terisi otomatis satu per satu.');
 }
 
 /* ---------- Integrasi ke navigasi ---------- */
