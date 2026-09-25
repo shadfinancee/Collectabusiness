@@ -629,7 +629,7 @@ input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 .useracct{position:relative}
 .userbtn{display:flex;align-items:center;gap:12px;background:none;border:0;padding:4px 6px;border-radius:10px;cursor:pointer}
@@ -651,13 +651,13 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .acct-list div{display:flex;justify-content:space-between;gap:10px;padding:10px 13px;font-size:13px;border-bottom:1px solid var(--line)}
 .acct-list div:last-child{border-bottom:0}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <!-- Untuk PEMBUATAN PDF INVOICE OTOMATIS di menu Monitoring: html2canvas
      merender tampilan invoice (sama persis dengan Preview/Print Invoice)
      menjadi gambar, lalu jsPDF membungkusnya jadi file PDF asli (bukan
      screenshot) berukuran A4 yang siap diunduh/dicetak langsung. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 /* Autocomplete PNR pada form Catat Pembayaran */
@@ -680,6 +680,25 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
 <style>
 #cloudStatus{position:fixed;right:16px;bottom:16px;z-index:90;background:#fff;border:1px solid #dfe3ea;border-radius:9px;padding:9px 12px;font-size:11px;font-weight:700;box-shadow:0 5px 18px #0001;display:flex;align-items:center;gap:7px}.cloud-dot{width:9px;height:9px;border-radius:50%;background:#999}.cloud-online .cloud-dot{background:#35a853}.cloud-sync .cloud-dot{background:#e5a500}.cloud-error .cloud-dot{background:#d71920}
+</style>
+
+<style id="performance-optimizations">
+/* ===== PERFORMANCE OPTIMIZATION ===== */
+.table-wrap{
+  contain:layout paint;
+  content-visibility:auto;
+  contain-intrinsic-size:420px;
+}
+.view{contain:layout style;}
+@media(max-width:820px){
+  .table-wrap{
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .table-wrap tbody tr:hover{background:inherit;}
+  .table-wrap tbody tr:hover td{color:var(--text2);}
+  .sidebar,.modal,.preview{backdrop-filter:none;}
+}
 </style>
 </head>
 <body>
@@ -1184,7 +1203,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 <div class="modal" id="modal"><div class="modalbox"><div class="modalhead"><h2 id="modalTitle">Form</h2><button class="close" onclick="closeModal()">×</button></div><div id="modalBody"></div></div></div>
 
 <script>
-if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
+window.addEventListener('load',()=>{if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}});
 const KEY='shad_finance_data_v2';
 
 const seed={
@@ -1477,7 +1496,6 @@ async function refreshFromCloud(){
       cloudUpdatedAt=row.updated_at||null;
       localStorage.setItem(KEY,JSON.stringify(data));
       refreshAfterHistory();
-      loadSettingsForm();
     }
     setCloudStatus('online','Cloud tersinkron');
   }catch(e){
@@ -1486,8 +1504,21 @@ async function refreshFromCloud(){
     setCloudStatus('error','Gagal memuat cloud');
   }
 }
+function setupCloudVisibilityPolling(){
+  document.addEventListener('visibilitychange',()=>{
+    if(!cloudReady)return;
+    if(document.hidden){
+      clearInterval(cloudPollTimer);
+      cloudPollTimer=null;
+    }else{
+      clearInterval(cloudPollTimer);
+      pollCloud();
+      cloudPollTimer=setInterval(pollCloud,30000);
+    }
+  },{once:false});
+}
 async function pollCloud(){
-  if(!cloudReady||!supabaseClient)return;
+  if(!cloudReady||!supabaseClient||document.hidden)return;
   try{
     const {data:row,error}=await supabaseClient
       .from(SUPABASE_TABLE)
@@ -1500,7 +1531,6 @@ async function pollCloud(){
       cloudUpdatedAt=row.updated_at;
       localStorage.setItem(KEY,JSON.stringify(data));
       refreshAfterHistory();
-      loadSettingsForm();
       setCloudStatus('online','Data cloud diperbarui');
     }
   }catch(e){
@@ -4173,16 +4203,24 @@ if(data.invoices.length&&!data.invoices.some(i=>(i.date||'').slice(0,4)==String(
 renderDashboard();renderCustomers();renderImportSummary()
 }
 async function boot(){
-  await initCloud();
+  // Render lokal lebih dulu agar UI muncul cepat. Sinkronisasi cloud berjalan
+  // di background dan tidak memblokir tampilan/menu.
   init();
   updateActivityBadge();
-  if(cloudReady){clearInterval(cloudPollTimer);cloudPollTimer=setInterval(pollCloud,15000);}
+
+  // Jangan menunggu jaringan sebelum pengguna bisa berinteraksi.
+  Promise.resolve().then(async()=>{
+    const ok=await initCloud();
+    if(ok){
+      clearInterval(cloudPollTimer);
+      cloudPollTimer=setInterval(pollCloud,30000);
+      setupCloudVisibilityPolling();
+    }
+  });
 }
-// Catatan: boot() sekarang dipanggil otomatis setelah login berhasil
-// (lihat onAuthenticated()), bukan langsung saat halaman dimuat, karena
-// data hanya boleh dibaca oleh pengguna yang sudah diautentikasi (RLS).
-// Agar tampilan tidak kosong sebelum login, render awal dengan data lokal/seed:
-init();
+// Rendering aplikasi ditunda sampai autentikasi berhasil.
+// Ini mencegah dashboard/tabel dirender dua kali saat startup dan mengurangi
+// beban CPU/memori pada HP.
 </script>
 <div class="preview" id="preview"><div class="previewbar"><h2 id="previewTitle">Preview Invoice</h2><button class="primary" onclick="printInvoice()">🖨 Print Invoice (A4)</button><button class="secondary" id="previewEditBtn" onclick="editPreviewInvoice()">✎ Edit Invoice</button><button class="secondary" onclick="closePreview()">Tutup</button></div><div id="printArea"></div></div>
 <style>
@@ -5043,7 +5081,19 @@ function submitInvoice(e){
   if(typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(rec.id);
 }
 function refreshAll(){
-  renderDashboard();renderInvoices();renderReceivables();renderPayments();renderAging();renderReminders();renderCustomers();
+  const active=document.querySelector('.view.active')?.id||'dashboard';
+  switch(active){
+    case 'dashboard': renderDashboard(); break;
+    case 'customers': renderCustomers(); break;
+    case 'invoices': renderInvoices(); break;
+    case 'receivables': renderReceivables(); break;
+    case 'payments': renderPayments(); break;
+    case 'aging': renderAging(); break;
+    case 'reminders': renderReminders(); break;
+    case 'invreport': if(typeof renderInvReport==='function')renderInvReport(); break;
+    case 'import': if(typeof renderImportSummary==='function')renderImportSummary(); break;
+    case 'settings': if(typeof loadSettingsForm==='function')loadSettingsForm(); break;
+  }
 }
 
 /* ---------- PREVIEW / CETAK ---------- */
@@ -6254,7 +6304,7 @@ table.ir-table tfoot td{background:#fff7dd;font-weight:800;border-top:2px solid 
 @media(max-width:1200px){.ir-sum{grid-template-columns:repeat(3,1fr)}.ir-two{grid-template-columns:1fr}}
 @media(max-width:640px){.ir-sum{grid-template-columns:repeat(2,1fr)}.ir-head{flex-direction:column}.ir-meta{text-align:left}}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
 /* ================= LAPORAN INVOICE & PIUTANG (otomatis dari data Invoice) ================= */
 const IR_STATUSES=['Draft','Terbit','Sebagian Dibayar','Jatuh Tempo','Overdue','Lunas'];
@@ -7113,8 +7163,8 @@ async function requestPasswordReset(){
     try{ syncAvatar(); }catch(e){}
     var act = document.querySelector('#nav button.active');
     try{ syncChrome(act ? act.dataset.view : 'dashboard'); }catch(e){}
-    setTimeout(alignNumbers, 400);
-    setInterval(updateNotif, 45000);
+    requestAnimationFrame(()=>setTimeout(alignNumbers, 120));
+    if(!window.__shadNotifTimer)window.__shadNotifTimer=setInterval(updateNotif,60000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
