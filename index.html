@@ -63,7 +63,8 @@ a{color:var(--red2)}
   transition:width .18s ease,transform .22s ease;overflow:hidden
 }
 /* brand */
-.sb-brand{display:flex;align-items:center;gap:11px;padding:0 14px;height:var(--hh);flex:none;border-bottom:1px solid var(--sb-line);background:rgba(0,0,0,.18)}
+.sb-brand{display:flex;align-items:center;gap:11px;padding:0 14px;height:var(--hh);flex:none;border-bottom:1px solid var(--sb-line);background:rgba(0,0,0,.18);cursor:pointer}
+.sb-brand:focus-visible{outline:2px solid #ffd018;outline-offset:-3px}
 .sb-mark{width:36px;height:36px;flex:none;border-radius:9px;background:linear-gradient(140deg,var(--red2),var(--red3));display:grid;place-items:center;font-weight:900;font-size:15px;color:#fff;letter-spacing:-1px;box-shadow:0 3px 10px -3px rgba(215,25,32,.9);position:relative}
 .sb-mark i{position:absolute;right:-3px;top:-3px;width:11px;height:11px;border-radius:50%;background:#ffd018;border:2px solid var(--sb-bg);display:block}
 .sb-name{min-width:0;overflow:hidden}
@@ -81,10 +82,18 @@ nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:6px 10px 14px;
 nav::-webkit-scrollbar{width:6px}
 nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
 .nav-group{margin-bottom:2px}
-.nav-ghead{display:flex;align-items:center;gap:8px;padding:11px 10px 7px;font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--sb-muted);cursor:pointer;user-select:none;border-radius:var(--radius)}
+#nav>.nav-group:first-child{display:none}
+.nav-ghead{display:flex;align-items:center;gap:9px;padding:10px 8px 8px;font-size:11px;font-weight:850;letter-spacing:.7px;text-transform:uppercase;color:#fff;cursor:pointer;user-select:none;border-radius:var(--radius)}
 .nav-ghead:hover{color:#fff}
 .nav-ghead .cv{margin-left:auto;transition:transform .18s;opacity:.75}
 .nav-ghead .cv svg{width:11px;height:11px;display:block}
+.nav-cat-ico{width:25px;height:25px;display:grid;place-items:center;flex:none;border-radius:7px;background:rgba(255,255,255,.1);color:#ffd46b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.nav-cat-ico svg{width:16px;height:16px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-group[data-nav-category="penjualan"] .nav-cat-ico{color:#8bc9ff;background:rgba(52,130,208,.19)}
+.nav-group[data-nav-category="piutang"] .nav-cat-ico{color:#c7a5ff;background:rgba(130,83,207,.18)}
+.nav-group[data-nav-category="pembelian"] .nav-cat-ico{color:#97d9a2;background:rgba(61,157,89,.18)}
+.nav-group[data-nav-category="laporan"] .nav-cat-ico{color:#ffca78;background:rgba(221,132,43,.17)}
+.nav-group[data-nav-category="sistem"] .nav-cat-ico{color:#d7dde8;background:rgba(137,151,171,.18)}
 .nav-group.closed .cv{transform:rotate(-90deg)}
 .nav-items{display:flex;flex-direction:column;gap:2px;overflow:hidden;max-height:600px;transition:max-height .22s ease,opacity .18s}
 .nav-group.closed .nav-items{max-height:0;opacity:0}
@@ -100,6 +109,21 @@ nav button.active:before{content:"";position:absolute;left:-10px;top:7px;bottom:
 .ico{width:20px;height:20px;flex:none;display:grid;place-items:center;opacity:.95}
 .ico svg{width:17px;height:17px;display:block;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 nav button.active .ico{opacity:1}
+/* Card-style module navigation stays inside the left sidebar. */
+.sidebar nav .nav-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:900px;padding:3px 1px 9px;transition:max-height .22s ease,opacity .18s}
+.sidebar nav .nav-group.closed .nav-items{max-height:0;padding-top:0;padding-bottom:0}
+.sidebar nav .nav-items>button{height:72px;min-height:72px;padding:7px 5px;border:1px solid rgba(255,255,255,.18);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;font-size:10.5px;line-height:1.15;box-shadow:0 2px 5px rgba(0,0,0,.12);white-space:normal}
+.sidebar nav .nav-items>button .ico{width:23px;height:23px}
+.sidebar nav .nav-items>button .ico svg{width:21px;height:21px}
+.sidebar nav .nav-items>button .lbl{display:block;flex:none;width:100%;min-width:0;height:2.3em;max-height:2.3em;white-space:normal;overflow:hidden;text-overflow:ellipsis;font-size:10.5px}
+.sidebar nav .nav-items>button[data-view="dashboard"],.sidebar nav .nav-items>button[data-view="aging"],.sidebar nav .nav-items>button[data-view="reminders"],.sidebar nav .nav-items>button[data-view="apaging"]{background:#eee6ff;border-color:#c6a9ef;color:#55327e}
+.sidebar nav .nav-items>button[data-view="customers"],.sidebar nav .nav-items>button[data-view="vendors"],.sidebar nav .nav-items>button[data-view="import"]{background:#dcedff;border-color:#8cbee9;color:#244f78}
+.sidebar nav .nav-items>button[data-view="invoices"],.sidebar nav .nav-items>button[data-view="payments"],.sidebar nav .nav-items>button[data-view="apbills"],.sidebar nav .nav-items>button[data-view="appayments"]{background:#e1f7dc;border-color:#9bd58c;color:#365e32}
+.sidebar nav .nav-items>button[data-view="invreport"],.sidebar nav .nav-items>button[data-view="profitability"]{background:#ffead8;border-color:#f0b278;color:#794617}
+.sidebar nav .nav-items>button[data-view="settings"]{background:#edf0f5;border-color:#c4cad5;color:#414a5b}
+.sidebar nav .nav-items>button:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 4px 9px rgba(0,0,0,.2)}
+.sidebar nav .nav-items>button.active{background:linear-gradient(145deg,var(--red2),var(--red3));border-color:#ffd018;color:#fff;box-shadow:0 4px 12px -5px rgba(215,25,32,.95)}
+.sidebar nav .nav-items>button.active:before{left:3px;top:7px;bottom:7px}
 /* sidebar footer */
 .sb-foot{flex:none;border-top:1px solid var(--sb-line);padding:9px 12px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.2)}
 .sb-collapse{border:1px solid var(--sb-line);background:rgba(255,255,255,.06);color:var(--sb-txt);border-radius:var(--radius);width:30px;height:30px;flex:none;display:grid;place-items:center;transition:.15s}
@@ -115,9 +139,16 @@ body.sb-collapsed .sb-book{margin:10px 8px 4px;padding:8px;justify-content:cente
 body.sb-collapsed nav{padding:6px 8px}
 body.sb-collapsed nav button{justify-content:center;padding:11px 0}
 body.sb-collapsed nav button.active:before{left:-8px}
+@media(min-width:821px){
+  body.sb-collapsed .sidebar nav .nav-items{grid-template-columns:1fr;gap:3px;padding:0}
+  body.sb-collapsed .sidebar nav .nav-items>button{height:42px;min-height:42px;padding:7px 0;border-color:transparent;background:transparent;box-shadow:none;transform:none}
+  body.sb-collapsed .sidebar nav .nav-items>button.active{background:linear-gradient(90deg,var(--red2),var(--red3));border-color:transparent;box-shadow:0 4px 14px -6px rgba(215,25,32,.95)}
+  body.sb-collapsed .sidebar nav .nav-items>button.active:before{left:-8px;top:7px;bottom:7px}
+}
+@media(min-width:821px){body.sb-collapsed .sidebar nav .nav-items>button .lbl{display:none}}
 body.sb-collapsed .nav-ghead{justify-content:center;padding:10px 0 6px;margin:0 6px;border-top:1px solid var(--sb-line);cursor:default}
 body.sb-collapsed .nav-ghead:after{content:"";width:14px;height:2px;border-radius:2px;background:rgba(255,255,255,.18)}
-body.sb-collapsed .nav-group.closed .nav-items{max-height:600px;opacity:1}
+@media(min-width:821px){body.sb-collapsed .nav-group.closed .nav-items{max-height:600px;opacity:1}}
 body.sb-collapsed .sb-foot{justify-content:center;padding:9px 0}
 /* tooltip saat collapse */
 body.sb-collapsed nav button[data-tip]:hover:after{
@@ -265,6 +296,24 @@ input[type=date].input{padding-right:8px}
 .reportgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .reportbox{padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg)}
 .reportbox strong{font-size:19px;font-variant-numeric:tabular-nums}
+.ap-aging-card{cursor:pointer;transition:.15s}
+.ap-aging-card:hover{border-color:var(--red2);box-shadow:var(--shadow-2);transform:translateY(-1px)}
+.ap-aging-card[aria-pressed=true]{border-color:var(--red2);background:var(--red-soft)}
+.overview-card,.ap-summary-card,.ap-aging-card{position:relative;overflow:hidden;border-top:3px solid var(--accent,var(--red2));background:linear-gradient(180deg,var(--tint,#fff),#fff);transition:.15s}
+#financialOverview .overview-card,#apBillCards .ap-summary-card,#apAgingCards .ap-aging-card{border-top:3px solid var(--accent,var(--red2))}
+.overview-card:hover,.ap-summary-card:hover,.ap-aging-card:hover{box-shadow:var(--shadow-2);transform:translateY(-1px)}
+.overview-card-0,.ap-summary-card-0{--accent:#c8151c;--tint:#fff5f5}
+.overview-card-1,.ap-summary-card-1{--accent:#d1a000;--tint:#fffbee}
+.overview-card-2{--accent:#21864a;--tint:#f1fbf4}
+.overview-card-3,.ap-summary-card-2{--accent:#3274c8;--tint:#f1f7ff}
+.overview-card-4{--accent:#d1a000;--tint:#fffbee}
+.overview-card-5,.ap-summary-card-3{--accent:#c8151c;--tint:#fff5f5}
+.overview-card-6{--accent:#21864a;--tint:#f1fbf4}
+.ap-aging-card--overdue{--accent:#c8151c;--tint:#fff2f2}
+.ap-aging-card--today{--accent:#d1a000;--tint:#fffbee}
+.ap-aging-card--near{--accent:#3274c8;--tint:#f1f7ff}
+.ap-aging-card--paid{--accent:#21864a;--tint:#f1fbf4}
+.ap-aging-card--open{--accent:#6952b7;--tint:#f6f3ff}
 .empty{text-align:center;padding:38px 20px;color:var(--muted);font-size:12.5px;background:var(--surface3);border-radius:var(--radius)}
 .notice{padding:12px 14px;border-radius:var(--radius);background:var(--yellow-soft);color:#6d5300;font-size:12px;border:1px solid #f2e2b4;border-left:3px solid var(--yellow);margin:12px 0;line-height:1.55}
 .notice b{color:#563f00}
@@ -829,13 +878,13 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 </div>
 
 <aside class="sidebar" id="sidebar">
-  <div class="sb-brand"><div class="sb-mark">S<i></i></div><div class="sb-name"><b>SHAD FINANCE</b><span>Tour &amp; Travel</span></div></div>
+  <div class="sb-brand" role="button" tabindex="0" aria-label="Buka Dashboard" title="Buka Dashboard" onclick="showView('dashboard')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showView('dashboard')}"><div class="sb-mark">S<i></i></div><div class="sb-name"><b>SHAD FINANCE</b><span>Tour &amp; Travel</span></div></div>
   <div class="sb-book" title="Data perusahaan aktif"><span class="bk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></span><div><b>PT Shad Al Fatih Indonesia</b><small>Yogyakarta &middot; IDR</small></div></div>
   <nav id="nav">
     <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Utama</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button class="active" data-view="dashboard" data-tip="Dashboard"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="lbl">Dashboard</span></button></div></div>
-    <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Penjualan</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button data-view="customers" data-tip="Customer / Agent"><span class="ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13A4 4 0 0 1 16 11"/></svg></span><span class="lbl">Customer / Agent</span></button><button data-view="invoices" data-tip="Invoice"><span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span><span class="lbl">Invoice</span></button><button data-view="payments" data-tip="Pembayaran"><span class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg></span><span class="lbl">Pembayaran</span></button></div></div>
+    <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Penjualan</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button data-view="customers" data-tip="Customer / Agent"><span class="ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13A4 4 0 0 1 16 11"/></svg></span><span class="lbl">Customer / Agent</span></button><button data-view="invoices" data-tip="Invoice"><span class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span><span class="lbl">Invoice</span></button><button data-view="payments" data-tip="Pembayaran Masuk"><span class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg></span><span class="lbl">Pembayaran Masuk</span></button></div></div>
     <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Piutang</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button data-view="receivables" data-tip="Piutang"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/><path d="M19 8v4h-4"/></svg></span><span class="lbl">Piutang</span></button><button data-view="aging" data-tip="Aging Piutang"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="lbl">Aging Piutang</span></button><button data-view="reminders" data-tip="Monitoring"><span class="ico"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span><span class="lbl">Monitoring</span></button></div></div>
-    <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Laporan & Data</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button data-view="invreport" data-tip="Laporan"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 16V9M12 16v-4M16 16v-7"/></svg></span><span class="lbl">Laporan</span></button><button data-view="import" data-tip="Impor Data"><span class="ico"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span><span class="lbl">Impor Data</span></button></div></div>
+    <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Laporan & Data</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button data-view="invreport" data-tip="Laporan"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 16V9M12 16v-4M16 16v-7"/></svg></span><span class="lbl">Laporan Flynance</span></button><button data-view="import" data-tip="Impor Data"><span class="ico"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span><span class="lbl">Impor Data</span></button></div></div>
     <div class="nav-group"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Sistem</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items"><button data-view="settings" data-tip="Pengaturan"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></span><span class="lbl">Pengaturan</span></button></div></div>
   </nav>
   <div class="sb-foot"><button class="sb-collapse" type="button" onclick="toggleCollapse()" title="Perkecil / perbesar sidebar" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button><small>Finance Suite v6</small></div>
@@ -871,6 +920,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   </div>
 </div>
 <div class="dash-kpi" id="dashKpi"></div>
+<div class="panel" style="margin-top:14px"><div class="panel-head"><h3>Financial Overview</h3><small>Akumulasi transaksi tercatat</small></div><div class="cards" id="financialOverview"></div></div>
 <div class="dash-charts">
   <section class="dwp"><div class="dwp-h"><h3>Tren Invoice</h3><span id="trendMeta"></span></div><div class="dwp-b" id="chartTrend"></div></section>
   <section class="dwp"><div class="dwp-h"><h3>Tren Pembayaran</h3><span id="payMeta"></span></div><div class="dwp-b" id="chartPay"></div></section>
@@ -1078,6 +1128,65 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
 <section id="reminders" class="view"><div class="heading"><h1>Monitoring Piutang</h1><p></p></div><div id="waReminderBody"></div></section>
 
+<section id="vendors" class="view"><div class="heading"><h1>Vendor</h1><p>Kelola data vendor dan supplier airlines.</p></div><div class="toolbar"><input class="input" id="vendorSearch" placeholder="Cari vendor / airlines / PIC..." oninput="renderVendors()"><button class="primary" onclick="openVendor()">＋ Tambah Vendor</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>NAMA VENDOR</th><th>AIRLINES</th><th>PIC</th><th>TELEPON</th><th>EMAIL</th><th>REKENING BANK</th><th>AKSI</th></tr></thead><tbody id="vendorRows"></tbody></table></div></div></section>
+
+<section id="apbills" class="view"><div class="heading"><h1>Tagihan Vendor</h1><p>Catat biaya vendor dan tautkan ke invoice penjualan untuk perhitungan HPP.</p></div><div class="cards" id="apBillCards"></div><div class="toolbar">
+<select class="input" id="apFieldFilter" onchange="renderAPBills()" title="Pilih kolom yang akan difilter">
+<option value="all">Semua Kolom</option>
+<option value="apNo">NO. AP</option>
+<option value="invoiceId">INVOICE</option>
+<option value="vendor">VENDOR</option>
+<option value="airlines">AIRLINES / PNR</option>
+<option value="date">TANGGAL</option>
+<option value="dueDate">JATUH TEMPO</option>
+</select>
+<input class="input" id="apSearch" placeholder="Cari nilai filter..." oninput="renderAPBills()">
+<select class="input" id="apStatusFilter" onchange="renderAPBills()"><option value="">Semua Status</option><option>Belum Dibayar</option><option>Sebagian Dibayar</option><option>Lunas</option><option>Jatuh Tempo</option><option>Overdue</option></select>
+<select class="input" id="apMonth" onchange="renderAPBills()"></select>
+<select class="input" id="apYear" onchange="renderAPBills()"></select>
+<span id="apBillSortBox" style="display:flex;gap:6px"></span>
+<button class="primary" onclick="openAPBill()">＋ Tagihan Vendor</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>NO. AP</th><th>INVOICE</th><th>VENDOR</th><th>AIRLINES / PNR</th><th>DEPT</th><th>PAX</th><th>TANGGAL</th><th>JATUH TEMPO</th><th>TOTAL TAGIHAN</th><th>TERBAYAR</th><th>SISA</th><th>STATUS</th><th>AKSI</th></tr></thead><tbody id="apBillRows"></tbody></table></div></div></section>
+
+<section id="appayments" class="view"><div class="heading"><h1>Daftar Pembayaran AP</h1><p>Riwayat pembayaran yang terhubung ke tagihan vendor.</p></div><div class="toolbar"><input class="input" id="apPaymentSearch" placeholder="Cari No. AP / vendor / PNR..." oninput="renderAPPayments()"><button class="primary" onclick="openAPPayment()">＋ Catat Pembayaran AP</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>NO. AP</th><th>VENDOR</th><th>AIRLINES / PNR</th><th>PAX</th><th>DEPT</th><th>TANGGAL</th><th>JENIS PEMBAYARAN</th><th>JUMLAH</th><th>CATATAN</th><th>AKSI</th></tr></thead><tbody id="apPaymentRows"></tbody></table></div></div></section>
+
+<section id="apaging" class="view"><div class="heading"><h1>Aging & Monitoring Jatuh Tempo AP</h1><p>Pantau kewajiban vendor menurut tanggal jatuh tempo.</p></div><div class="cards" id="apAgingCards"></div><div class="toolbar"><input class="input" id="apAgingSearch" placeholder="Cari No. AP / vendor / PNR..." oninput="renderAPAging()"><select class="input" id="apAgingMonth" onchange="renderAPAging()"></select><input class="input" id="apAgingDate" type="date" title="Tanggal jatuh tempo" onchange="renderAPAging()"><select class="input" id="apAgingVendor" onchange="renderAPAging()"><option value="">Semua Vendor</option></select><select class="input" id="apAgingStatus" onchange="renderAPAging()"><option value="">Semua Status AP</option><option>Belum Dibayar</option><option>Sebagian Dibayar</option><option>Jatuh Tempo</option><option>Overdue</option><option>Lunas</option></select><select class="input" id="apAgingReminder" onchange="renderAPAging()"><option value="">Semua Status Reminder</option><option>Overdue</option><option>Hari Ini</option><option>H-1</option><option>H-3</option><option>H-7</option><option>Belum jatuh tempo</option><option>Lunas</option></select><button class="secondary" onclick="resetAPAgingFilters()">Reset Filter</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>NO. AP</th><th>VENDOR</th><th>INVOICE</th><th>AIRLINES / PNR</th><th>PAX</th><th>DEPT</th><th>JATUH TEMPO</th><th>SISA TAGIHAN</th><th>HARI</th><th>STATUS AP</th><th>STATUS REMINDER</th></tr></thead><tbody id="apAgingRows"></tbody></table></div></div></section>
+
+<section id="profitability" class="view">
+  <div class="ir-doc profit-doc">
+    <div class="ir-head">
+      <div class="ir-brand"><div class="ir-logo"><span>shad</span><em>TOUR &amp; TRAVEL</em></div><div class="ir-comp"><strong>PT SHAD AL FATIH INDONESIA</strong><span>Tour &amp; Travel &middot; Yogyakarta, Indonesia</span><span>Divisi Finance &amp; Accounting</span></div></div>
+      <div class="ir-meta"><b>LAPORAN PROFITABILITAS</b><span>Periode: <i id="profitPeriod">-</i></span><span>Tercetak pada <i id="profitPrintedAt">-</i></span></div>
+    </div>
+    <div class="ir-title"><h1>LAPORAN PROFITABILITAS</h1><p>Rekap pendapatan invoice dan HPP dari tagihan AP tertaut</p></div>
+    <div class="ir-toolbar noprint">
+      <span class="profit-range"><select class="input" id="profitRangeField" title="Kolom tanggal" onchange="renderProfitability()"><option value="dept">DEPT</option><option value="invoice">Tanggal Invoice</option><option value="due">Jatuh Tempo</option></select><label for="profitFrom">From</label><input class="input" id="profitFrom" type="date" onchange="renderProfitability()"><label for="profitTo">To</label><input class="input" id="profitTo" type="date" onchange="renderProfitability()"><button type="button" class="secondary" onclick="resetProfitDateFilter()">Reset</button></span>
+      <span class="ir-sort-control profit-sort-control"><select class="input" id="profitSortField" aria-label="Urutkan profitabilitas" onchange="renderProfitability()"><option value="date">Tanggal</option><option value="id">No. Invoice</option><option value="customer">Customer</option><option value="revenue">Pendapatan</option><option value="profit">Laba Kotor</option><option value="margin">Margin</option></select><button type="button" class="secondary ir-sort-direction" id="profitSortDirection" aria-label="Urutan tanggal menurun" title="Balik urutan" onclick="toggleProfitSortDirection()">↓</button></span>
+      <select class="input" id="profitCustomer" onchange="renderProfitability()"><option value="">Semua Customer</option></select>
+      <select class="input" id="profitAirline" onchange="renderProfitability()"><option value="">Semua Airlines</option></select>
+      <select class="input" id="profitVendor" onchange="renderProfitability()"><option value="">Semua Vendor</option></select>
+      <input class="input" id="profitPNR" placeholder="PNR" oninput="renderProfitability()">
+      <input class="input" id="profitSales" placeholder="Sales" oninput="renderProfitability()">
+      <span class="profit-export"><button type="button" class="secondary" onclick="exportProfitabilityExcel()">⇩ Export Excel (.xlsx)</button><button type="button" class="primary" onclick="exportProfitabilityPDF()">⇩ Cetak / PDF</button></span>
+    </div>
+    <div class="ir-sum" id="profitCards"></div>
+    <div class="ir-panel">
+      <div class="ir-panel-head"><h3>DETAIL PROFITABILITAS</h3><span id="profitCount"></span></div>
+      <div class="table-wrap"><table class="ir-table profit-table"><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>AIRLINES</th><th>PNR</th><th>DEPT</th><th>SALES</th><th>PAX</th><th>PENDAPATAN</th><th>HPP</th><th>LABA KOTOR</th><th>MARGIN</th><th>VENDOR</th></tr></thead><tbody id="profitRows"></tbody><tfoot id="profitFoot"></tfoot></table></div>
+    </div>
+    <div class="ir-panel">
+      <div class="ir-panel-head"><h3>RINGKASAN PROFITABILITAS</h3></div>
+      <div class="ir-two">
+        <div class="table-wrap"><table class="ir-table ir-mini"><thead><tr><th>RENTANG MARGIN</th><th class="c">JML INVOICE</th><th class="r">PENDAPATAN</th><th class="r">HPP</th><th class="r">LABA KOTOR</th></tr></thead><tbody id="profitMarginRows"></tbody></table></div>
+        <div class="table-wrap"><table class="ir-table ir-mini"><thead><tr><th>RINGKASAN VENDOR</th><th class="c">JML INVOICE</th><th class="c">JML AP</th><th class="r">TOTAL HPP</th><th class="r">KONTRIBUSI</th></tr></thead><tbody id="profitVendorRows"></tbody></table></div>
+      </div>
+      <div class="ir-note" id="profitNote"></div>
+      <div class="ir-sign">
+        <div><span>Dibuat oleh,</span><i id="profitUser">Finance User</i><small>Finance &amp; Accounting</small></div>
+        <div><span>Disetujui oleh,</span><i>Rizky Noviarini S.Gz., M.P.H.</i><small>Mnr. Finance</small></div>
+      </div>
+    </div>
+  </div>
+</section>
 
 
 <section id="import" class="view">
@@ -1127,6 +1236,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     <div class="ir-toolbar noprint">
       <input class="input" id="irSearch" placeholder="⌕  Cari invoice / customer / sales..." oninput="renderInvReport()">
       <select class="input" id="irStatus" onchange="renderInvReport()"></select>
+      <span class="ir-sort-control"><select class="input" id="irSortField" aria-label="Urutkan laporan" onchange="renderInvReport()"><option value="date">Tanggal</option><option value="id">No. Invoice</option><option value="customer">Customer</option><option value="amount">Nilai Invoice</option><option value="paid">Terbayar</option><option value="sisa">Sisa Piutang</option></select><button type="button" class="secondary ir-sort-direction" id="irSortDirection" aria-label="Urutan tanggal menurun" title="Balik urutan" onclick="toggleIRSortDirection()">↓</button></span>
       <span style="display:flex;align-items:center;gap:8px;border:1px solid #e3e6ee;border-radius:12px;padding:6px 10px;background:#fff">
         <select class="input" id="irRangeField" onchange="renderInvReport()" style="min-width:150px">
           <option value="dept">DEPT</option>
@@ -1196,7 +1306,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 <button class="set-mitem" data-set="lampiran" onclick="setNav('lampiran')"><span class="ico">🖇</span>Lampiran</button>
 <button class="set-mitem" data-set="atribut" onclick="setNav('atribut')"><span class="ico">☰</span>Atribut Tambahan</button>
 <button class="set-mitem" data-set="akun" onclick="setNav('akun')"><span class="ico">▤</span>Akun Perkiraan</button>
-<button class="set-mitem" data-set="lainlain" onclick="setNav('lainlain')"><span class="ico">⋯</span>Lain-lain</button></aside><div class="set-panel"><div class="set-pane active" id="setpane-perusahaan"><div class="set-phead"><h2>Perusahaan</h2><p>Identitas dan periode akuntansi perusahaan.</p></div><div class="set-tabs"><button class="set-tab active" data-tab="info" onclick="setTab('info')">Info Perusahaan</button><button class="set-tab" data-tab="alamat" onclick="setTab('alamat')">Alamat</button></div><div class="set-tabpane active" id="settab-info"><div class="formgrid"><div class="field"><label>Nama Perusahaan</label><input id="setCompany" data-pref="company" value="PT Shad Al Fatih Indonesia"></div><div class="field"><label>Kategori Usaha</label><select id="setCategory" data-pref="category"><option>Jasa</option><option>Perdagangan</option><option>Manufaktur</option><option>Transportasi & Travel</option><option>Lainnya</option></select></div><div class="field"><label>Bidang Usaha</label><select id="setSector" data-pref="sector"><option>Tour & Travel</option><option>Tiketing Penerbangan</option><option>Umroh & Haji</option><option>Perhotelan</option><option>Rental Kendaraan</option><option>Lainnya</option></select></div><div class="field"><label>Telepon</label><input id="setPhone" data-pref="phone" placeholder="0274-000000"></div><div class="field"><label>Faksimili</label><input id="setFax" data-pref="fax" placeholder="0274-000000"></div><div class="field"><label>Email</label><input id="setEmail" data-pref="email" type="email" placeholder="finance@shadtour.co.id"></div><div class="field"><label>Tgl Mulai Data</label><input id="setStartDate" data-pref="startDate" type="date"></div><div class="field"><label>Periode Akuntansi</label><select id="setPeriod" data-pref="period"><option>Januari - Desember</option><option>April - Maret</option><option>Juli - Juni</option><option>Oktober - September</option></select></div></div></div><div class="set-tabpane" id="settab-alamat"><div class="formgrid"><div class="field full"><label>Alamat</label><textarea id="setAddress" data-pref="address" rows="3" placeholder="Jl. ..."></textarea></div><div class="field"><label>Kota</label><input id="setCity" data-pref="city" value="Yogyakarta"></div><div class="field"><label>Provinsi</label><input id="setProvince" data-pref="province" placeholder="DI Yogyakarta"></div><div class="field"><label>Kode Pos</label><input id="setZip" data-pref="zip" placeholder="55000"></div><div class="field"><label>Negara</label><input id="setCountry" data-pref="country" value="Indonesia"></div></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-fitur"><div class="set-phead"><h2>Fitur</h2><p>Aktifkan modul yang dipakai perusahaan.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="fMultiCurrency"><span>Modul Invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="fPiutang"><span>Modul Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fPembayaran"><span>Modul Pembayaran</span></label><label class="set-switch"><input type="checkbox" data-pref="fAging"><span>Modul Aging Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fWa"><span>Modul Monitoring WhatsApp</span></label><label class="set-switch"><input type="checkbox" data-pref="fImport"><span>Modul Impor Data</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pajak"><div class="set-phead"><h2>Pajak</h2><p>Pengaturan perpajakan untuk dokumen penjualan.</p></div><div class="formgrid"><div class="field"><label>NPWP</label><input data-pref="taxNpwp" placeholder="00.000.000.0-000.000"></div><div class="field"><label>Nama Wajib Pajak</label><input data-pref="taxName" placeholder=""></div><div class="field"><label>Jenis Pajak</label><select data-pref="taxType"><option>PPN 11%</option><option>PPN 12%</option><option>Non PPN</option></select></div><div class="field"><label>Tarif Pajak (%)</label><input type="number" data-pref="taxRate" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="taxInclusive"><span>Harga sudah termasuk pajak</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-penjualan"><div class="set-phead"><h2>Penjualan</h2><p>Default dokumen penjualan dan invoice.</p></div><div class="formgrid"><div class="field"><label>Termin Jatuh Tempo (hari)</label><input type="number" data-pref="salTerm" placeholder="0"></div><div class="field"><label>Prefix No. Invoice</label><input data-pref="salPrefix" placeholder="INV-"></div><div class="field"><label>Metode Pembayaran Default</label><select data-pref="salMethod"><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select></div><label class="set-switch"><input type="checkbox" data-pref="salDiscount"><span>Tampilkan diskon pada invoice</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembelian"><div class="set-phead"><h2>Pembelian</h2><p>Default dokumen pembelian dan hutang.</p></div><div class="formgrid"><div class="field"><label>Termin Hutang (hari)</label><input type="number" data-pref="purTerm" placeholder="0"></div><div class="field"><label>Prefix No. Pembelian</label><input data-pref="purPrefix" placeholder="PO-"></div><label class="set-switch"><input type="checkbox" data-pref="purRef"><span>Wajib nomor referensi supplier</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembatasan"><div class="set-phead"><h2>Pembatasan</h2><p>Batasan transaksi dan periode.</p></div><div class="formgrid"><div class="field"><label>Batas Maksimal Piutang per Customer (Rp)</label><input type="number" data-pref="limCredit" placeholder="0"></div><div class="field"><label>Batas Hari Overdue Peringatan</label><input type="number" data-pref="limOverdue" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="limLock"><span>Kunci transaksi periode lampau</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-persetujuan"><div class="set-phead"><h2>Persetujuan</h2><p>Alur approval dokumen.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="apvInvoice"><span>Aktifkan persetujuan invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="apvPayment"><span>Aktifkan persetujuan pembayaran</span></label><div class="field"><label>Nama Penyetuju</label><input data-pref="apvName" placeholder="Rizky Noviarini S.Gz., M.P.H."></div><div class="field"><label>Jabatan Penyetuju</label><input data-pref="apvRole" placeholder="Mnr. Finance"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lampiran"><div class="set-phead"><h2>Lampiran</h2><p>Aturan unggah lampiran dokumen.</p></div><div class="formgrid"><div class="field"><label>Ukuran Maksimal File (MB)</label><input type="number" data-pref="attMax" placeholder="0"></div><div class="field"><label>Tipe File Diizinkan</label><select data-pref="attTypes"><option>PDF</option><option>PDF, JPG, PNG</option><option>Semua Tipe</option></select></div><label class="set-switch"><input type="checkbox" data-pref="attRequired"><span>Wajib lampiran pada pembayaran</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-atribut"><div class="set-phead"><h2>Atribut Tambahan</h2><p>Kolom tambahan pada data invoice.</p></div><div class="formgrid"><div class="field"><label>Nama Atribut 1</label><input data-pref="atr1" placeholder=""></div><div class="field"><label>Nama Atribut 2</label><input data-pref="atr2" placeholder=""></div><div class="field"><label>Nama Atribut 3</label><input data-pref="atr3" placeholder=""></div><label class="set-switch"><input type="checkbox" data-pref="atrShow"><span>Tampilkan atribut pada laporan</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-akun"><div class="set-phead"><h2>Akun Perkiraan</h2><p>Pemetaan akun default buku besar.</p></div><div class="formgrid"><div class="field"><label>Akun Piutang Usaha</label><input data-pref="accAr" placeholder="1-10200"></div><div class="field"><label>Akun Kas & Bank</label><input data-pref="accCash" placeholder="1-10001"></div><div class="field"><label>Akun Pendapatan</label><input data-pref="accIncome" placeholder="4-40000"></div><div class="field"><label>Akun Pajak Keluaran</label><input data-pref="accTax" placeholder="2-20300"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lainlain"><div class="set-phead"><h2>Lain-lain</h2><p>Preferensi aplikasi dan cadangan data.</p></div><div class="formgrid"><div class="field"><label>Nama Pengguna</label><input id="setUser" data-pref="user" placeholder=""></div><div class="field"><label>Mata Uang</label><select id="setCurrency" data-pref="currency"><option>IDR - Rupiah</option></select></div></div><div class="notice"><b>Cloud Sync:</b> Data utama aplikasi dapat disimpan di Supabase agar invoice, customer, piutang, pembayaran, dan data terkait terbaca sama dari laptop/HP. Setelah konfigurasi Supabase di bagian kode, status koneksi akan tampil di kanan bawah.<br><button class="secondary" style="margin-top:8px" onclick="refreshFromCloud()">↻ Muat Data Terbaru dari Cloud</button></div><h3 style="margin:16px 0 6px">Cadangkan &amp; Pulihkan Data</h3><p style="color:var(--muted);margin:0 0 14px;font-size:12px">Unduh cadangan secara berkala agar data tidak hilang saat cache/browser dibersihkan.</p><div class="toolbar" style="margin:0"><button class="secondary" onclick="backupData()">⇩ Unduh Cadangan (JSON)</button><input class="input" id="restoreFile" type="file" accept=".json,application/json"><button class="secondary" onclick="restoreData()">⇧ Pulihkan dari Cadangan</button></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div></div></div></section>
+<button class="set-mitem" data-set="lainlain" onclick="setNav('lainlain')"><span class="ico">⋯</span>Lain-lain</button></aside><div class="set-panel"><div class="set-pane active" id="setpane-perusahaan"><div class="set-phead"><h2>Perusahaan</h2><p>Identitas dan periode akuntansi perusahaan.</p></div><div class="set-tabs"><button class="set-tab active" data-tab="info" onclick="setTab('info')">Info Perusahaan</button><button class="set-tab" data-tab="alamat" onclick="setTab('alamat')">Alamat</button></div><div class="set-tabpane active" id="settab-info"><div class="formgrid"><div class="field"><label>Nama Perusahaan</label><input id="setCompany" data-pref="company" value="PT Shad Al Fatih Indonesia"></div><div class="field"><label>Kategori Usaha</label><select id="setCategory" data-pref="category"><option>Jasa</option><option>Perdagangan</option><option>Manufaktur</option><option>Transportasi & Travel</option><option>Lainnya</option></select></div><div class="field"><label>Bidang Usaha</label><select id="setSector" data-pref="sector"><option>Tour & Travel</option><option>Tiketing Penerbangan</option><option>Umroh & Haji</option><option>Perhotelan</option><option>Rental Kendaraan</option><option>Lainnya</option></select></div><div class="field"><label>Telepon</label><input id="setPhone" data-pref="phone" placeholder="0274-000000"></div><div class="field"><label>Faksimili</label><input id="setFax" data-pref="fax" placeholder="0274-000000"></div><div class="field"><label>Email</label><input id="setEmail" data-pref="email" type="email" placeholder="finance@shadtour.co.id"></div><div class="field"><label>Tgl Mulai Data</label><input id="setStartDate" data-pref="startDate" type="date"></div><div class="field"><label>Periode Akuntansi</label><select id="setPeriod" data-pref="period"><option>Januari - Desember</option><option>April - Maret</option><option>Juli - Juni</option><option>Oktober - September</option></select></div></div></div><div class="set-tabpane" id="settab-alamat"><div class="formgrid"><div class="field full"><label>Alamat</label><textarea id="setAddress" data-pref="address" rows="3" placeholder="Jl. ..."></textarea></div><div class="field"><label>Kota</label><input id="setCity" data-pref="city" value="Yogyakarta"></div><div class="field"><label>Provinsi</label><input id="setProvince" data-pref="province" placeholder="DI Yogyakarta"></div><div class="field"><label>Kode Pos</label><input id="setZip" data-pref="zip" placeholder="55000"></div><div class="field"><label>Negara</label><input id="setCountry" data-pref="country" value="Indonesia"></div></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-fitur"><div class="set-phead"><h2>Fitur</h2><p>Aktifkan modul yang dipakai perusahaan.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="fMultiCurrency"><span>Modul Invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="fPiutang"><span>Modul Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fPembayaran"><span>Modul Pembayaran</span></label><label class="set-switch"><input type="checkbox" data-pref="fAging"><span>Modul Aging Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fWa"><span>Modul Monitoring WhatsApp</span></label><label class="set-switch"><input type="checkbox" data-pref="fImport"><span>Modul Impor Data</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pajak"><div class="set-phead"><h2>Pajak</h2><p>Pengaturan perpajakan untuk dokumen penjualan.</p></div><div class="formgrid"><div class="field"><label>NPWP</label><input data-pref="taxNpwp" placeholder="00.000.000.0-000.000"></div><div class="field"><label>Nama Wajib Pajak</label><input data-pref="taxName" placeholder=""></div><div class="field"><label>Jenis Pajak</label><select data-pref="taxType"><option>PPN 11%</option><option>PPN 12%</option><option>Non PPN</option></select></div><div class="field"><label>Tarif Pajak (%)</label><input type="number" data-pref="taxRate" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="taxInclusive"><span>Harga sudah termasuk pajak</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-penjualan"><div class="set-phead"><h2>Penjualan</h2><p>Default dokumen penjualan dan invoice.</p></div><div class="formgrid"><div class="field"><label>Termin Jatuh Tempo (hari)</label><input type="number" data-pref="salTerm" placeholder="0"></div><div class="field"><label>Prefix No. Invoice</label><input data-pref="salPrefix" placeholder="INV-"></div><div class="field"><label>Metode Pembayaran Default</label><select data-pref="salMethod"><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select></div><label class="set-switch"><input type="checkbox" data-pref="salDiscount"><span>Tampilkan diskon pada invoice</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembelian"><div class="set-phead"><h2>Pembelian</h2><p>Default dokumen pembelian dan hutang.</p></div><div class="formgrid"><div class="field"><label>Termin Hutang (hari)</label><input type="number" data-pref="purTerm" placeholder="0"></div><div class="field"><label>Prefix No. Pembelian</label><input data-pref="purPrefix" placeholder="PO-"></div><label class="set-switch"><input type="checkbox" data-pref="purRef"><span>Wajib nomor referensi supplier</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembatasan"><div class="set-phead"><h2>Pembatasan</h2><p>Batasan transaksi dan periode.</p></div><div class="formgrid"><div class="field"><label>Batas Maksimal Piutang per Customer (Rp)</label><input type="number" data-pref="limCredit" placeholder="0"></div><div class="field"><label>Batas Hari Overdue Peringatan</label><input type="number" data-pref="limOverdue" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="limLock"><span>Kunci transaksi periode lampau</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-persetujuan"><div class="set-phead"><h2>Persetujuan</h2><p>Alur approval dokumen.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="apvInvoice"><span>Aktifkan persetujuan invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="apvPayment"><span>Aktifkan persetujuan pembayaran</span></label><div class="field"><label>Nama Penyetuju</label><input data-pref="apvName" placeholder="Rizky Noviarini S.Gz., M.P.H."></div><div class="field"><label>Jabatan Penyetuju</label><input data-pref="apvRole" placeholder="Mnr. Finance"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lampiran"><div class="set-phead"><h2>Lampiran</h2><p>Aturan unggah lampiran dokumen.</p></div><div class="formgrid"><div class="field"><label>Ukuran Maksimal File (MB)</label><input type="number" data-pref="attMax" placeholder="0"></div><div class="field"><label>Tipe File Diizinkan</label><select data-pref="attTypes"><option>PDF</option><option>PDF, JPG, PNG</option><option>Semua Tipe</option></select></div><label class="set-switch"><input type="checkbox" data-pref="attRequired"><span>Wajib lampiran pada pembayaran</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-atribut"><div class="set-phead"><h2>Atribut Tambahan</h2><p>Kolom tambahan pada data invoice.</p></div><div class="formgrid"><div class="field"><label>Nama Atribut 1</label><input data-pref="atr1" placeholder=""></div><div class="field"><label>Nama Atribut 2</label><input data-pref="atr2" placeholder=""></div><div class="field"><label>Nama Atribut 3</label><input data-pref="atr3" placeholder=""></div><label class="set-switch"><input type="checkbox" data-pref="atrShow"><span>Tampilkan atribut pada laporan</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-akun"><div class="set-phead"><h2>Akun Perkiraan</h2><p>Pemetaan akun default buku besar.</p></div><div class="formgrid"><div class="field"><label>Akun Piutang Usaha</label><input data-pref="accAr" placeholder="1-10200"></div><div class="field"><label>Akun Kas & Bank</label><input data-pref="accCash" placeholder="1-10001"></div><div class="field"><label>Akun Pendapatan</label><input data-pref="accIncome" placeholder="4-40000"></div><div class="field"><label>Akun Pajak Keluaran</label><input data-pref="accTax" placeholder="2-20300"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lainlain"><div class="set-phead"><h2>Lain-lain</h2><p>Preferensi aplikasi dan cadangan data.</p></div><div class="formgrid"><div class="field"><label>Nama Pengguna</label><input id="setUser" data-pref="user" placeholder=""></div><div class="field"><label>Mata Uang</label><select id="setCurrency" data-pref="currency"><option>IDR - Rupiah</option></select></div></div><div class="notice"><b>Cloud Sync:</b> Data utama aplikasi dapat disimpan di Supabase agar invoice, customer, piutang, pembayaran, dan data terkait terbaca sama dari laptop/HP. Setelah konfigurasi Supabase di bagian kode, status koneksi akan tampil di kanan bawah.<br><button class="secondary" style="margin-top:8px" onclick="refreshFromCloud()">↻ Muat Data Terbaru dari Cloud</button></div><h3 style="margin:16px 0 6px">Cadangkan &amp; Pulihkan Data</h3><p style="color:var(--muted);margin:0 0 14px;font-size:12px">Unduh cadangan secara berkala agar data tidak hilang saat cache/browser dibersihkan.</p><div class="toolbar" style="margin:0"><button class="secondary" onclick="backupData()">⇩ Unduh Cadangan (JSON)</button><input class="input" id="restoreFile" type="file" accept=".json,application/json"><button class="secondary" onclick="restoreData()">⇧ Pulihkan dari Cadangan</button></div>
+<h3 style="margin:20px 0 6px">Cadangan Otomatis Harian</h3><p style="color:var(--muted);margin:0 0 10px;font-size:12px">Aplikasi menyimpan cadangan data ke cloud secara otomatis satu kali setiap hari (saat pertama kali dibuka pada hari itu), disimpan selama 30 hari terakhir. Anda bisa mengunduh atau memulihkan salah satu cadangan di bawah.</p>
+<div id="backupAutoStatus" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
+<div class="toolbar" style="margin:0 0 10px"><button class="secondary" onclick="loadBackupHistory()">↻ Muat Ulang Riwayat</button><button class="secondary" onclick="autoDailyBackup(true)">⚡ Cadangkan Sekarang</button></div>
+<div class="table-wrap"><table><thead><tr><th>TANGGAL</th><th>WAKTU DISIMPAN</th><th style="width:220px">AKSI</th></tr></thead><tbody id="backupHistoryBody"><tr><td colspan="3" style="color:var(--muted)">Belum dimuat.</td></tr></tbody></table></div>
+<div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div></div></div></section>
 
 </div></main>
 
@@ -1224,6 +1339,9 @@ invoices:[
 {id:'INV-2024-001',customer:'IGH Tour',date:'2024-05-10',due:'2024-05-25',amount:403000000,paid:403000000,closing:'2024-05-25'}
 ],
 payments:[],
+vendors:[],
+apBills:[],
+apPayments:[],
 settings:{company:'PT Shad Al Fatih Indonesia',city:'Yogyakarta',currency:'IDR - Rupiah',user:'Finance User'}
 };
 
@@ -1846,6 +1964,7 @@ customers:{key:'agentName',dir:1},
 receivables:{key:'due',dir:1},
 payments:{key:'date',dir:-1},
 aging:{key:'umur',dir:-1},
+apbills:{key:'date',dir:-1},
 
 };
 function cmpVal(a,b){
@@ -1861,7 +1980,7 @@ return rows.slice().sort((a,b)=>s.dir*cmpVal(getVal(a,s.key),getVal(b,s.key)));
 function setSort(view,key){sortState[view].key=key;rerenderView(view)}
 function toggleSortDir(view){sortState[view].dir*=-1;rerenderView(view)}
 function rerenderView(view){
-const map={dashboard:renderDashboardTable,invoices:renderInvoices,customers:renderCustomers,receivables:renderReceivables,payments:renderPayments,aging:renderAging};
+const map={dashboard:renderDashboardTable,invoices:renderInvoices,customers:renderCustomers,receivables:renderReceivables,payments:renderPayments,aging:renderAging,apbills:renderAPBills};
 map[view]&&map[view]();
 }
 function sortControlHTML(view,options){
@@ -2101,6 +2220,7 @@ function showView(v){
 document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
 document.getElementById(v).classList.add('active');
 document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===v));
+const crumb=document.getElementById('crumbNow');if(crumb)crumb.textContent=document.querySelector('#nav button[data-view="'+v+'"] .lbl')?.textContent||document.querySelector('#'+v+' .heading h1')?.textContent||'Dashboard';
 if(v==='dashboard')renderDashboard();
 if(v==='customers')renderCustomers();
 if(v==='invoices')renderInvoices();
@@ -2108,6 +2228,11 @@ if(v==='receivables')renderReceivables();
 if(v==='payments')renderPayments();
 if(v==='aging')renderAging();
 if(v==='reminders')renderReminders();
+if(v==='vendors')renderVendors();
+if(v==='apbills')renderAPBills();
+if(v==='appayments')renderAPPayments();
+if(v==='apaging')renderAPAging();
+if(v==='profitability')renderProfitability();
 
 if(v==='invreport')renderInvReport();
 if(v==='settings')loadSettingsForm();
@@ -2263,6 +2388,7 @@ function renderDashboard(){
   document.getElementById('dashAct').innerHTML=acts.length?`<div class="wlist">${acts.map(a=>`<div class="wrow"><div><b>${a.text}</b><span>${a.sub}</span></div><div class="rgt"><strong style="color:${a.t==='pay'?'var(--green)':'var(--red)'}">${a.t==='pay'?'+':''}${rp(a.val)}</strong><em>${date(a.date)}</em></div></div>`).join('')}</div>`:'<div class="empty">Belum ada aktivitas.</div>';
 
   renderDashboardTable();
+  renderFinancialOverview();
 }
 const invoiceSortOptions=[['date','Tanggal'],['due','Jatuh Tempo'],['closing','Tgl Closing'],['id','No. Invoice'],['customer','Customer'],['amount','Nilai Invoice'],['paid','Terbayar'],['sisa','Sisa Piutang'],['airlines','Airlines'],['dept','DEPT']];
 function invoiceSortVal(i,key){
@@ -2898,7 +3024,6 @@ save();refreshAll();
 logActivity('Hapus','Pembayaran','Menghapus pembayaran '+(p.method||'')+' sebesar '+rp(Math.abs(p.amount))+' pada invoice '+(p.invoice||'-'));
 if(typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(p.invoice);
 }
-
 function aging(i){let s=i.amount-i.paid;if(s<=0)return 0;let d=daysUntil(i.due);return d===null?0:Math.max(0,-d)}
 function agingBuckets(){
 let open=data.invoices.filter(i=>i.amount-i.paid>0),ranges=[[0,30,'0 - 30 Hari','#54ad68'],[31,60,'31 - 60 Hari','#f6b719'],[61,90,'61 - 90 Hari','#f78c0b'],[91,99999,'> 90 Hari','#e1433d']];
@@ -2913,6 +3038,77 @@ function catOf(a){return a<=30?'0 - 30 Hari':a<=60?'31 - 60 Hari':a<=90?'61 - 90
 let rows=open.filter(i=>(i.id+i.customer).toLowerCase().includes(q)&&(!cf||catOf(aging(i))===cf));
 rows=sortRows(rows,'aging',(i,key)=>key==='sisa'?i.amount-i.paid:key==='umur'?aging(i):i[key]);
 document.getElementById('agingRows').innerHTML=rows.map(i=>{let a=aging(i),cat=catOf(a);return `<tr><td class="inv">${i.id}</td><td>${i.customer}</td><td>${rp(i.amount-i.paid)}</td><td>${a} hari</td><td>${cat}</td></tr>`}).join('')||'<tr><td colspan="5" class="empty">Tidak ada piutang terbuka.</td></tr>'
+}
+const AP_PAYMENT_TYPES=['Booking Fee via Mandiri','Booking Fee via BSI','Booking Fee via Tunai','Deposit via Mandiri','Deposit via BSI','Deposit via Tunai','Full Payment via Mandiri','Full Payment via BSI','Full Payment via Tunai','Fee Portal','Refund via BSI','Refund via Mandiri','Refund via Tunai','Koreksi / Pengurangan Pembayaran'];
+function apPaymentType(payment){return payment.paymentType||payment.method||'-'}
+function apPaymentIsNegative(type){return /^Refund via /.test(type)||type==='Koreksi / Pengurangan Pembayaran'}
+function apPaidBeforePayment(bill,paymentId){return Math.max(0,Math.min(num(bill.totalAmount),num(bill.initialPaid)+data.apPayments.filter(p=>p.apBillId===bill.id&&p.id!==paymentId).reduce((sum,p)=>sum+num(p.amount),0)))}
+function apPaymentBillLabel(bill){return [bill.airlines,bill.pnr].filter(Boolean).join(' / ')+' · '+(bill.apNo||'-')+' · '+apVendorName(bill)}
+function formatAPPaymentAmountValue(value){return Math.abs(num(value)).toLocaleString('id-ID')}
+function formatAPPaymentAmount(input){
+  const caret=input.selectionStart||input.value.length,digitsBefore=input.value.slice(0,caret).replace(/\D/g,'').length;
+  const digits=input.value.replace(/\D/g,'');input.value=digits?Number(digits).toLocaleString('id-ID'):'';
+  let position=0,count=0;while(position<input.value.length&&count<digitsBefore){if(/\d/.test(input.value[position]))count++;position++}
+  input.setSelectionRange(position,position);
+}
+function openAPPayment(paymentId){
+  ensureFinanceData();const existing=data.apPayments.find(p=>p.id===paymentId);const currentBillId=existing?.apBillId||'';
+  if(!data.apBills.length){alert('Belum ada tagihan AP untuk dipilih.');return;}
+  const currentBill=data.apBills.find(b=>b.id===currentBillId);
+  const options=data.apBills.map(b=>`<option value="${esc(apPaymentBillLabel(b))}"></option>`).join('');
+  const type=existing?apPaymentType(existing):AP_PAYMENT_TYPES[0];
+  const types=AP_PAYMENT_TYPES.map(t=>`<option ${t===type?'selected':''}>${t}</option>`).join('')+(type&&!AP_PAYMENT_TYPES.includes(type)?`<option selected>${esc(type)}</option>`:'');
+  openModal(existing?'Edit Pembayaran AP':'Catat Pembayaran AP',`<form onsubmit="submitAPPayment(event,'${existing?esc(existing.id):''}')"><div class="formgrid">
+  <input type="hidden" id="apPayBill" value="${esc(currentBillId)}"><div class="field"><label>No. AP</label><input id="apPayAPNo" readonly value="${esc(currentBill?.apNo||'')}"></div><div class="field"><label>Tanggal *</label><input id="apPayDate" type="date" required value="${esc(existing?.date||todayStr())}"></div>
+  <div class="field"><label>AIRLINES / PNR *</label><input id="apPayBillQuery" list="apPayBillOptions" required autocomplete="off" placeholder="Ketik PNR atau pilih tagihan" value="${esc(currentBill?apPaymentBillLabel(currentBill):'')}" oninput="matchAPPaymentBill()"><datalist id="apPayBillOptions">${options}</datalist><small id="apPayMatchHint">Ketik PNR, airlines, atau No. AP untuk menemukan tagihan.</small></div><div class="field"><label>Nama Vendor</label><input id="apPayVendor" readonly value="${esc(currentBill?apVendorName(currentBill):'')}"></div>
+  <div class="field"><label>DEPT</label><input id="apPayDept" type="date" readonly value="${esc(currentBill?.dept||'')}"></div><div class="field"><label>Jenis Pembayaran *</label><select id="apPayType" required onchange="syncAPPaymentAmountHint()">${types}</select></div>
+  <div class="field"><label>Jumlah (Rp) *</label><input id="apPayAmount" type="text" inputmode="numeric" required value="${existing?formatAPPaymentAmountValue(existing.amount):''}" oninput="formatAPPaymentAmount(this)" placeholder="0"><small id="apPayAmountHint">Nominal refund/koreksi disimpan negatif.</small></div><div class="field"><label>Sisa Tagihan</label><input id="apPayBalance" readonly value="${currentBill?rp(apBalance(currentBill)):'-'}"></div>
+  <div class="field full"><label>Catatan</label><textarea id="apPayNote" rows="2">${esc(existing?.note||'')}</textarea></div></div><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Simpan Pembayaran</button></div></form>`);
+  syncAPPaymentAmountHint();
+}
+function matchAPPaymentBill(){
+  const query=(document.getElementById('apPayBillQuery')?.value||'').trim().toLowerCase();
+  const exact=data.apBills.filter(b=>[apPaymentBillLabel(b),b.pnr,b.apNo].some(value=>String(value||'').trim().toLowerCase()===query));
+  const partial=exact.length?exact:(query.length>=3?data.apBills.filter(b=>String(b.pnr||'').toLowerCase().includes(query)):[]);
+  const bill=partial.length===1?partial[0]:null;
+  document.getElementById('apPayBill').value=bill?.id||'';
+  updateAPPaymentVendor();
+  const hint=document.getElementById('apPayMatchHint');if(hint)hint.textContent=bill?'Tagihan ditemukan: '+bill.apNo+' · '+apVendorName(bill):query?'Pilih saran tagihan yang sesuai.':'Ketik PNR, airlines, atau No. AP untuk menemukan tagihan.';
+}
+function updateAPPaymentVendor(){const bill=data.apBills.find(b=>b.id===document.getElementById('apPayBill').value);document.getElementById('apPayAPNo').value=bill?.apNo||'';document.getElementById('apPayVendor').value=bill?apVendorName(bill):'';document.getElementById('apPayDept').value=bill?.dept||'';document.getElementById('apPayBalance').value=bill?rp(apBalance(bill)):'-'}
+function syncAPPaymentAmountHint(){const type=document.getElementById('apPayType')?.value;const hint=document.getElementById('apPayAmountHint');if(hint)hint.textContent=apPaymentIsNegative(type)?'Refund/koreksi akan disimpan sebagai nominal negatif.':'Masukkan nominal positif; tidak boleh melebihi sisa tagihan.'}
+function submitAPPayment(e,paymentId){
+  e.preventDefault();ensureFinanceData();matchAPPaymentBill();const bill=data.apBills.find(b=>b.id===document.getElementById('apPayBill').value),type=apPayType.value,inputAmount=Math.abs(num(apPayAmount.value));if(!bill||inputAmount<=0){alert('Pilih tagihan AP yang sesuai dan isi jumlah lebih dari Rp 0.');return;}
+  const negative=apPaymentIsNegative(type),paidBefore=apPaidBeforePayment(bill,paymentId),amount=negative?-inputAmount:inputAmount;
+  if(negative&&inputAmount>paidBefore){alert('Refund/koreksi tidak boleh melebihi total pembayaran bersih yang sudah masuk.');return;}
+  if(!negative&&inputAmount>Math.max(0,num(bill.totalAmount)-paidBefore)){alert('Jumlah pembayaran tidak boleh melebihi sisa tagihan.');return;}
+  const old=paymentId?data.apPayments.find(p=>p.id===paymentId):null;
+  const payment={...(old||{}),id:old?.id||'appay-'+Date.now().toString(36),apBillId:bill.id,date:apPayDate.value,amount,paymentType:type,method:type,note:apPayNote.value.trim()};
+  const index=data.apPayments.findIndex(p=>p.id===payment.id);if(index<0)data.apPayments.push(payment);else data.apPayments[index]=payment;
+  save();closeModal();refreshAPViews();
+}
+function editAPPayment(paymentId){openAPPayment(paymentId)}
+function deleteAPPayment(paymentId){const payment=data.apPayments.find(p=>p.id===paymentId);if(!payment)return;if(!confirm('Hapus pembayaran AP ini? Saldo tagihan akan dihitung ulang.'))return;data.apPayments=data.apPayments.filter(p=>p.id!==paymentId);save();refreshAPViews()}
+function refreshAPViews(){renderAPPayments();renderAPBills();renderAPAging();if(typeof renderProfitability==='function')renderProfitability();if(typeof renderFinancialOverview==='function')renderFinancialOverview()}
+function renderAPPayments(){
+  ensureFinanceData();const q=(document.getElementById('apPaymentSearch')?.value||'').toLowerCase();const payments=data.apPayments.filter(p=>{const b=data.apBills.find(x=>x.id===p.apBillId);return !!b&&[p.date,b.apNo,apVendorName(b),b.airlines,b.pnr,b.dept,p.note,apPaymentType(p)].join(' ').toLowerCase().includes(q)}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  document.getElementById('apPaymentRows').innerHTML=payments.map(p=>{const b=data.apBills.find(x=>x.id===p.apBillId);return`<tr><td><b>${esc(b.apNo)}</b></td><td>${esc(apVendorName(b))}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${num(b.pax)}</td><td>${b.dept?date(b.dept):'-'}</td><td>${p.date?date(p.date):'-'}</td><td>${esc(apPaymentType(p))}</td><td class="num" style="color:${num(p.amount)<0?'var(--red2)':'inherit'}">${rp(p.amount)}</td><td>${esc(p.note||'-')}</td><td><button class="secondary" onclick="editAPPayment('${esc(p.id)}')">Edit</button> <button class="secondary" onclick="deleteAPPayment('${esc(p.id)}')">Hapus</button></td></tr>`}).join('')||'<tr><td colspan="10" class="empty">Belum ada pembayaran AP.</td></tr>';
+}
+function apAgingCategory(bill){if(apBalance(bill)<=0)return'Lunas';const d=daysUntil(bill.dueDate);if(d===null||d>7)return'Belum jatuh tempo';if(d<0)return'Overdue';if(d===0)return'Hari Ini';return'H-'+d}
+let apAgingQuickFilter='';
+function setAPAgingQuickFilter(filter){apAgingQuickFilter=filter;renderAPAging()}
+function resetAPAgingFilters(){['apAgingSearch','apAgingMonth','apAgingDate','apAgingVendor','apAgingStatus','apAgingReminder'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});apAgingQuickFilter='';renderAPAging()}
+function renderAPAging(){
+  ensureFinanceData();const all=data.apBills,q=(document.getElementById('apAgingSearch')?.value||'').toLowerCase(),month=document.getElementById('apAgingMonth')?.value||'',dueDate=document.getElementById('apAgingDate')?.value||'',vendor=document.getElementById('apAgingVendor')?.value||'',statusFilter=document.getElementById('apAgingStatus')?.value||'',reminder=document.getElementById('apAgingReminder')?.value||'';
+  const monthEl=document.getElementById('apAgingMonth');if(monthEl){const selected=monthEl.value;monthEl.innerHTML=dueMonthOptions(selected);monthEl.value=selected}
+  const vendorEl=document.getElementById('apAgingVendor');if(vendorEl){const selected=vendorEl.value;vendorEl.innerHTML='<option value="">Semua Vendor</option>'+[...new Set(all.map(apVendorName))].filter(v=>v&&v!=='-').sort().map(v=>`<option value="${esc(v)}" ${selected===v?'selected':''}>${esc(v)}</option>`).join('');if(all.some(b=>apVendorName(b)===selected))vendorEl.value=selected}
+  const cardDefs=[['Overdue','Overdue','overdue'],['Jatuh Tempo Hari Ini','Hari Ini','today'],['H-1','H-1','near'],['H-3','H-3','near'],['H-7','H-7','near'],['Lunas','Lunas','paid']];
+  document.getElementById('apAgingCards').innerHTML=cardDefs.map(([label,key,tone])=>`<button type="button" class="card reportbox ap-aging-card ap-aging-card--${tone}" style="text-align:left;color:var(--text)" aria-pressed="${apAgingQuickFilter===key}" onclick="setAPAgingQuickFilter('${key}')"><p>${label}</p><strong>${all.filter(b=>apAgingCategory(b)===key).length}</strong></button>`).join('')+`<button type="button" class="card reportbox ap-aging-card ap-aging-card--open" style="text-align:left;color:var(--text)" aria-pressed="${apAgingQuickFilter==='OPEN'}" onclick="setAPAgingQuickFilter('OPEN')"><p>Total Piutang Belum Dibayar</p><strong>${rp(all.reduce((sum,b)=>sum+apBalance(b),0))}</strong></button>`;
+  const rows=all.filter(b=>{
+    const category=apAgingCategory(b),due=b.dueDate||'',text=[b.apNo,apVendorName(b),b.invoiceId,b.airlines,b.pnr,b.pax,b.dept].join(' ').toLowerCase();
+    return(!q||text.includes(q))&&(!month||due.slice(5,7)===month)&&(!dueDate||due===dueDate)&&(!vendor||apVendorName(b)===vendor)&&(!statusFilter||apStatus(b)===statusFilter)&&(!reminder||category===reminder)&&(!apAgingQuickFilter||(apAgingQuickFilter==='OPEN'?apBalance(b)>0:category===apAgingQuickFilter));
+  }).sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||''));
+  document.getElementById('apAgingRows').innerHTML=rows.map(b=>{const d=daysUntil(b.dueDate),category=apAgingCategory(b);return`<tr><td>${esc(b.apNo)}</td><td>${esc(apVendorName(b))}</td><td>${esc(b.invoiceId||'-')}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${num(b.pax)}</td><td>${b.dept?date(b.dept):'-'}</td><td>${b.dueDate?date(b.dueDate):'-'}</td><td>${rp(apBalance(b))}</td><td>${d===null?'-':d<0?Math.abs(d)+' hari lewat':d+' hari'}</td><td>${apBadge(apStatus(b))}</td><td>${apBadge(category)}</td></tr>`}).join('')||'<tr><td colspan="11" class="empty">Tidak ada tagihan AP yang sesuai dengan filter.</td></tr>';
 }
 
 function normalizeWaPhone(raw){
@@ -3047,6 +3243,256 @@ if(oldId){
 }
 save();closeModal();renderCustomers();
 logActivity(custActionType,'Customer',(custActionType==='Tambah'?'Menambahkan':'Mengubah')+' data customer "'+(c.agentName||'-')+'" (Invoice '+(c.invoice||'-')+')');
+}
+
+function ensureFinanceData(){
+  if(!Array.isArray(data.vendors))data.vendors=[];
+  if(!Array.isArray(data.apBills))data.apBills=[];
+  if(!Array.isArray(data.apPayments))data.apPayments=[];
+}
+function initAPNavigation(){
+  const nav=document.getElementById('nav');
+  if(!nav||document.getElementById('apNav'))return;
+  const reportsGroup=nav.querySelector('.nav-group:nth-last-child(2)');
+  (reportsGroup||nav).insertAdjacentHTML(reportsGroup?'beforebegin':'beforeend',`
+    <div class="nav-group" id="apNav"><div class="nav-ghead" onclick="toggleNavGroup(this)"><span>Pembelian</span><span class="cv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></div><div class="nav-items">
+      <button data-view="vendors" data-tip="Vendor"><span class="ico"><svg viewBox="0 0 24 24"><path d="M22 16.5 13 12l-1-9a1 1 0 0 0-2 0l-1 9-9 4.5 1 1.5 9-2 2 5 2-5 9 2z"/></svg></span><span class="lbl">Vendor</span></button>
+      <button data-view="apbills" data-tip="Tagihan Vendor"><span class="ico"><svg viewBox="0 0 24 24"><path d="M5 3.5h9l5 5V13M14 3.5v5h5M5 3.5V20a1 1 0 0 0 1 1h5M8 12h8M8 15h3"/><circle cx="17" cy="17" r="4"/><path d="M17 15v4m1-3.1c-.2-.4-.6-.6-1-.6-.6 0-1 .3-1 .7 0 .9 2 .4 2 1.3 0 .5-.4.8-1 .8-.4 0-.8-.2-1-.5"/></svg></span><span class="lbl">Utang</span></button>
+      <button data-view="appayments" data-tip="Pembayaran AP"><span class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span><span class="lbl">Pembayaran Keluar</span></button>
+      <button data-view="apaging" data-tip="Aging AP"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="lbl">Aging / Monitoring</span></button>
+    </div></div>`);
+  const reportsItems=reportsGroup?.querySelector('.nav-items');
+  const reportButton=reportsItems?.querySelector('[data-view="invreport"]');
+  if(reportButton)reportButton.insertAdjacentHTML('afterend','<button data-view="profitability" data-tip="Laporan Profitabilitas"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 16v-5m4 5V8m4 8V4m4 12v-7"/></svg></span><span class="lbl">Laporan Profitabilitas</span></button>');
+  nav.querySelectorAll('#apNav button,[data-view="profitability"]').forEach(button=>button.onclick=()=>showView(button.dataset.view));
+  const categoryIcons={
+    'Penjualan':['penjualan','<svg viewBox="0 0 24 24"><path d="M5 8h14l1 12H4L5 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>'],
+    'Piutang':['piutang','<svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h16"/><path d="m7 15 3-4 3 2 5-6"/><circle cx="18" cy="7" r="2"/></svg>'],
+    'Pembelian':['pembelian','<svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h4"/></svg>'],
+    'Laporan & Data':['laporan','<svg viewBox="0 0 24 24"><path d="M4 19V5m0 14h16"/><rect x="7" y="11" width="3" height="5" rx=".5"/><rect x="12" y="8" width="3" height="8" rx=".5"/><rect x="17" y="5" width="3" height="11" rx=".5"/></svg>'],
+    'Sistem':['sistem','<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.2a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7h-.2a2 2 0 1 1 0-4h.2a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1v-.2a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.2a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.1 2.7Z"/></svg>']
+  };
+  nav.querySelectorAll('.nav-group').forEach(group=>{
+    const head=group.querySelector('.nav-ghead'),label=head?.querySelector('span:not(.cv)'),config=categoryIcons[label?.textContent.trim()];
+    if(config){group.dataset.navCategory=config[0];if(!head.querySelector('.nav-cat-ico'))head.insertAdjacentHTML('afterbegin','<span class="nav-cat-ico" aria-hidden="true">'+config[1]+'</span>')}
+    group.classList.add('closed');if(head)head.setAttribute('aria-expanded','false');
+  });
+}
+function apVendorName(bill){return data.vendors.find(v=>v.id===bill.vendorId)?.name||bill.vendorName||'-'}
+function apTotalPaid(bill){return Math.max(0,Math.min(num(bill.totalAmount),num(bill.initialPaid)+data.apPayments.filter(p=>p.apBillId===bill.id).reduce((sum,p)=>sum+num(p.amount),0)))}
+function apBalance(bill){return Math.max(0,num(bill.totalAmount)-apTotalPaid(bill))}
+function apStatus(bill){
+  const balance=apBalance(bill);if(balance<=0)return'Lunas';
+  const days=daysUntil(bill.dueDate);if(days!==null&&days<0)return'Overdue';if(days===0)return'Jatuh Tempo';
+  return apTotalPaid(bill)>0?'Sebagian Dibayar':'Belum Dibayar';
+}
+function apBadge(status){const cls=status==='Lunas'?'bg':status==='Overdue'?'br':status==='Jatuh Tempo'?'by':status==='Sebagian Dibayar'?'bb':'muted';return `<span class="badge ${cls}">${esc(status)}</span>`}
+function renderVendors(){
+  ensureFinanceData();const q=(document.getElementById('vendorSearch')?.value||'').toLowerCase();
+  const rows=data.vendors.filter(v=>[v.name,v.airlines,v.pic,v.phone,v.email].join(' ').toLowerCase().includes(q));
+  document.getElementById('vendorRows').innerHTML=rows.map(v=>`<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.airlines||'-')}</td><td>${esc(v.pic||'-')}</td><td>${esc(v.phone||'-')}</td><td>${esc(v.email||'-')}</td><td>${esc(v.bank||'-')}</td><td><button class="secondary" onclick="openVendor('${esc(v.id)}')">Edit</button> <button class="secondary" onclick="deleteVendor('${esc(v.id)}')">Hapus</button></td></tr>`).join('')||'<tr><td colspan="7" class="empty">Belum ada data vendor.</td></tr>';
+}
+function openVendor(id){
+  ensureFinanceData();const v=data.vendors.find(x=>x.id===id);const val=x=>esc(x||'');
+  openModal(v?'Edit Vendor':'Tambah Vendor',`<form onsubmit="submitVendor(event,'${v?esc(v.id):''}')"><div class="formgrid">
+  <div class="field"><label>Nama Vendor *</label><input id="vendorName" required value="${val(v?.name)}"></div><div class="field"><label>Airlines</label><input id="vendorAirlines" value="${val(v?.airlines)}"></div>
+  <div class="field"><label>PIC</label><input id="vendorPic" value="${val(v?.pic)}"></div><div class="field"><label>Nomor Telepon</label><input id="vendorPhone" value="${val(v?.phone)}"></div>
+  <div class="field"><label>Email</label><input id="vendorEmail" type="email" value="${val(v?.email)}"></div><div class="field"><label>Rekening Bank</label><input id="vendorBank" value="${val(v?.bank)}"></div>
+  <div class="field full"><label>Alamat</label><input id="vendorAddress" value="${val(v?.address)}"></div></div>
+  <div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Simpan Vendor</button></div></form>`);
+}
+function submitVendor(e,id){
+  e.preventDefault();ensureFinanceData();const vendor={id:id||'vendor-'+Date.now().toString(36),name:vendorName.value.trim(),airlines:vendorAirlines.value.trim(),pic:vendorPic.value.trim(),phone:vendorPhone.value.trim(),email:vendorEmail.value.trim(),bank:vendorBank.value.trim(),address:vendorAddress.value.trim()};
+  const ix=data.vendors.findIndex(v=>v.id===id);if(ix<0)data.vendors.push(vendor);else data.vendors[ix]=vendor;save();closeModal();renderVendors();
+}
+function deleteVendor(id){
+  if(data.apBills.some(b=>b.vendorId===id)){alert('Vendor masih digunakan oleh tagihan AP dan tidak dapat dihapus.');return;}
+  if(!confirm('Hapus vendor ini?'))return;data.vendors=data.vendors.filter(v=>v.id!==id);save();renderVendors();
+}
+function apInvoiceOptions(selected){return '<option value="">Tidak ditautkan</option>'+data.invoices.map(i=>`<option value="${esc(i.id)}" ${i.id===selected?'selected':''}>${esc(i.id)} · ${esc(i.customer)}</option>`).join('')}
+function apVendorOptions(selected){return data.vendors.map(v=>`<option value="${esc(v.id)}" ${v.id===selected?'selected':''}>${esc(v.name)}${v.airlines?' · '+esc(v.airlines):''}</option>`).join('')}
+function openAPBill(id){
+  ensureFinanceData();const b=data.apBills.find(x=>x.id===id);const val=x=>esc(x??'');
+  const apNo=b?.apNo||'AP-'+todayStr().replace(/-/g,'')+'-'+String(data.apBills.length+1).padStart(3,'0');
+  const amount=b?num(b.totalAmount):0;
+  openModal(b?'Edit Tagihan AP':'Tagihan Vendor Baru',`<form onsubmit="submitAPBill(event,'${b?esc(b.id):''}')"><div class="formgrid">
+  <div class="field"><label>No. AP *</label><input id="apNo" required value="${val(apNo)}"></div><div class="field"><label>Tanggal *</label><input id="apDate" type="date" required value="${val(b?.date||todayStr())}"></div>
+  <div class="field"><label>Vendor *</label><select id="apVendor" required><option value="">Pilih vendor</option>${apVendorOptions(b?.vendorId)}</select></div><div class="field"><label>Invoice Penjualan</label><select id="apInvoice">${apInvoiceOptions(b?.invoiceId)}</select></div>
+  <div class="field"><label>Airlines</label><input id="apAirlines" value="${val(b?.airlines)}"></div><div class="field"><label>PNR</label><input id="apPNR" value="${val(b?.pnr)}"></div>
+  <div class="field"><label>DEPT</label><input id="apDept" type="date" value="${val(b?.dept)}"></div><div class="field"><label>Pax</label><input id="apPax" type="number" min="0" value="${val(b?.pax??0)}" oninput="updateAPTotal()"></div>
+  <div class="field"><label>Harga per Pax (Rp)</label><input id="apUnitCost" type="number" min="0" value="${val(b?.unitCost??0)}" oninput="updateAPTotal()"></div>
+  <div class="field"><label>Deskripsi</label><input id="apDescription" value="${val(b?.description)}"></div><div class="field"><label>Total Tagihan (Rp)</label><input id="apAmount" type="number" min="0" required value="${val(amount)}"></div>
+  <div class="field"><label>Total Terbayar (Rp)</label><input value="${val(b?apTotalPaid(b):0)}" readonly></div><div class="field"><label>Total Sisa (Rp)</label><input value="${val(b?apBalance(b):0)}" readonly></div>
+  <div class="field"><label>Tanggal Jatuh Tempo *</label><input id="apDue" type="date" required value="${val(b?.dueDate)}"></div><div class="field"><label>Status</label><input value="${val(b?apStatus(b):'Belum Dibayar')}" readonly></div>
+  </div><small>Total awal dihitung dari Pax × Harga per Pax dan dapat disesuaikan.</small><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Simpan Tagihan</button></div></form>`);
+}
+function updateAPTotal(){const pax=num(document.getElementById('apPax')?.value),unit=num(document.getElementById('apUnitCost')?.value);const amount=document.getElementById('apAmount');if(amount)amount.value=pax*unit}
+function submitAPBill(e,id){
+  e.preventDefault();ensureFinanceData();const vendor=data.vendors.find(v=>v.id===apVendor.value);if(!vendor){alert('Pilih vendor terlebih dahulu.');return;}
+  const prev=data.apBills.find(x=>x.id===id);const apNo=apNoInput();
+  if(data.apBills.some(x=>x.apNo.toLowerCase()===apNo.toLowerCase()&&x.id!==id)){alert('No. AP sudah digunakan.');return;}
+  if(num(apAmount.value)<(prev?apTotalPaid(prev):0)){alert('Total tagihan tidak boleh lebih kecil dari total yang sudah dibayar.');return;}
+  const bill={...(prev||{}),id:id||'ap-'+Date.now().toString(36),apNo,date:apDate.value,vendorId:vendor.id,vendorName:vendor.name,invoiceId:apInvoice.value,airlines:apAirlines.value.trim()||vendor.airlines||'',pnr:apPNR.value.trim(),dept:apDept.value,pax:num(apPax.value),unitCost:num(apUnitCost.value),description:apDescription.value.trim(),totalAmount:num(apAmount.value),dueDate:apDue.value,initialPaid:num(prev?.initialPaid)};
+  if(bill.totalAmount<=0){alert('Total tagihan harus lebih dari Rp 0.');return;}
+  const ix=data.apBills.findIndex(x=>x.id===id);if(ix<0)data.apBills.push(bill);else data.apBills[ix]=bill;save();closeModal();refreshAPViews();
+}
+function apNoInput(){return document.getElementById('apNo').value.trim()}
+function deleteAPBill(id){
+  const hasPayments=data.apPayments.some(p=>p.apBillId===id);
+  const msg=hasPayments?'Tagihan AP ini sudah memiliki riwayat pembayaran. Menghapusnya juga akan menghapus seluruh riwayat pembayaran terkait. Lanjutkan hapus?':'Hapus tagihan AP ini?';
+  if(!confirm(msg))return;
+  data.apBills=data.apBills.filter(b=>b.id!==id);
+  data.apPayments=data.apPayments.filter(p=>p.apBillId!==id);
+  save();refreshAPViews();
+}
+function apBillFilterValue(b,field){
+  switch(field){
+    case 'apNo':return b.apNo||'';
+    case 'invoiceId':return b.invoiceId||'';
+    case 'vendor':return apVendorName(b);
+    case 'airlines':return [b.airlines,b.pnr].filter(Boolean).join(' / ');
+    case 'date':return date(b.date);
+    case 'dueDate':return date(b.dueDate);
+    default:return [b.apNo,b.invoiceId,apVendorName(b),b.airlines,b.pnr].join(' ');
+  }
+}
+const apBillSortOptions=[['date','Tanggal'],['dueDate','Jatuh Tempo'],['apNo','No. AP'],['vendor','Vendor'],['totalAmount','Total Tagihan'],['sisa','Sisa']];
+function apBillSortVal(b,key){
+  if(key==='vendor')return apVendorName(b);
+  if(key==='sisa')return apBalance(b);
+  if(key==='totalAmount')return num(b.totalAmount);
+  if(key==='dueDate')return b.dueDate||'';
+  if(key==='apNo')return b.apNo||'';
+  return b.date||'';
+}
+function renderAPBills(){
+  ensureFinanceData();
+  const q=(document.getElementById('apSearch')?.value||'').trim().toLowerCase();
+  const field=document.getElementById('apFieldFilter')?.value||'all';
+  const filter=document.getElementById('apStatusFilter')?.value||'';
+  const mf=document.getElementById('apMonth')?.value||'';
+  const yf=document.getElementById('apYear')?.value||'';
+
+  const monthSel=document.getElementById('apMonth');
+  if(monthSel)monthSel.innerHTML=dueMonthOptions(mf).replace('Semua Bulan','Semua Bulan (sesuai kolom filter)');
+
+  const yearSel=document.getElementById('apYear');
+  if(yearSel){
+    const current=yearSel.value||yf;
+    const dataYears=[...new Set(data.apBills.flatMap(b=>[(b.date||'').slice(0,4),(b.dueDate||'').slice(0,4)]).filter(Boolean))];
+    const fixedYears=[];for(let y=2020;y<=2031;y++)fixedYears.push(String(y));
+    const years=[...new Set(dataYears.concat(fixedYears))].sort().reverse();
+    yearSel.innerHTML='<option value="">Semua Tahun</option>'+years.map(y=>`<option value="${y}" ${current===y?'selected':''}>${y}</option>`).join('');
+  }
+
+  document.getElementById('apBillSortBox').innerHTML=sortControlHTML('apbills',apBillSortOptions);
+
+  let bills=data.apBills.filter(b=>{
+    const matchesSearch=!q||(
+      field==='all'
+        ?[b.apNo,b.invoiceId,apVendorName(b),b.airlines,b.pnr].join(' ').toLowerCase().includes(q)
+        :String(apBillFilterValue(b,field)).toLowerCase().includes(q)
+    );
+    const matchesStatus=!filter||apStatus(b)===filter;
+
+    const dateCandidates=field==='dueDate'?[b.dueDate||'']:field==='date'?[b.date||'']:[b.date||''];
+    const matchesMonth=!mf||dateCandidates.some(d=>d.slice(5,7)===mf);
+    const yearCandidates=field==='dueDate'?[b.dueDate||'']:[b.date||'',b.dueDate||''];
+    const matchesYear=!yf||yearCandidates.some(d=>d.slice(0,4)===yf);
+
+    return matchesSearch&&matchesStatus&&matchesMonth&&matchesYear;
+  });
+  bills=sortRows(bills,'apbills',apBillSortVal);
+
+  const balance=data.apBills.reduce((s,b)=>s+apBalance(b),0),overdue=data.apBills.filter(b=>apStatus(b)==='Overdue').reduce((s,b)=>s+apBalance(b),0);
+  document.getElementById('apBillCards').innerHTML=[['Total Tagihan',rp(data.apBills.reduce((s,b)=>s+num(b.totalAmount),0))],['Total Terbayar',rp(data.apBills.reduce((s,b)=>s+apTotalPaid(b),0))],['Total Sisa',rp(balance)],['Overdue',rp(overdue)]].map((x,index)=>`<div class="card reportbox ap-summary-card ap-summary-card-${index}"><p>${x[0]}</p><strong>${x[1]}</strong></div>`).join('');
+  const hasSpecificFilter=q||filter||mf||yf||field!=='all';
+  document.getElementById('apBillRows').innerHTML=bills.map(b=>`<tr><td><b>${esc(b.apNo)}</b></td><td>${esc(b.invoiceId||'-')}</td><td>${esc(apVendorName(b))}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${b.dept?date(b.dept):'-'}</td><td>${num(b.pax)}</td><td>${date(b.date)}</td><td>${date(b.dueDate)}</td><td>${rp(b.totalAmount)}</td><td>${rp(apTotalPaid(b))}</td><td>${rp(apBalance(b))}</td><td>${apBadge(apStatus(b))}</td><td><button class="secondary" onclick="openAPBill('${esc(b.id)}')">Edit</button> <button class="secondary" onclick="deleteAPBill('${esc(b.id)}')">Hapus</button></td></tr>`).join('')||`<tr><td colspan="13" class="empty">${hasSpecificFilter?'Tidak ada tagihan AP yang sesuai dengan filter.':'Belum ada tagihan AP.'}</td></tr>`;
+}
+function setProfitOptions(id,values,label){const el=document.getElementById(id),previous=el.value;el.innerHTML=`<option value="">Semua ${label}</option>`+values.filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(values.includes(previous))el.value=previous}
+function resetProfitDateFilter(){document.getElementById('profitFrom').value='';document.getElementById('profitTo').value='';renderProfitability()}
+let profitabilityExportState=null;
+let profitabilitySortDirection=-1;
+function toggleProfitSortDirection(){profitabilitySortDirection*=-1;renderProfitability()}
+function renderProfitability(){
+  ensureFinanceData();const all=data.invoices;
+  setProfitOptions('profitCustomer',[...new Set(all.map(i=>i.customer))],'Customer');setProfitOptions('profitAirline',[...new Set(all.map(i=>invoiceAirlines(i)))],'Airlines');setProfitOptions('profitVendor',[...new Set(data.vendors.map(v=>v.name))],'Vendor');
+  const rangeField=document.getElementById('profitRangeField').value,from=document.getElementById('profitFrom').value,to=document.getElementById('profitTo').value,customer=document.getElementById('profitCustomer').value,airline=document.getElementById('profitAirline').value,vendor=document.getElementById('profitVendor').value,pnr=(document.getElementById('profitPNR').value||'').toLowerCase(),sales=(document.getElementById('profitSales').value||'').toLowerCase();
+  const reportRows=irData(),reportById=new Map(reportRows.map(r=>[r.id,r]));
+  const rows=all.filter(i=>{const cust=(data.customers||[]).find(c=>c.invoice===i.id)||{},air=invoiceAirlines(i)||cust.airlines||'',ref=i.pnr||cust.pnr||'',sale=i.sales||cust.sales||'',report=reportById.get(i.id),rangeValue=rangeField==='dept'?irDeptDate(report||{}):rangeField==='due'?(report?.due||''):(report?.date||'');return(!from||(rangeValue&&rangeValue>=from))&&(!to||(rangeValue&&rangeValue<=to))&&(!customer||i.customer===customer)&&(!airline||air===airline)&&(!vendor||data.apBills.some(b=>b.invoiceId===i.id&&apVendorName(b)===vendor))&&(!pnr||ref.toLowerCase().includes(pnr))&&(!sales||sale.toLowerCase().includes(sales))});
+  const details=rows.map(i=>{let bills=data.apBills.filter(b=>b.invoiceId===i.id&&(!vendor||apVendorName(b)===vendor));return{invoice:i,customer:(data.customers||[]).find(c=>c.invoice===i.id)||{},bills,revenue:num(i.amount),hpp:bills.reduce((s,b)=>s+num(b.totalAmount),0)}}).filter(x=>!vendor||x.bills.length);
+  const sortField=document.getElementById('profitSortField').value,sortValue=x=>sortField==='id'?x.invoice.id:sortField==='customer'?x.invoice.customer:sortField==='revenue'?x.revenue:sortField==='profit'?x.revenue-x.hpp:sortField==='margin'?(x.revenue?(x.revenue-x.hpp)/x.revenue*100:0):x.invoice.date||'';
+  details.sort((a,b)=>{const av=sortValue(a),bv=sortValue(b);return typeof av==='number'&&typeof bv==='number'?profitabilitySortDirection*(av-bv):profitabilitySortDirection*String(av||'').localeCompare(String(bv||''),'id',{numeric:true,sensitivity:'base'})});
+  const directionButton=document.getElementById('profitSortDirection');directionButton.textContent=profitabilitySortDirection===1?'↑':'↓';directionButton.setAttribute('aria-label',profitabilitySortDirection===1?'Urutan menaik':'Urutan menurun');
+  const revenue=details.reduce((s,x)=>s+x.revenue,0),hpp=details.reduce((s,x)=>s+x.hpp,0),profit=revenue-hpp,pax=details.reduce((s,x)=>s+num(x.invoice.pax||x.customer.pax),0),margin=revenue?profit/revenue*100:0;
+  details.forEach(x=>x.margin=x.revenue?((x.revenue-x.hpp)/x.revenue*100):0);
+  const fieldLabel=rangeField==='dept'?'DEPT':rangeField==='due'?'Jatuh Tempo':'Tanggal Invoice';
+  const period=from||to?fieldLabel+': '+(from?irShortDate(from):'Awal')+' s/d '+(to?irShortDate(to):'Sekarang'):'Semua Periode';
+  document.getElementById('profitPeriod').textContent=period;
+  document.getElementById('profitPrintedAt').textContent=irPrintedAt();
+  document.getElementById('profitUser').textContent=(data.settings&&data.settings.user)||'Finance User';
+  document.getElementById('profitCount').textContent=details.length+' invoice';
+  document.getElementById('profitCards').innerHTML=[
+    ['JUMLAH INVOICE',details.length+' Invoice','sesuai filter',''],
+    ['TOTAL PENDAPATAN',rp(revenue),'nilai invoice tertaut',''],
+    ['TOTAL HPP',rp(hpp),'biaya AP tertaut','gold'],
+    ['LABA KOTOR',rp(profit),'pendapatan dikurangi HPP',''],
+    ['GROSS MARGIN',margin.toFixed(1)+' %','laba kotor / pendapatan','gold'],
+    ['TOTAL PAX',pax+' Pax','jumlah penumpang','gold']
+  ].map(x=>`<div class="ir-card ${x[3]}"><p>${x[0]}</p><strong>${x[1]}</strong><small>${x[2]}</small></div>`).join('');
+  document.getElementById('profitRows').innerHTML=details.map(x=>{const i=x.invoice,air=invoiceAirlines(i)||x.customer.airlines||'-',ref=i.pnr||x.customer.pnr||'-',dep=invoiceDept(i)||x.customer.dept||'-',sale=i.sales||x.customer.sales||'-',gross=x.revenue-x.hpp;return`<tr><td class="inv">${esc(i.id)}</td><td><b>${esc(i.customer)}</b></td><td>${esc(air)}</td><td>${esc(ref)}</td><td>${esc(dep)}</td><td>${esc(sale)}</td><td class="c">${num(i.pax||x.customer.pax)}</td><td class="r">${rp(x.revenue)}</td><td class="r">${rp(x.hpp)}</td><td class="r"><b>${rp(gross)}</b></td><td class="r">${x.margin.toFixed(1)}%</td><td>${esc(x.bills.map(apVendorName).join(', ')||'-')}</td></tr>`}).join('')||'<tr><td colspan="12" class="empty">Tidak ada invoice untuk filter ini.</td></tr>';
+  document.getElementById('profitFoot').innerHTML=details.length?`<tr><td colspan="7">TOTAL (${details.length} invoice)</td><td class="r">${rp(revenue)}</td><td class="r">${rp(hpp)}</td><td class="r">${rp(profit)}</td><td class="r">${margin.toFixed(1)}%</td><td></td></tr>`:'';
+  const bands=[['Margin Negatif',x=>x.margin<0],['0 - 10%',x=>x.margin>=0&&x.margin<10],['10 - 20%',x=>x.margin>=10&&x.margin<20],['20 - 30%',x=>x.margin>=20&&x.margin<30],['> 30%',x=>x.margin>=30]];
+  const marginGroups=bands.map(([label,test])=>{const group=details.filter(test),groupRevenue=group.reduce((s,x)=>s+x.revenue,0),groupHpp=group.reduce((s,x)=>s+x.hpp,0);return{label,count:group.length,revenue:groupRevenue,hpp:groupHpp,profit:groupRevenue-groupHpp}});
+  document.getElementById('profitMarginRows').innerHTML=marginGroups.map(g=>`<tr><td>${g.label}</td><td class="c">${g.count}</td><td class="r">${rp(g.revenue)}</td><td class="r">${rp(g.hpp)}</td><td class="r"><b>${rp(g.profit)}</b></td></tr>`).join('')+`<tr style="background:#fff7dd;font-weight:800"><td>TOTAL</td><td class="c">${details.length}</td><td class="r">${rp(revenue)}</td><td class="r">${rp(hpp)}</td><td class="r">${rp(profit)}</td></tr>`;
+  const vendorGroups=new Map();details.forEach(x=>x.bills.forEach(b=>{const name=apVendorName(b);if(!vendorGroups.has(name))vendorGroups.set(name,{name,invoiceIds:new Set(),bills:0,hpp:0});const group=vendorGroups.get(name);group.invoiceIds.add(x.invoice.id);group.bills++;group.hpp+=num(b.totalAmount)}));
+  const vendorRows=[...vendorGroups.values()].sort((a,b)=>b.hpp-a.hpp);
+  document.getElementById('profitVendorRows').innerHTML=vendorRows.map(v=>`<tr><td>${esc(v.name)}</td><td class="c">${v.invoiceIds.size}</td><td class="c">${v.bills}</td><td class="r"><b>${rp(v.hpp)}</b></td><td class="r">${hpp?(v.hpp/hpp*100).toFixed(1):'0.0'}%</td></tr>`).join('')+`<tr style="background:#fff7dd;font-weight:800"><td>TOTAL</td><td class="c">${new Set(vendorRows.flatMap(v=>[...v.invoiceIds])).size}</td><td class="c">${vendorRows.reduce((s,v)=>s+v.bills,0)}</td><td class="r">${rp(vendorRows.reduce((s,v)=>s+v.hpp,0))}</td><td class="r">${hpp?'100.0':'0.0'}%</td></tr>`;
+  profitabilityExportState={details,marginGroups,vendorRows,revenue,hpp,profit,pax,margin,period,printedAt:irPrintedAt(),user:(data.settings&&data.settings.user)||'Finance User'};
+  document.getElementById('profitNote').innerHTML=`Dari <b>${details.length}</b> invoice, total pendapatan sebesar <b>${rp(revenue)}</b> dengan HPP <b>${rp(hpp)}</b>, menghasilkan laba kotor <b>${rp(profit)}</b> dan gross margin <b>${margin.toFixed(1)}%</b>. HPP dihitung dari tagihan AP yang tertaut pada invoice dalam filter ini.`;
+}
+async function exportProfitabilityExcel(){
+  const report=profitabilityExportState;if(!window.ExcelJS){alert('Modul Excel belum siap. Periksa koneksi internet lalu coba lagi.');return}if(!report)return;
+  const wb=new ExcelJS.Workbook();wb.creator='PT Shad Al Fatih Indonesia';
+  const ws=wb.addWorksheet('Profitabilitas',{views:[{state:'frozen',ySplit:9}],pageSetup:{orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0}});
+  const RED='FFC8151C',GOLD='FFF3C900',DARK='FF7C0000',headers=['INVOICE','CUSTOMER','AIRLINES','PNR','DEPT','SALES','PAX','PENDAPATAN','HPP','LABA KOTOR','MARGIN','VENDOR'];
+  ws.columns=[16,25,20,13,11,16,8,19,19,19,12,28].map(width=>({width}));
+  ws.mergeCells('A1:L1');ws.getCell('A1').value='PT SHAD AL FATIH INDONESIA';ws.getCell('A1').font={name:'Arial',bold:true,size:16,color:{argb:DARK}};
+  ws.mergeCells('A2:L2');ws.getCell('A2').value='LAPORAN PROFITABILITAS';ws.getCell('A2').font={name:'Arial',bold:true,size:14,color:{argb:RED}};
+  ws.mergeCells('A3:L3');ws.getCell('A3').value='Periode: '+report.period+'  |  Dicetak: '+report.printedAt;
+  [1,2,3].forEach(r=>{ws.getRow(r).alignment={horizontal:'center',vertical:'middle'};ws.getRow(r).height=20});ws.getRow(1).height=42;
+  try{const image=wb.addImage({base64:irLogoPNG().split(',')[1],extension:'png'});ws.addImage(image,{tl:{col:.1,row:.1},ext:{width:95,height:44}})}catch(e){}
+  const kpis=[['JUMLAH INVOICE',report.details.length],['TOTAL PENDAPATAN',report.revenue],['TOTAL HPP',report.hpp],['LABA KOTOR',report.profit],['GROSS MARGIN',report.margin/100],['TOTAL PAX',report.pax]];
+  kpis.forEach(([label,value],index)=>{const col=index*2+1;ws.mergeCells(5,col,5,col+1);ws.mergeCells(6,col,6,col+1);const title=ws.getCell(5,col),cell=ws.getCell(6,col);title.value=label;title.font={name:'Arial',bold:true,size:9,color:{argb:DARK}};title.fill={type:'pattern',pattern:'solid',fgColor:{argb:GOLD}};title.alignment={horizontal:'center'};cell.value=value;cell.font={name:'Arial',bold:true,size:11};cell.alignment={horizontal:'center'};if(index>0&&index<4)cell.numFmt='"Rp "#,##0';if(index===4)cell.numFmt='0.0%';[title,cell].forEach(c=>c.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}})});
+  const headerRow=9;headers.forEach((label,index)=>{const cell=ws.getCell(headerRow,index+1);cell.value=label;cell.font={name:'Arial',bold:true,size:9,color:{argb:'FFFFFFFF'}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:RED}};cell.alignment={horizontal:'center',vertical:'middle',wrapText:true}});ws.getRow(headerRow).height=26;
+  report.details.forEach(x=>{const i=x.invoice,customer=x.customer,air=invoiceAirlines(i)||customer.airlines||'-',pnr=i.pnr||customer.pnr||'-',dept=invoiceDept(i)||customer.dept||'-',sales=i.sales||customer.sales||'-';const row=ws.addRow([i.id,i.customer,air,pnr,dept,sales,num(i.pax||customer.pax),x.revenue,x.hpp,x.revenue-x.hpp,x.margin/100,x.bills.map(apVendorName).join(', ')||'-']);row.eachCell(cell=>{cell.font={name:'Arial',size:9};cell.border={top:{style:'hair'},left:{style:'hair'},bottom:{style:'hair'},right:{style:'hair'}}});[8,9,10].forEach(n=>row.getCell(n).numFmt='"Rp "#,##0');row.getCell(11).numFmt='0.0%'});
+  const total=ws.addRow(['TOTAL','','','','','','',report.revenue,report.hpp,report.profit,report.margin/100,'']);total.font={name:'Arial',bold:true,size:10};total.eachCell(cell=>cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF7DD'}});[8,9,10].forEach(n=>total.getCell(n).numFmt='"Rp "#,##0');total.getCell(11).numFmt='0.0%';
+  ws.autoFilter={from:{row:headerRow,column:1},to:{row:headerRow+report.details.length,column:headers.length}};
+  const start=headerRow+report.details.length+3;ws.mergeCells(start,1,start,5);ws.getCell(start,1).value='RINGKASAN RENTANG MARGIN';ws.getCell(start,1).font={bold:true,color:{argb:RED}};ws.mergeCells(start,7,start,12);ws.getCell(start,7).value='RINGKASAN VENDOR';ws.getCell(start,7).font={bold:true,color:{argb:RED}};
+  const marginHeader=ws.getRow(start+1);['RENTANG MARGIN','JML INVOICE','PENDAPATAN','HPP','LABA KOTOR'].forEach((v,i)=>{const c=marginHeader.getCell(i+1);c.value=v;c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:RED}}});
+  ['VENDOR','JML INVOICE','JML AP','TOTAL HPP','KONTRIBUSI'].forEach((v,i)=>{const c=marginHeader.getCell(i+7);c.value=v;c.font={bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:RED}}});
+  report.marginGroups.forEach((group,index)=>{const row=ws.getRow(start+2+index);[group.label,group.count,group.revenue,group.hpp,group.profit].forEach((v,i)=>row.getCell(i+1).value=v);[3,4,5].forEach(i=>row.getCell(i).numFmt='"Rp "#,##0')});
+  report.vendorRows.forEach((vendor,index)=>{const row=ws.getRow(start+2+index);[vendor.name,vendor.invoiceIds.size,vendor.bills,vendor.hpp,report.hpp?vendor.hpp/report.hpp:0].forEach((v,i)=>row.getCell(i+7).value=v);row.getCell(10).numFmt='"Rp "#,##0';row.getCell(11).numFmt='0.0%'});
+  const signRow=start+2+Math.max(report.marginGroups.length,report.vendorRows.length)+2;ws.mergeCells(signRow,1,signRow,4);ws.mergeCells(signRow,9,signRow,12);ws.getCell(signRow,1).value='Dibuat oleh,';ws.getCell(signRow,9).value='Disetujui oleh,';ws.mergeCells(signRow+3,1,signRow+3,4);ws.mergeCells(signRow+3,9,signRow+3,12);ws.getCell(signRow+3,1).value=report.user;ws.getCell(signRow+3,9).value='Rizky Noviarini S.Gz., M.P.H.';ws.getCell(signRow+4,1).value='Finance & Accounting';ws.getCell(signRow+4,9).value='Mnr. Finance';
+  [signRow,signRow+3,signRow+4].forEach(r=>ws.getRow(r).alignment={horizontal:'center'});ws.getRow(signRow+2).height=28;ws.getCell(signRow+3,1).font={bold:true};ws.getCell(signRow+3,9).font={bold:true};
+  const buffer=await wb.xlsx.writeBuffer(),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='Laporan-Profitabilitas-'+todayStr()+'.xlsx';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),4000);
+}
+function exportProfitabilityPDF(){
+  const report=profitabilityExportState;if(!report)return;
+  const details=report.details.map(x=>{const i=x.invoice,c=x.customer,air=invoiceAirlines(i)||c.airlines||'-',pnr=i.pnr||c.pnr||'-',dept=invoiceDept(i)||c.dept||'-',sales=i.sales||c.sales||'-';return`<tr><td>${esc(i.id)}</td><td>${esc(i.customer)}</td><td>${esc(air)}</td><td>${esc(pnr)}</td><td>${esc(dept)}</td><td>${esc(sales)}</td><td class="c">${num(i.pax||c.pax)}</td><td class="r">${rp(x.revenue)}</td><td class="r">${rp(x.hpp)}</td><td class="r"><b>${rp(x.revenue-x.hpp)}</b></td><td class="r">${x.margin.toFixed(1)}%</td><td>${esc(x.bills.map(apVendorName).join(', ')||'-')}</td></tr>`}).join('')||'<tr><td colspan="12" class="c">Tidak ada data pada filter ini.</td></tr>';
+  const marginRows=report.marginGroups.map(g=>`<tr><td>${g.label}</td><td class="c">${g.count}</td><td class="r">${rp(g.revenue)}</td><td class="r">${rp(g.hpp)}</td><td class="r">${rp(g.profit)}</td></tr>`).join('');
+  const vendorRows=report.vendorRows.map(v=>`<tr><td>${esc(v.name)}</td><td class="c">${v.invoiceIds.size}</td><td class="c">${v.bills}</td><td class="r">${rp(v.hpp)}</td><td class="r">${report.hpp?(v.hpp/report.hpp*100).toFixed(1):'0.0'}%</td></tr>`).join('');
+  const kpis=[['JUMLAH INVOICE',report.details.length+' invoice'],['TOTAL PENDAPATAN',rp(report.revenue)],['TOTAL HPP',rp(report.hpp)],['LABA KOTOR',rp(report.profit)],['GROSS MARGIN',report.margin.toFixed(1)+'%'],['TOTAL PAX',report.pax+' pax']].map(k=>`<div class="kpi"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('');
+  const html=`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Laporan Profitabilitas</title><style>
+  @page{size:A4 landscape;margin:9mm}*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{margin:0;font-family:Arial,sans-serif;color:#20293a}.head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #c8151c;padding-bottom:8px}.brand{display:flex;align-items:center;gap:12px}.brand img{width:72px}.brand b{font-size:13px}.brand small{display:block;color:#6b7382;margin-top:3px}.meta{text-align:right;font-size:9px;color:#6b7382}.meta b{display:block;color:#c8151c;font-size:11px;margin-bottom:4px}.gold{height:3px;background:#f3c900}h1{text-align:center;font-size:15px;letter-spacing:1px;margin:12px 0 3px}.period{text-align:center;color:#6b7382;font-size:9px;margin:0 0 10px}.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:10px}.kpi{border:1px solid #e0e4ec;border-top:3px solid #c8151c;padding:6px}.kpi:nth-child(3n){border-top-color:#f3c900}.kpi small{display:block;color:#8a8f9c;font-size:7px;font-weight:bold}.kpi b{display:block;font-size:10px;margin-top:4px}table{width:100%;border-collapse:collapse}th{background:#c8151c;color:#fff;font-size:6.5px;padding:4px 2px;border:1px solid #a5121a}td{font-size:6.5px;padding:3px 2px;border:.5px solid #e2e6ee;white-space:nowrap}tbody tr:nth-child(even){background:#fcfcfe}.r{text-align:right}.c{text-align:center}tfoot td{background:#fff7dd;font-weight:bold;border-top:2px solid #f3c900}.section{margin:10px 0 4px;color:#c8151c;font-size:9px;font-weight:bold}.summaries{display:grid;grid-template-columns:1.1fr 1fr;gap:9px}.note{margin-top:7px;background:#fff7dd;border-left:3px solid #f3c900;padding:5px 7px;font-size:7px}.sign{display:flex;justify-content:flex-end;gap:60px;margin-top:14px;text-align:center;font-size:8px;color:#5c6474}.sign div{min-width:160px}.sign strong{display:block;margin-top:28px;border-top:1px solid #c9ced8;padding-top:3px;color:#20293a}
+  </style></head><body><div class="head"><div class="brand"><img src="${irLogoPNG()}"><div><b>PT SHAD AL FATIH INDONESIA</b><small>Tour &amp; Travel · Yogyakarta · Finance &amp; Accounting</small></div></div><div class="meta"><b>LAPORAN PROFITABILITAS</b>Periode: ${esc(report.period)}<br>Dicetak: ${esc(report.printedAt)}</div></div><div class="gold"></div><h1>LAPORAN PROFITABILITAS</h1><p class="period">Pendapatan invoice dikurangi HPP dari AP tertaut</p><div class="kpis">${kpis}</div>
+  <table><thead><tr><th>INVOICE</th><th>CUSTOMER</th><th>AIRLINES</th><th>PNR</th><th>DEPT</th><th>SALES</th><th>PAX</th><th>PENDAPATAN</th><th>HPP</th><th>LABA KOTOR</th><th>MARGIN</th><th>VENDOR</th></tr></thead><tbody>${details}</tbody><tfoot><tr><td colspan="7">TOTAL (${report.details.length} invoice)</td><td class="r">${rp(report.revenue)}</td><td class="r">${rp(report.hpp)}</td><td class="r">${rp(report.profit)}</td><td class="r">${report.margin.toFixed(1)}%</td><td></td></tr></tfoot></table>
+  <div class="section">RINGKASAN PROFITABILITAS</div><div class="summaries"><table><thead><tr><th>RENTANG MARGIN</th><th>JML</th><th>PENDAPATAN</th><th>HPP</th><th>LABA KOTOR</th></tr></thead><tbody>${marginRows}</tbody></table><table><thead><tr><th>VENDOR</th><th>JML INVOICE</th><th>JML AP</th><th>TOTAL HPP</th><th>KONTRIBUSI</th></tr></thead><tbody>${vendorRows}</tbody></table></div><div class="note">Total pendapatan ${rp(report.revenue)}, HPP ${rp(report.hpp)}, laba kotor ${rp(report.profit)}, gross margin ${report.margin.toFixed(1)}%.</div><div class="sign"><div>Dibuat oleh,<strong>${esc(report.user)}</strong>Finance &amp; Accounting</div><div>Disetujui oleh,<strong>Rizky Noviarini S.Gz., M.P.H.</strong>Mnr. Finance</div></div><script>window.onload=function(){setTimeout(function(){window.print()},350)}<\/script></body></html>`;
+  const win=window.open('','_blank');if(!win){alert('Popup diblokir browser. Izinkan popup untuk mencetak laporan.');return}win.document.open();win.document.write(html);win.document.close();
+}
+function renderFinancialOverview(){
+  ensureFinanceData();const revenue=data.invoices.reduce((s,i)=>s+num(i.amount),0),hpp=data.apBills.filter(b=>b.invoiceId).reduce((s,b)=>s+num(b.totalAmount),0),receivable=data.invoices.reduce((s,i)=>s+Math.max(0,num(i.amount)-num(i.paid)),0),payable=data.apBills.reduce((s,b)=>s+apBalance(b),0),received=data.invoices.reduce((s,i)=>s+num(i.paid),0),paid=data.apBills.reduce((s,b)=>s+apTotalPaid(b),0),gross=revenue-hpp;
+  document.getElementById('financialOverview').innerHTML=[['Pendapatan',rp(revenue)],['HPP Tertaut',rp(hpp)],['Laba Kotor',rp(gross)],['Gross Margin',revenue?(gross/revenue*100).toFixed(1)+'%':'0.0%'],['Piutang',rp(receivable)],['Hutang / AP',rp(payable)],['Kas Bersih Tercatat',rp(received-paid)]].map((x,index)=>`<div class="card reportbox overview-card overview-card-${index}"><p>${x[0]}</p><strong>${x[1]}</strong></div>`).join('');
 }
 
 function deleteCustomer(customerId){
@@ -3625,6 +4071,7 @@ function setNav(k){
 document.querySelectorAll('.set-mitem').forEach(b=>b.classList.toggle('active',b.dataset.set===k));
 document.querySelectorAll('.set-pane').forEach(p=>p.classList.toggle('active',p.id==='setpane-'+k));
 if(k==='perusahaan')setTab('info');
+if(k==='lainlain')loadBackupHistory();
 }
 function setTab(t){
 document.querySelectorAll('.set-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
@@ -3667,6 +4114,105 @@ alert('Data berhasil dipulihkan dari cadangan.');
 }catch(e){console.error(e);alert('Gagal membaca file cadangan. Pastikan file berformat JSON hasil unduhan dari menu ini.')}
 };
 reader.readAsText(f);
+}
+
+/* ===================================================================
+   CADANGAN OTOMATIS HARIAN
+   ===================================================================
+   Menyimpan salinan data ke Supabase satu kali per hari (baris terpisah
+   pada tabel SUPABASE_TABLE yang sama, sehingga tidak perlu membuat
+   tabel baru). Disimpan otomatis saat aplikasi dibuka pertama kali pada
+   hari itu dan sudah terhubung ke cloud. Cadangan lama otomatis dihapus
+   setelah BACKUP_RETENTION_DAYS hari.
+   =================================================================== */
+const BACKUP_ID_PREFIX=SUPABASE_STATE_ID+'_BACKUP_';
+const BACKUP_RETENTION_DAYS=30;
+const AUTO_BACKUP_KEY=KEY+'_last_auto_backup_date';
+
+async function autoDailyBackup(manual){
+  manual=!!manual;
+  const today=todayStr();
+  if(!manual && localStorage.getItem(AUTO_BACKUP_KEY)===today)return;
+  if(!cloudReady||!supabaseClient){
+    if(manual)alert('Cloud belum terhubung, tidak bisa membuat cadangan otomatis saat ini.');
+    return;
+  }
+  try{
+    const snapshot=JSON.parse(JSON.stringify(data));
+    const payload={id:BACKUP_ID_PREFIX+today,state:snapshot,updated_at:new Date().toISOString()};
+    const {error}=await supabaseClient.from(SUPABASE_TABLE).upsert(payload,{onConflict:'id'});
+    if(error)throw error;
+    localStorage.setItem(AUTO_BACKUP_KEY,today);
+    cleanupOldBackups();
+    if(document.getElementById('backupHistoryBody'))loadBackupHistory();
+    if(manual)alert('Cadangan hari ini berhasil disimpan ke cloud.');
+  }catch(e){
+    console.warn('Cadangan otomatis gagal:',cloudErrorText(e));
+    if(manual)alert('Gagal membuat cadangan: '+cloudErrorText(e));
+  }
+}
+async function cleanupOldBackups(){
+  if(!supabaseClient)return;
+  try{
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-BACKUP_RETENTION_DAYS);
+    const cutoffStr=isoLocal(cutoff);
+    const {data:rows,error}=await supabaseClient.from(SUPABASE_TABLE).select('id').like('id',BACKUP_ID_PREFIX+'%');
+    if(error)throw error;
+    const toDelete=(rows||[]).map(r=>r.id).filter(id=>id.slice(BACKUP_ID_PREFIX.length)<cutoffStr);
+    if(toDelete.length)await supabaseClient.from(SUPABASE_TABLE).delete().in('id',toDelete);
+  }catch(e){console.warn('Bersihkan cadangan lama gagal:',cloudErrorText(e))}
+}
+async function loadBackupHistory(){
+  const tbody=document.getElementById('backupHistoryBody');
+  const statusEl=document.getElementById('backupAutoStatus');
+  if(!tbody)return;
+  if(statusEl){
+    const last=localStorage.getItem(AUTO_BACKUP_KEY);
+    statusEl.textContent=last?('Cadangan otomatis terakhir tersimpan: '+last):'Belum ada cadangan otomatis tersimpan di perangkat ini.';
+  }
+  if(!supabaseClient){tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted)">Cloud belum terhubung, cadangan otomatis tidak tersedia.</td></tr>';return}
+  tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted)">Memuat riwayat cadangan…</td></tr>';
+  try{
+    const {data:rows,error}=await supabaseClient.from(SUPABASE_TABLE).select('id,updated_at').like('id',BACKUP_ID_PREFIX+'%').order('id',{ascending:false});
+    if(error)throw error;
+    if(!rows||!rows.length){tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted)">Belum ada cadangan otomatis tersimpan.</td></tr>';return}
+    tbody.innerHTML=rows.map(r=>{
+      const tgl=r.id.slice(BACKUP_ID_PREFIX.length);
+      const waktu=r.updated_at?new Date(r.updated_at).toLocaleString('id-ID'):'-';
+      return `<tr><td>${esc(tgl)}</td><td>${esc(waktu)}</td><td class="rowact">
+        <button class="secondary" onclick="downloadDailyBackup('${tgl}')">⇩ Unduh</button>
+        <button class="secondary" onclick="restoreDailyBackup('${tgl}')">⇧ Pulihkan</button>
+      </td></tr>`;
+    }).join('');
+  }catch(e){
+    tbody.innerHTML='<tr><td colspan="3" style="color:#d71920">Gagal memuat riwayat cadangan: '+esc(cloudErrorText(e))+'</td></tr>';
+  }
+}
+async function fetchDailyBackupState(tgl){
+  const {data:row,error}=await supabaseClient.from(SUPABASE_TABLE).select('state').eq('id',BACKUP_ID_PREFIX+tgl).maybeSingle();
+  if(error)throw error;
+  return row?row.state:null;
+}
+async function downloadDailyBackup(tgl){
+  try{
+    const state=await fetchDailyBackupState(tgl);
+    if(!state){alert('Cadangan tanggal tersebut tidak ditemukan.');return}
+    downloadFile('backup_finance_shad_'+tgl+'.json',JSON.stringify(state,null,2),'application/json');
+  }catch(e){alert('Gagal mengunduh cadangan: '+cloudErrorText(e))}
+}
+async function restoreDailyBackup(tgl){
+  if(!confirm('Memulihkan cadangan tanggal '+tgl+' akan menimpa seluruh data yang ada saat ini (termasuk data di cloud). Lanjutkan?'))return;
+  try{
+    const state=await fetchDailyBackupState(tgl);
+    if(!state){alert('Cadangan tanggal tersebut tidak ditemukan.');return}
+    data=state;
+    if(!Array.isArray(data.payments))data.payments=[];
+    save();
+    if(cloudReady)await pushCloudState(false);
+    renderDashboard();renderCustomers();renderInvoices();renderReceivables();renderPayments();renderAging();renderReminders();renderImportSummary();
+    loadSettingsForm();
+    alert('Data berhasil dipulihkan dari cadangan tanggal '+tgl+'.');
+  }catch(e){alert('Gagal memulihkan cadangan: '+cloudErrorText(e))}
 }
 
 function csvCell(x){return `"${String(x??'').replaceAll('"','""')}"`}
@@ -4189,6 +4735,7 @@ document.getElementById('importSummary').innerHTML=[
 
 
 function init(){
+ensureFinanceData();initAPNavigation();
 loadSettingsForm();
 /* jika tahun ini belum ada invoice, tampilkan rentang seluruh data */
 const yr=new Date().getFullYear();
@@ -4215,6 +4762,7 @@ async function boot(){
       clearInterval(cloudPollTimer);
       cloudPollTimer=setInterval(pollCloud,30000);
       setupCloudVisibilityPolling();
+      autoDailyBackup();
     }
   });
 }
@@ -5081,6 +5629,7 @@ function submitInvoice(e){
   if(typeof queueAutoInvoicePdfRebuild==='function')queueAutoInvoicePdfRebuild(rec.id);
 }
 function refreshAll(){
+  ensureFinanceData();
   const active=document.querySelector('.view.active')?.id||'dashboard';
   switch(active){
     case 'dashboard': renderDashboard(); break;
@@ -5090,6 +5639,11 @@ function refreshAll(){
     case 'payments': renderPayments(); break;
     case 'aging': renderAging(); break;
     case 'reminders': renderReminders(); break;
+    case 'vendors': renderVendors(); break;
+    case 'apbills': renderAPBills(); break;
+    case 'appayments': renderAPPayments(); break;
+    case 'apaging': renderAPAging(); break;
+    case 'profitability': renderProfitability(); break;
     case 'invreport': if(typeof renderInvReport==='function')renderInvReport(); break;
     case 'import': if(typeof renderImportSummary==='function')renderImportSummary(); break;
     case 'settings': if(typeof loadSettingsForm==='function')loadSettingsForm(); break;
@@ -6258,6 +6812,7 @@ setInterval(()=>{const t=waIso(new Date());if(t!==_waToday){_waToday=t;renderWaR
 
 <style>/* ===== LAPORAN INVOICE & PIUTANG ===== */
 #invreport{--ir-red:#c8151c;--ir-red-d:#7c0000;--ir-gold:#f3c900;--ir-ink:#20293a}
+#profitability{--ir-red:#c8151c;--ir-red-d:#7c0000;--ir-gold:#f3c900;--ir-ink:#20293a}
 .ir-doc{background:#fff;border:1px solid #e6e9ef;border-radius:14px;padding:22px 22px 26px;box-shadow:0 6px 22px #0000000a}
 .ir-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:4px solid var(--ir-red);padding-bottom:14px;position:relative}
 .ir-head:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:3px;background:var(--ir-gold)}
@@ -6277,6 +6832,15 @@ setInterval(()=>{const t=waIso(new Date());if(t!==_waToday){_waToday=t;renderWaR
 .ir-title p{margin:5px 0 0;font-size:11px;color:#7b8394}
 .ir-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
 .ir-toolbar .input{min-width:190px}
+.ir-sort-control{display:flex;align-items:center;gap:6px}
+.ir-sort-control .input{min-width:130px}
+.ir-sort-direction{width:38px;min-width:38px;height:34px;padding:0;font-size:16px;font-weight:800}
+.profit-range{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 8px;border:1px solid #e3e6ee;border-radius:var(--radius-lg);background:#fff}
+.profit-range label{font-size:11px;color:var(--muted)}
+.profit-range select.input{min-width:145px}
+.profit-range input.input{min-width:145px}
+.profit-export{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.profit-doc .ir-sign{border-top:1px solid var(--line);padding-top:14px}
 .ir-sum{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px}
 .ir-card{border:1px solid #e8ebf1;border-top:3px solid var(--ir-red);border-radius:10px;padding:12px 13px;background:linear-gradient(180deg,#fffdf5,#fff)}
 .ir-card.gold{border-top-color:var(--ir-gold)}
@@ -6303,11 +6867,14 @@ table.ir-table tfoot td{background:#fff7dd;font-weight:800;border-top:2px solid 
 .ir-sign small{display:block;font-size:9.5px;color:#8a8f9c}
 @media(max-width:1200px){.ir-sum{grid-template-columns:repeat(3,1fr)}.ir-two{grid-template-columns:1fr}}
 @media(max-width:640px){.ir-sum{grid-template-columns:repeat(2,1fr)}.ir-head{flex-direction:column}.ir-meta{text-align:left}}
+@media(max-width:820px){.ir-sort-control{width:100%}.ir-sort-control select.input{flex:1;min-width:0;width:auto}.ir-sort-control button.ir-sort-direction{width:38px!important;min-width:38px!important;flex:0 0 38px}.profit-range,.profit-export{width:100%;margin-left:0}.profit-range{align-items:stretch}.profit-range label{align-self:center}.profit-range .input{flex:1;min-width:0!important}.profit-export button{flex:1}.profit-doc .ir-sign{gap:18px;justify-content:space-around}.profit-doc .ir-sign div{min-width:0;flex:1}}
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
 /* ================= LAPORAN INVOICE & PIUTANG (otomatis dari data Invoice) ================= */
 const IR_STATUSES=['Draft','Terbit','Sebagian Dibayar','Jatuh Tempo','Overdue','Lunas'];
+let irSortDirection=-1;
+function toggleIRSortDirection(){irSortDirection*=-1;renderInvReport()}
 const irRp=n=>'Rp '+Math.round(Number(n||0)).toLocaleString('id-ID');
 const irDateFmt=s=>s?date(s):'-';
 function irToday(){return new Date().toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}
@@ -6369,12 +6936,16 @@ function irFiltered(){
   const rf=document.getElementById('irRangeField')?.value||'dept';
   const cf=document.getElementById('irClosingFrom')?.value||'';
   const ct=document.getElementById('irClosingTo')?.value||'';
-  return irData().filter(r=>{
+  const sortField=document.getElementById('irSortField')?.value||'date';
+  const rows=irData().filter(r=>{
     const v=irRangeValue(r,rf);
     return [r.id,r.customer,r.airlines,r.pic,r.pnr,r.dept,r.phone,r.sales].join(' ').toLowerCase().includes(q)
       &&(!st||r.status===st)
       &&(!cf||(v&&v>=cf))&&(!ct||(v&&v<=ct));
-  }).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  });
+  rows.sort((a,b)=>{const av=sortField==='sisa'?a.sisa:a[sortField],bv=sortField==='sisa'?b.sisa:b[sortField];return typeof av==='number'&&typeof bv==='number'?irSortDirection*(av-bv):irSortDirection*String(av||'').localeCompare(String(bv||''),'id',{numeric:true,sensitivity:'base'})});
+  const directionButton=document.getElementById('irSortDirection');if(directionButton){directionButton.textContent=irSortDirection===1?'↑':'↓';directionButton.setAttribute('aria-label',irSortDirection===1?'Urutan menaik':'Urutan menurun')}
+  return rows;
 }
 function irDaysCell(r){
   if(r.days===null)return '-';
@@ -6967,7 +7538,13 @@ async function requestPasswordReset(){
   window.toggleNavGroup = function(el){
     if (document.body.classList.contains('sb-collapsed') && !MQ()) return;
     var g = el.closest('.nav-group');
-    if (g) g.classList.toggle('closed');
+    if (!g) return;
+    var opening=g.classList.contains('closed');
+    document.querySelectorAll('#nav .nav-group').forEach(function(group){
+      var isOpen=group===g&&opening;
+      group.classList.toggle('closed',!isOpen);
+      var head=group.querySelector('.nav-ghead');if(head)head.setAttribute('aria-expanded',String(isOpen));
+    });
   };
 
   window.toggleCollapse = function(){
