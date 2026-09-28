@@ -384,6 +384,12 @@ legend{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:upper
 /* ==========================================================================
    8. MODAL / DIALOG
    ========================================================================== */
+.ap-inv-combo input.ap-it-invq{width:100%}
+.ap-inv-list{position:fixed;z-index:200;display:none;background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-3);overflow-y:auto;padding:4px}
+.ap-inv-item{padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);line-height:1.35}
+.ap-inv-item.on{background:var(--red-soft)}
+.ap-inv-item span{color:var(--text2)}
+.ap-inv-empty{padding:10px;color:var(--muted);font-size:12px}
 .modal{position:fixed;inset:0;background:rgba(14,19,30,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:20px;backdrop-filter:blur(2px)}
 .modal.open{display:flex;animation:fadeIn .16s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -3187,7 +3193,7 @@ function renderReminders(){if(typeof renderWaReminder==='function')renderWaRemin
 
 
 function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.add('open')}
-function closeModal(){document.getElementById('modal').classList.remove('open')}
+function closeModal(){if(typeof apInvClose==='function')apInvClose();document.getElementById('modal').classList.remove('open')}
 
 /* FORM CUSTOMER BARU */
 function openCustomer(customerId){
@@ -3321,23 +3327,100 @@ function apBillInvoiceAmounts(b){const m=new Map();apBillItems(b).forEach(it=>{i
 function apBillInvoiceText(b){const ids=[...new Set(apBillItems(b).map(it=>it.invoiceId).filter(Boolean))];return ids.length?ids.join(', '):(b.invoiceId||'')}
 function apItemRowHTML(it){
   it=it||{};
-  return `<tr class="ap-item-row"><td><select class="ap-it-inv" onchange="apItemInvoiceChanged(this)">${apInvoiceOptions(it.invoiceId)}</select></td><td><input class="ap-it-pnr" value="${esc(it.pnr||'')}"></td><td><input class="ap-it-pax" type="number" min="0" style="text-align:right" value="${esc(it.pax??0)}" oninput="apItemRecalc(this)"></td><td><input class="ap-it-unit" type="number" min="0" style="text-align:right" value="${esc(it.unitCost??0)}" oninput="apItemRecalc(this)"></td><td><input class="ap-it-amt" type="number" min="0" style="text-align:right" value="${esc(it.amount??0)}" oninput="updateAPTotal()"></td><td><button type="button" class="secondary" title="Hapus baris" onclick="removeAPItem(this)">✕</button></td></tr>`;
+  return `<tr class="ap-item-row"><td><div class="ap-inv-combo"><input type="text" class="ap-it-invq" placeholder="🔍 Cari No. Invoice / Customer..." autocomplete="off" value="${esc(apInvLabel(it.invoiceId))}" onfocus="apInvOpen(this)" oninput="apInvTyped(this)" onkeydown="apInvKey(event,this)" onblur="apInvBlur(this)"><input type="hidden" class="ap-it-inv" value="${esc(it.invoiceId||'')}"></div></td><td><input class="ap-it-pnr" value="${esc(it.pnr||'')}"></td><td><input class="ap-it-pax" type="number" min="0" style="text-align:right" value="${esc(it.pax??0)}" oninput="apItemRecalc(this)"></td><td><input class="ap-it-unit" type="number" min="0" style="text-align:right" value="${esc(it.unitCost??0)}" oninput="apItemRecalc(this)"></td><td><input class="ap-it-amt" type="number" min="0" style="text-align:right" value="${esc(it.amount??0)}" oninput="updateAPTotal()"></td><td><button type="button" class="secondary" title="Hapus baris" onclick="removeAPItem(this)">✕</button></td></tr>`;
 }
 function addAPItem(it){
   const body=document.getElementById('apItemsBody');if(!body)return;
   body.insertAdjacentHTML('beforeend',apItemRowHTML(it));updateAPTotal();
 }
 function removeAPItem(btn){
-  const body=document.getElementById('apItemsBody');
+  apInvClose();const body=document.getElementById('apItemsBody');
   if(body.querySelectorAll('.ap-item-row').length<=1){alert('Minimal harus ada 1 baris invoice.');return}
   btn.closest('tr').remove();updateAPTotal();
 }
-function apItemInvoiceChanged(sel){
-  const row=sel.closest('tr'),inv=data.invoices.find(i=>i.id===sel.value);if(!inv)return;
+function apItemInvoiceChanged(row){
+  const inv=data.invoices.find(i=>i.id===row.querySelector('.ap-it-inv').value);if(!inv)return;
   const pnr=row.querySelector('.ap-it-pnr'),pax=row.querySelector('.ap-it-pax');
   if(pnr&&!pnr.value.trim()&&inv.pnr)pnr.value=inv.pnr;
   if(pax&&!num(pax.value)&&num(inv.pax)){pax.value=num(inv.pax);apItemRecalc(pax)}
 }
+/* ---- Kolom pencarian invoice (No. Invoice / Customer) ---- */
+const AP_INV_MAX=30;
+let apInvActive=null,apInvIndex=0,apInvResults=[];
+function apInvLabel(id){if(!id)return'';const i=data.invoices.find(x=>x.id===id);return i?i.id+' · '+(i.customer||''):id}
+function apInvSearch(q){
+  const toks=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
+  return data.invoices.filter(i=>{const t=(i.id+' '+(i.customer||'')).toLowerCase();return toks.every(k=>t.includes(k))});
+}
+function apInvListEl(){
+  let l=document.getElementById('apInvList');
+  if(!l){
+    l=document.createElement('div');l.id='apInvList';l.className='ap-inv-list';document.body.appendChild(l);
+    l.addEventListener('mousedown',e=>{e.preventDefault();const it=e.target.closest('[data-i]');if(it)apInvPick(Number(it.dataset.i))});
+  }
+  return l;
+}
+function apInvOpen(input){apInvActive=input;apInvIndex=0;try{input.select()}catch(e){}apInvRender()}
+function apInvTyped(input){
+  const hidden=input.closest('tr').querySelector('.ap-it-inv');
+  if(!input.value.trim())hidden.value='';
+  apInvActive=input;apInvIndex=0;apInvRender();
+}
+function apInvRender(){
+  const input=apInvActive;if(!input||!document.body.contains(input)){apInvClose();return}
+  const hidden=input.closest('tr').querySelector('.ap-it-inv');
+  const showAll=hidden.value&&input.value===apInvLabel(hidden.value);
+  const matches=apInvSearch(showAll?'':input.value);
+  apInvResults=matches.slice(0,AP_INV_MAX);
+  const list=apInvListEl();
+  let html=apInvResults.map((i,ix)=>`<div class="ap-inv-item${ix===apInvIndex?' on':''}" data-i="${ix}"><b>${esc(i.id)}</b> <span>· ${esc(i.customer||'-')}</span></div>`).join('');
+  if(!apInvResults.length)html='<div class="ap-inv-empty">Invoice tidak ditemukan.</div>';
+  if(matches.length>AP_INV_MAX)html+=`<div class="ap-inv-empty">+${matches.length-AP_INV_MAX} invoice lainnya — ketik lebih spesifik.</div>`;
+  list.innerHTML=html;list.style.display='block';apInvPosition();
+}
+function apInvPosition(){
+  const input=apInvActive,list=document.getElementById('apInvList');
+  if(!list||list.style.display!=='block')return;
+  if(!input||!document.body.contains(input)){apInvClose();return}
+  const r=input.getBoundingClientRect(),w=Math.max(r.width,340),left=Math.max(8,Math.min(r.left,innerWidth-w-8));
+  const below=innerHeight-r.bottom-12,above=r.top-12;
+  list.style.width=w+'px';list.style.left=left+'px';
+  if(below<180&&above>below){list.style.top='auto';list.style.bottom=(innerHeight-r.top+2)+'px';list.style.maxHeight=Math.min(280,above)+'px'}
+  else{list.style.bottom='auto';list.style.top=(r.bottom+2)+'px';list.style.maxHeight=Math.min(280,Math.max(120,below))+'px'}
+}
+function apInvClose(){const l=document.getElementById('apInvList');if(l)l.style.display='none';apInvActive=null;apInvResults=[]}
+function apInvPick(idx){
+  const inv=apInvResults[idx],input=apInvActive;if(!inv||!input)return;
+  const row=input.closest('tr');row.querySelector('.ap-it-inv').value=inv.id;input.value=apInvLabel(inv.id);
+  apInvClose();apItemInvoiceChanged(row);
+}
+function apInvKey(e,input){
+  const list=document.getElementById('apInvList'),open=list&&list.style.display==='block';
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();if(!open){apInvOpen(input);return}
+    if(!apInvResults.length)return;
+    apInvIndex=(apInvIndex+(e.key==='ArrowDown'?1:-1)+apInvResults.length)%apInvResults.length;
+    list.querySelectorAll('.ap-inv-item').forEach((el,ix)=>el.classList.toggle('on',ix===apInvIndex));
+    const cur=list.querySelector('.ap-inv-item.on');if(cur)cur.scrollIntoView({block:'nearest'});
+  }else if(e.key==='Enter'){
+    if(open){e.preventDefault();apInvPick(apInvIndex)}
+  }else if(e.key==='Escape'){
+    if(open){e.preventDefault();e.stopPropagation();apInvClose()}
+  }else if(e.key==='Tab'){apInvClose()}
+}
+function apInvBlur(input){
+  const row=input.closest('tr');if(!row)return;
+  const hidden=row.querySelector('.ap-it-inv'),typed=input.value.trim();
+  if(!typed){hidden.value=''}
+  else if(input.value!==apInvLabel(hidden.value)||!hidden.value){
+    const exact=data.invoices.filter(i=>i.id.toLowerCase()===typed.toLowerCase());
+    if(exact.length===1){hidden.value=exact[0].id;input.value=apInvLabel(exact[0].id);apInvClose();apItemInvoiceChanged(row);return}
+    input.value=apInvLabel(hidden.value);
+  }
+  if(apInvActive===input)apInvClose();
+}
+window.addEventListener('scroll',e=>{const l=document.getElementById('apInvList');if(apInvActive&&!(l&&l.contains(e.target)))apInvPosition()},true);
+window.addEventListener('resize',apInvPosition);
 function apItemRecalc(el){
   const row=el.closest('tr');
   row.querySelector('.ap-it-amt').value=num(row.querySelector('.ap-it-pax').value)*num(row.querySelector('.ap-it-unit').value);
