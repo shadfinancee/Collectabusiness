@@ -3105,10 +3105,10 @@ function renderAPAging(){
   const cardDefs=[['Overdue','Overdue','overdue'],['Jatuh Tempo Hari Ini','Hari Ini','today'],['H-1','H-1','near'],['H-3','H-3','near'],['H-7','H-7','near'],['Lunas','Lunas','paid']];
   document.getElementById('apAgingCards').innerHTML=cardDefs.map(([label,key,tone])=>`<button type="button" class="card reportbox ap-aging-card ap-aging-card--${tone}" style="text-align:left;color:var(--text)" aria-pressed="${apAgingQuickFilter===key}" onclick="setAPAgingQuickFilter('${key}')"><p>${label}</p><strong>${all.filter(b=>apAgingCategory(b)===key).length}</strong></button>`).join('')+`<button type="button" class="card reportbox ap-aging-card ap-aging-card--open" style="text-align:left;color:var(--text)" aria-pressed="${apAgingQuickFilter==='OPEN'}" onclick="setAPAgingQuickFilter('OPEN')"><p>Total Piutang Belum Dibayar</p><strong>${rp(all.reduce((sum,b)=>sum+apBalance(b),0))}</strong></button>`;
   const rows=all.filter(b=>{
-    const category=apAgingCategory(b),due=b.dueDate||'',text=[b.apNo,apVendorName(b),b.invoiceId,b.airlines,b.pnr,b.pax,b.dept].join(' ').toLowerCase();
+    const category=apAgingCategory(b),due=b.dueDate||'',text=[b.apNo,apVendorName(b),apBillInvoiceText(b),b.airlines,b.pnr,b.pax,b.dept].join(' ').toLowerCase();
     return(!q||text.includes(q))&&(!month||due.slice(5,7)===month)&&(!dueDate||due===dueDate)&&(!vendor||apVendorName(b)===vendor)&&(!statusFilter||apStatus(b)===statusFilter)&&(!reminder||category===reminder)&&(!apAgingQuickFilter||(apAgingQuickFilter==='OPEN'?apBalance(b)>0:category===apAgingQuickFilter));
   }).sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||''));
-  document.getElementById('apAgingRows').innerHTML=rows.map(b=>{const d=daysUntil(b.dueDate),category=apAgingCategory(b);return`<tr><td>${esc(b.apNo)}</td><td>${esc(apVendorName(b))}</td><td>${esc(b.invoiceId||'-')}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${num(b.pax)}</td><td>${b.dept?date(b.dept):'-'}</td><td>${b.dueDate?date(b.dueDate):'-'}</td><td>${rp(apBalance(b))}</td><td>${d===null?'-':d<0?Math.abs(d)+' hari lewat':d+' hari'}</td><td>${apBadge(apStatus(b))}</td><td>${apBadge(category)}</td></tr>`}).join('')||'<tr><td colspan="11" class="empty">Tidak ada tagihan AP yang sesuai dengan filter.</td></tr>';
+  document.getElementById('apAgingRows').innerHTML=rows.map(b=>{const d=daysUntil(b.dueDate),category=apAgingCategory(b);return`<tr><td>${esc(b.apNo)}</td><td>${esc(apVendorName(b))}</td><td>${esc(apBillInvoiceText(b)||'-')}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${num(b.pax)}</td><td>${b.dept?date(b.dept):'-'}</td><td>${b.dueDate?date(b.dueDate):'-'}</td><td>${rp(apBalance(b))}</td><td>${d===null?'-':d<0?Math.abs(d)+' hari lewat':d+' hari'}</td><td>${apBadge(apStatus(b))}</td><td>${apBadge(category)}</td></tr>`}).join('')||'<tr><td colspan="11" class="empty">Tidak ada tagihan AP yang sesuai dengan filter.</td></tr>';
 }
 
 function normalizeWaPhone(raw){
@@ -3311,29 +3311,74 @@ function deleteVendor(id){
 }
 function apInvoiceOptions(selected){return '<option value="">Tidak ditautkan</option>'+data.invoices.map(i=>`<option value="${esc(i.id)}" ${i.id===selected?'selected':''}>${esc(i.id)} · ${esc(i.customer)}</option>`).join('')}
 function apVendorOptions(selected){return data.vendors.map(v=>`<option value="${esc(v.id)}" ${v.id===selected?'selected':''}>${esc(v.name)}${v.airlines?' · '+esc(v.airlines):''}</option>`).join('')}
+function apBillItems(b){
+  if(!b)return[];
+  if(Array.isArray(b.items)&&b.items.length)return b.items.map(it=>({invoiceId:it.invoiceId||'',pnr:it.pnr||'',pax:num(it.pax),unitCost:num(it.unitCost),amount:num(it.amount)}));
+  if(b.invoiceId||b.pnr||num(b.pax)||num(b.totalAmount))return[{invoiceId:b.invoiceId||'',pnr:b.pnr||'',pax:num(b.pax),unitCost:num(b.unitCost),amount:num(b.totalAmount)}];
+  return[];
+}
+function apBillInvoiceAmounts(b){const m=new Map();apBillItems(b).forEach(it=>{if(it.invoiceId)m.set(it.invoiceId,(m.get(it.invoiceId)||0)+num(it.amount))});return m}
+function apBillInvoiceText(b){const ids=[...new Set(apBillItems(b).map(it=>it.invoiceId).filter(Boolean))];return ids.length?ids.join(', '):(b.invoiceId||'')}
+function apItemRowHTML(it){
+  it=it||{};
+  return `<tr class="ap-item-row"><td><select class="ap-it-inv" onchange="apItemInvoiceChanged(this)">${apInvoiceOptions(it.invoiceId)}</select></td><td><input class="ap-it-pnr" value="${esc(it.pnr||'')}"></td><td><input class="ap-it-pax" type="number" min="0" style="text-align:right" value="${esc(it.pax??0)}" oninput="apItemRecalc(this)"></td><td><input class="ap-it-unit" type="number" min="0" style="text-align:right" value="${esc(it.unitCost??0)}" oninput="apItemRecalc(this)"></td><td><input class="ap-it-amt" type="number" min="0" style="text-align:right" value="${esc(it.amount??0)}" oninput="updateAPTotal()"></td><td><button type="button" class="secondary" title="Hapus baris" onclick="removeAPItem(this)">✕</button></td></tr>`;
+}
+function addAPItem(it){
+  const body=document.getElementById('apItemsBody');if(!body)return;
+  body.insertAdjacentHTML('beforeend',apItemRowHTML(it));updateAPTotal();
+}
+function removeAPItem(btn){
+  const body=document.getElementById('apItemsBody');
+  if(body.querySelectorAll('.ap-item-row').length<=1){alert('Minimal harus ada 1 baris invoice.');return}
+  btn.closest('tr').remove();updateAPTotal();
+}
+function apItemInvoiceChanged(sel){
+  const row=sel.closest('tr'),inv=data.invoices.find(i=>i.id===sel.value);if(!inv)return;
+  const pnr=row.querySelector('.ap-it-pnr'),pax=row.querySelector('.ap-it-pax');
+  if(pnr&&!pnr.value.trim()&&inv.pnr)pnr.value=inv.pnr;
+  if(pax&&!num(pax.value)&&num(inv.pax)){pax.value=num(inv.pax);apItemRecalc(pax)}
+}
+function apItemRecalc(el){
+  const row=el.closest('tr');
+  row.querySelector('.ap-it-amt').value=num(row.querySelector('.ap-it-pax').value)*num(row.querySelector('.ap-it-unit').value);
+  updateAPTotal();
+}
+function updateAPTotal(){
+  const rows=[...document.querySelectorAll('#apItemsBody .ap-item-row')];
+  const total=rows.reduce((s,r)=>s+num(r.querySelector('.ap-it-amt').value),0);
+  const pax=rows.reduce((s,r)=>s+num(r.querySelector('.ap-it-pax').value),0);
+  const t=document.getElementById('apAmount');if(t)t.value=total;
+  const px=document.getElementById('apPaxTotal');if(px)px.textContent=pax;
+}
 function openAPBill(id){
   ensureFinanceData();const b=data.apBills.find(x=>x.id===id);const val=x=>esc(x??'');
   const apNo=b?.apNo||'AP-'+todayStr().replace(/-/g,'')+'-'+String(data.apBills.length+1).padStart(3,'0');
-  const amount=b?num(b.totalAmount):0;
+  const items=apBillItems(b);if(!items.length)items.push({invoiceId:'',pnr:'',pax:0,unitCost:0,amount:0});
+  const amount=items.reduce((s,it)=>s+num(it.amount),0);
   openModal(b?'Edit Tagihan AP':'Tagihan Vendor Baru',`<form onsubmit="submitAPBill(event,'${b?esc(b.id):''}')"><div class="formgrid">
   <div class="field"><label>No. AP *</label><input id="apNo" required value="${val(apNo)}"></div><div class="field"><label>Tanggal *</label><input id="apDate" type="date" required value="${val(b?.date||todayStr())}"></div>
-  <div class="field"><label>Vendor *</label><select id="apVendor" required><option value="">Pilih vendor</option>${apVendorOptions(b?.vendorId)}</select></div><div class="field"><label>Invoice Penjualan</label><select id="apInvoice">${apInvoiceOptions(b?.invoiceId)}</select></div>
-  <div class="field"><label>Airlines</label><input id="apAirlines" value="${val(b?.airlines)}"></div><div class="field"><label>PNR</label><input id="apPNR" value="${val(b?.pnr)}"></div>
-  <div class="field"><label>DEPT</label><input id="apDept" type="date" value="${val(b?.dept)}"></div><div class="field"><label>Pax</label><input id="apPax" type="number" min="0" value="${val(b?.pax??0)}" oninput="updateAPTotal()"></div>
-  <div class="field"><label>Harga per Pax (Rp)</label><input id="apUnitCost" type="number" min="0" value="${val(b?.unitCost??0)}" oninput="updateAPTotal()"></div>
-  <div class="field"><label>Deskripsi</label><input id="apDescription" value="${val(b?.description)}"></div><div class="field"><label>Total Tagihan (Rp)</label><input id="apAmount" type="number" min="0" required value="${val(amount)}"></div>
-  <div class="field"><label>Total Terbayar (Rp)</label><input value="${val(b?apTotalPaid(b):0)}" readonly></div><div class="field"><label>Total Sisa (Rp)</label><input value="${val(b?apBalance(b):0)}" readonly></div>
-  <div class="field"><label>Tanggal Jatuh Tempo *</label><input id="apDue" type="date" required value="${val(b?.dueDate)}"></div><div class="field"><label>Status</label><input value="${val(b?apStatus(b):'Belum Dibayar')}" readonly></div>
-  </div><small>Total awal dihitung dari Pax × Harga per Pax dan dapat disesuaikan.</small><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Simpan Tagihan</button></div></form>`);
+  <div class="field"><label>Vendor *</label><select id="apVendor" required><option value="">Pilih vendor</option>${apVendorOptions(b?.vendorId)}</select></div><div class="field"><label>Airlines</label><input id="apAirlines" value="${val(b?.airlines)}"></div>
+  <div class="field"><label>DEPT</label><input id="apDept" type="date" value="${val(b?.dept)}"></div><div class="field"><label>Deskripsi</label><input id="apDescription" value="${val(b?.description)}"></div>
+  <div class="field full"><label>Invoice Penjualan, PNR &amp; Pax</label>
+    <div class="table-wrap"><table><thead><tr><th style="min-width:230px">INVOICE PENJUALAN</th><th style="min-width:110px">PNR</th><th style="width:80px">PAX</th><th style="min-width:130px">HARGA / PAX (RP)</th><th style="min-width:140px">NOMINAL (RP)</th><th style="width:44px"></th></tr></thead><tbody id="apItemsBody">${items.map(apItemRowHTML).join('')}</tbody></table></div>
+    <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:10px"><button type="button" class="secondary" onclick="addAPItem()">＋ Tambah Invoice / PNR</button><span style="font-size:12px;color:var(--muted)">Total Pax: <b id="apPaxTotal">${items.reduce((s,it)=>s+num(it.pax),0)}</b></span></div>
+  </div>
+  <div class="field"><label>Total Tagihan (Rp) — akumulasi semua baris</label><input id="apAmount" type="number" min="0" readonly required value="${val(amount)}"></div><div class="field"><label>Total Terbayar (Rp)</label><input value="${val(b?apTotalPaid(b):0)}" readonly></div>
+  <div class="field"><label>Total Sisa (Rp)</label><input value="${val(b?apBalance(b):0)}" readonly></div><div class="field"><label>Tanggal Jatuh Tempo *</label><input id="apDue" type="date" required value="${val(b?.dueDate)}"></div>
+  <div class="field"><label>Status</label><input value="${val(b?apStatus(b):'Belum Dibayar')}" readonly></div>
+  </div><small>Klik “Tambah Invoice / PNR” untuk menggabungkan beberapa invoice dalam satu tagihan. Nominal tiap baris = Pax × Harga per Pax (bisa disesuaikan), dan Total Tagihan otomatis menjumlahkan semua baris.</small><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Batal</button><button class="primary">Simpan Tagihan</button></div></form>`);
 }
-function updateAPTotal(){const pax=num(document.getElementById('apPax')?.value),unit=num(document.getElementById('apUnitCost')?.value);const amount=document.getElementById('apAmount');if(amount)amount.value=pax*unit}
 function submitAPBill(e,id){
   e.preventDefault();ensureFinanceData();const vendor=data.vendors.find(v=>v.id===apVendor.value);if(!vendor){alert('Pilih vendor terlebih dahulu.');return;}
   const prev=data.apBills.find(x=>x.id===id);const apNo=apNoInput();
   if(data.apBills.some(x=>x.apNo.toLowerCase()===apNo.toLowerCase()&&x.id!==id)){alert('No. AP sudah digunakan.');return;}
-  if(num(apAmount.value)<(prev?apTotalPaid(prev):0)){alert('Total tagihan tidak boleh lebih kecil dari total yang sudah dibayar.');return;}
-  const bill={...(prev||{}),id:id||'ap-'+Date.now().toString(36),apNo,date:apDate.value,vendorId:vendor.id,vendorName:vendor.name,invoiceId:apInvoice.value,airlines:apAirlines.value.trim()||vendor.airlines||'',pnr:apPNR.value.trim(),dept:apDept.value,pax:num(apPax.value),unitCost:num(apUnitCost.value),description:apDescription.value.trim(),totalAmount:num(apAmount.value),dueDate:apDue.value,initialPaid:num(prev?.initialPaid)};
-  if(bill.totalAmount<=0){alert('Total tagihan harus lebih dari Rp 0.');return;}
+  const items=[...document.querySelectorAll('#apItemsBody .ap-item-row')].map(r=>({invoiceId:r.querySelector('.ap-it-inv').value,pnr:r.querySelector('.ap-it-pnr').value.trim(),pax:num(r.querySelector('.ap-it-pax').value),unitCost:num(r.querySelector('.ap-it-unit').value),amount:num(r.querySelector('.ap-it-amt').value)})).filter(it=>it.invoiceId||it.pnr||it.pax||it.amount);
+  const total=items.reduce((s,it)=>s+it.amount,0);
+  if(!items.length||total<=0){alert('Total tagihan harus lebih dari Rp 0.');return;}
+  if(total<(prev?apTotalPaid(prev):0)){alert('Total tagihan tidak boleh lebih kecil dari total yang sudah dibayar.');return;}
+  const pnrs=[...new Set(items.map(it=>it.pnr).filter(Boolean))];
+  const firstInv=(items.find(it=>it.invoiceId)||{}).invoiceId||'';
+  const bill={...(prev||{}),id:id||'ap-'+Date.now().toString(36),apNo,date:apDate.value,vendorId:vendor.id,vendorName:vendor.name,invoiceId:firstInv,items,airlines:apAirlines.value.trim()||vendor.airlines||'',pnr:pnrs.join(', '),dept:apDept.value,pax:items.reduce((s,it)=>s+it.pax,0),unitCost:items.length===1?items[0].unitCost:0,description:apDescription.value.trim(),totalAmount:total,dueDate:apDue.value,initialPaid:num(prev?.initialPaid)};
   const ix=data.apBills.findIndex(x=>x.id===id);if(ix<0)data.apBills.push(bill);else data.apBills[ix]=bill;save();closeModal();refreshAPViews();
 }
 function apNoInput(){return document.getElementById('apNo').value.trim()}
@@ -3348,12 +3393,12 @@ function deleteAPBill(id){
 function apBillFilterValue(b,field){
   switch(field){
     case 'apNo':return b.apNo||'';
-    case 'invoiceId':return b.invoiceId||'';
+    case 'invoiceId':return apBillInvoiceText(b);
     case 'vendor':return apVendorName(b);
     case 'airlines':return [b.airlines,b.pnr].filter(Boolean).join(' / ');
     case 'date':return date(b.date);
     case 'dueDate':return date(b.dueDate);
-    default:return [b.apNo,b.invoiceId,apVendorName(b),b.airlines,b.pnr].join(' ');
+    default:return [b.apNo,apBillInvoiceText(b),apVendorName(b),b.airlines,b.pnr].join(' ');
   }
 }
 const apBillSortOptions=[['date','Tanggal'],['dueDate','Jatuh Tempo'],['apNo','No. AP'],['vendor','Vendor'],['totalAmount','Total Tagihan'],['sisa','Sisa']];
@@ -3390,7 +3435,7 @@ function renderAPBills(){
   let bills=data.apBills.filter(b=>{
     const matchesSearch=!q||(
       field==='all'
-        ?[b.apNo,b.invoiceId,apVendorName(b),b.airlines,b.pnr].join(' ').toLowerCase().includes(q)
+        ?[b.apNo,apBillInvoiceText(b),apVendorName(b),b.airlines,b.pnr].join(' ').toLowerCase().includes(q)
         :String(apBillFilterValue(b,field)).toLowerCase().includes(q)
     );
     const matchesStatus=!filter||apStatus(b)===filter;
@@ -3407,7 +3452,7 @@ function renderAPBills(){
   const balance=data.apBills.reduce((s,b)=>s+apBalance(b),0),overdue=data.apBills.filter(b=>apStatus(b)==='Overdue').reduce((s,b)=>s+apBalance(b),0);
   document.getElementById('apBillCards').innerHTML=[['Total Tagihan',rp(data.apBills.reduce((s,b)=>s+num(b.totalAmount),0))],['Total Terbayar',rp(data.apBills.reduce((s,b)=>s+apTotalPaid(b),0))],['Total Sisa',rp(balance)],['Overdue',rp(overdue)]].map((x,index)=>`<div class="card reportbox ap-summary-card ap-summary-card-${index}"><p>${x[0]}</p><strong>${x[1]}</strong></div>`).join('');
   const hasSpecificFilter=q||filter||mf||yf||field!=='all';
-  document.getElementById('apBillRows').innerHTML=bills.map(b=>`<tr><td><b>${esc(b.apNo)}</b></td><td>${esc(b.invoiceId||'-')}</td><td>${esc(apVendorName(b))}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${b.dept?date(b.dept):'-'}</td><td>${num(b.pax)}</td><td>${date(b.date)}</td><td>${date(b.dueDate)}</td><td>${rp(b.totalAmount)}</td><td>${rp(apTotalPaid(b))}</td><td>${rp(apBalance(b))}</td><td>${apBadge(apStatus(b))}</td><td><button class="secondary" onclick="openAPBill('${esc(b.id)}')">Edit</button> <button class="secondary" onclick="deleteAPBill('${esc(b.id)}')">Hapus</button></td></tr>`).join('')||`<tr><td colspan="13" class="empty">${hasSpecificFilter?'Tidak ada tagihan AP yang sesuai dengan filter.':'Belum ada tagihan AP.'}</td></tr>`;
+  document.getElementById('apBillRows').innerHTML=bills.map(b=>`<tr><td><b>${esc(b.apNo)}</b></td><td>${esc(apBillInvoiceText(b)||'-')}</td><td>${esc(apVendorName(b))}</td><td>${esc([b.airlines,b.pnr].filter(Boolean).join(' / ')||'-')}</td><td>${b.dept?date(b.dept):'-'}</td><td>${num(b.pax)}</td><td>${date(b.date)}</td><td>${date(b.dueDate)}</td><td>${rp(b.totalAmount)}</td><td>${rp(apTotalPaid(b))}</td><td>${rp(apBalance(b))}</td><td>${apBadge(apStatus(b))}</td><td><button class="secondary" onclick="openAPBill('${esc(b.id)}')">Edit</button> <button class="secondary" onclick="deleteAPBill('${esc(b.id)}')">Hapus</button></td></tr>`).join('')||`<tr><td colspan="13" class="empty">${hasSpecificFilter?'Tidak ada tagihan AP yang sesuai dengan filter.':'Belum ada tagihan AP.'}</td></tr>`;
 }
 function setProfitOptions(id,values,label){const el=document.getElementById(id),previous=el.value;el.innerHTML=`<option value="">Semua ${label}</option>`+values.filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b))).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if(values.includes(previous))el.value=previous}
 function resetProfitDateFilter(){document.getElementById('profitFrom').value='';document.getElementById('profitTo').value='';renderProfitability()}
@@ -3419,8 +3464,8 @@ function renderProfitability(){
   setProfitOptions('profitCustomer',[...new Set(all.map(i=>i.customer))],'Customer');setProfitOptions('profitAirline',[...new Set(all.map(i=>invoiceAirlines(i)))],'Airlines');setProfitOptions('profitVendor',[...new Set(data.vendors.map(v=>v.name))],'Vendor');
   const rangeField=document.getElementById('profitRangeField').value,from=document.getElementById('profitFrom').value,to=document.getElementById('profitTo').value,customer=document.getElementById('profitCustomer').value,airline=document.getElementById('profitAirline').value,vendor=document.getElementById('profitVendor').value,pnr=(document.getElementById('profitPNR').value||'').toLowerCase(),sales=(document.getElementById('profitSales').value||'').toLowerCase();
   const reportRows=irData(),reportById=new Map(reportRows.map(r=>[r.id,r]));
-  const rows=all.filter(i=>{const cust=(data.customers||[]).find(c=>c.invoice===i.id)||{},air=invoiceAirlines(i)||cust.airlines||'',ref=i.pnr||cust.pnr||'',sale=i.sales||cust.sales||'',report=reportById.get(i.id),rangeValue=rangeField==='dept'?irDeptDate(report||{}):rangeField==='due'?(report?.due||''):(report?.date||'');return(!from||(rangeValue&&rangeValue>=from))&&(!to||(rangeValue&&rangeValue<=to))&&(!customer||i.customer===customer)&&(!airline||air===airline)&&(!vendor||data.apBills.some(b=>b.invoiceId===i.id&&apVendorName(b)===vendor))&&(!pnr||ref.toLowerCase().includes(pnr))&&(!sales||sale.toLowerCase().includes(sales))});
-  const details=rows.map(i=>{let bills=data.apBills.filter(b=>b.invoiceId===i.id&&(!vendor||apVendorName(b)===vendor));return{invoice:i,customer:(data.customers||[]).find(c=>c.invoice===i.id)||{},bills,revenue:num(i.amount),hpp:bills.reduce((s,b)=>s+num(b.totalAmount),0)}}).filter(x=>!vendor||x.bills.length);
+  const rows=all.filter(i=>{const cust=(data.customers||[]).find(c=>c.invoice===i.id)||{},air=invoiceAirlines(i)||cust.airlines||'',ref=i.pnr||cust.pnr||'',sale=i.sales||cust.sales||'',report=reportById.get(i.id),rangeValue=rangeField==='dept'?irDeptDate(report||{}):rangeField==='due'?(report?.due||''):(report?.date||'');return(!from||(rangeValue&&rangeValue>=from))&&(!to||(rangeValue&&rangeValue<=to))&&(!customer||i.customer===customer)&&(!airline||air===airline)&&(!vendor||data.apBills.some(b=>apBillInvoiceAmounts(b).has(i.id)&&apVendorName(b)===vendor))&&(!pnr||ref.toLowerCase().includes(pnr))&&(!sales||sale.toLowerCase().includes(sales))});
+  const details=rows.map(i=>{let bills=data.apBills.filter(b=>apBillInvoiceAmounts(b).has(i.id)&&(!vendor||apVendorName(b)===vendor)).map(b=>({...b,totalAmount:apBillInvoiceAmounts(b).get(i.id)}));return{invoice:i,customer:(data.customers||[]).find(c=>c.invoice===i.id)||{},bills,revenue:num(i.amount),hpp:bills.reduce((s,b)=>s+num(b.totalAmount),0)}}).filter(x=>!vendor||x.bills.length);
   const sortField=document.getElementById('profitSortField').value,sortValue=x=>sortField==='id'?x.invoice.id:sortField==='customer'?x.invoice.customer:sortField==='revenue'?x.revenue:sortField==='profit'?x.revenue-x.hpp:sortField==='margin'?(x.revenue?(x.revenue-x.hpp)/x.revenue*100:0):x.invoice.date||'';
   details.sort((a,b)=>{const av=sortValue(a),bv=sortValue(b);return typeof av==='number'&&typeof bv==='number'?profitabilitySortDirection*(av-bv):profitabilitySortDirection*String(av||'').localeCompare(String(bv||''),'id',{numeric:true,sensitivity:'base'})});
   const directionButton=document.getElementById('profitSortDirection');directionButton.textContent=profitabilitySortDirection===1?'↑':'↓';directionButton.setAttribute('aria-label',profitabilitySortDirection===1?'Urutan menaik':'Urutan menurun');
@@ -3491,7 +3536,7 @@ function exportProfitabilityPDF(){
   const win=window.open('','_blank');if(!win){alert('Popup diblokir browser. Izinkan popup untuk mencetak laporan.');return}win.document.open();win.document.write(html);win.document.close();
 }
 function renderFinancialOverview(){
-  ensureFinanceData();const revenue=data.invoices.reduce((s,i)=>s+num(i.amount),0),hpp=data.apBills.filter(b=>b.invoiceId).reduce((s,b)=>s+num(b.totalAmount),0),receivable=data.invoices.reduce((s,i)=>s+Math.max(0,num(i.amount)-num(i.paid)),0),payable=data.apBills.reduce((s,b)=>s+apBalance(b),0),received=data.invoices.reduce((s,i)=>s+num(i.paid),0),paid=data.apBills.reduce((s,b)=>s+apTotalPaid(b),0),gross=revenue-hpp;
+  ensureFinanceData();const revenue=data.invoices.reduce((s,i)=>s+num(i.amount),0),hpp=data.apBills.reduce((s,b)=>s+[...apBillInvoiceAmounts(b).values()].reduce((a,v)=>a+v,0),0),receivable=data.invoices.reduce((s,i)=>s+Math.max(0,num(i.amount)-num(i.paid)),0),payable=data.apBills.reduce((s,b)=>s+apBalance(b),0),received=data.invoices.reduce((s,i)=>s+num(i.paid),0),paid=data.apBills.reduce((s,b)=>s+apTotalPaid(b),0),gross=revenue-hpp;
   document.getElementById('financialOverview').innerHTML=[['Pendapatan',rp(revenue)],['HPP Tertaut',rp(hpp)],['Laba Kotor',rp(gross)],['Gross Margin',revenue?(gross/revenue*100).toFixed(1)+'%':'0.0%'],['Piutang',rp(receivable)],['Hutang / AP',rp(payable)],['Kas Bersih Tercatat',rp(received-paid)]].map((x,index)=>`<div class="card reportbox overview-card overview-card-${index}"><p>${x[0]}</p><strong>${x[1]}</strong></div>`).join('');
 }
 
