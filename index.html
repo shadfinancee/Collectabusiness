@@ -3650,7 +3650,6 @@ function editInvoice(id){openInvoice(id)}
 function submitInvoice(e,old){
 e.preventDefault();
 let amount=Number(iAmount.value),paid=Number(iPaid.value);
-if(paid>amount){alert('Jumlah terbayar tidak boleh lebih besar dari nilai invoice.');return}
 let x={id:iId.value,customer:iCustomer.value,date:iDate.value,due:iDue.value,amount,paid,closing:iClosing.value};
 if(!x.closing&&x.amount>0&&x.paid>=x.amount)x.closing=todayStr();
 if(old){let n=data.invoices.findIndex(i=>i.id===old);data.invoices[n]=x}else data.invoices.unshift(x);
@@ -4144,10 +4143,7 @@ const currentPaid=(data.payments||[])
   .reduce((sum,x)=>sum+num(x.amount),0);
 const currentSisa=Math.max(0,num(i.amount)-currentPaid);
 
-if(amt>0 && amt>currentSisa){
-  alert('Jumlah pembayaran melebihi sisa piutang.');
-  return;
-}
+/* Pembayaran BOLEH melebihi sisa piutang (kelebihan bayar/credit). */
 if(amt<0 && currentPaid+amt<0){
   alert('Pengurangan pembayaran tidak boleh membuat Total Payment menjadi negatif.');
   return;
@@ -5684,10 +5680,8 @@ function submitInvoice(e){
   const totalRp=Math.round(c.total);
   const paidRp=Math.round(c.paid);
   const hasRefund=i.invoiceType==='Refund'||(i.items||[]).some(x=>x.refund);
-  if(!hasRefund&&totalRp>=0&&paidRp>totalRp){
-    alert('Pembayaran ('+rp(paidRp)+') tidak boleh melebihi total invoice ('+rp(totalRp)+').');
-    return;
-  }
+  /* Pembayaran BOLEH melebihi total invoice (kelebihan bayar/credit).
+     Sisa Tagihan akan bernilai negatif dan status menjadi Lunas. */
   if(c.total<=0&&i.docStatus!=='Draft'&&i.invoiceType!=='Refund'&&!i.items.some(x=>x.refund)){alert('Total invoice masih 0. Lengkapi detail tiket atau simpan sebagai Draft.');return}
   let old=i._editing;
   if(!old&&data.invoices.some(x=>x.id===i.id)){alert('Nomor invoice sudah dipakai.');return}
