@@ -4977,6 +4977,7 @@ table.pr tfoot tr.total-payment th{background:#9b1519;color:#fff;border-color:#9
 table.pr tfoot tr.total-payment th.r{background:#9b1519!important;color:#fff!important;border-color:#9b1519!important}
 table.pr td.c{text-align:center}table.pr td:nth-child(2){text-align:center!important}table.pr .r,table.pr th.r{text-align:right;white-space:nowrap}
 table.pr td.muted{color:#707887}
+table.pr tr.refund-note-row td{text-align:left!important;font-style:italic;font-size:9.5px;color:#d71920!important;font-weight:600;padding:3px 6px;word-break:break-word}
 table.ip td{border:1px solid #9b1519;padding:5px 6px;font-size:10.5px;color:#171b25}
 table.ip .r{text-align:right;white-space:nowrap}
 table.ip tr.tot td{background:#fff;font-weight:700}
@@ -5124,6 +5125,10 @@ table.bank td{padding:1px 6px 1px 0;font-size:10.5px}
 .iv-payment-record .iv-payment-table input,.iv-payment-record .iv-payment-table select{width:100%;padding:9px;border:1px solid #dce1e8;border-radius:6px;background:#fff}
 .iv-payment-record .iv-payment-table .iv-pay-delete{width:38px;text-align:center}
 .iv-payment-record .iv-payment-table .iv-pay-delete button{padding:6px 8px;color:#d71920}
+.iv-payment-record .iv-refund-toggle{display:flex;align-items:flex-start;gap:9px;margin:4px 0 10px;font-size:12.5px;color:#4b5563;cursor:pointer;line-height:1.4}
+.iv-payment-record .iv-refund-toggle input{width:auto;margin-top:2px;accent-color:#c91b24}
+.iv-payment-record .iv-payment-table tr.iv-refund-note-row td{background:#fff6f6;border-top:0;padding:0 7px 8px}
+.iv-payment-record .iv-payment-table tr.iv-refund-note-row input{border-color:#f0b4b7;font-size:12.5px}
 .iv-payment-record .iv-payment-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
 .iv-payment-record .iv-payment-total{font-weight:700;white-space:nowrap}
 .rate2-print{margin-top:4px;padding-top:4px;border-top:1px dashed #777}.paybox .need-deposit-row td{padding:0!important;border:1px solid #a00000!important}.paybox .need-deposit-box{margin:0;border:0;background:#fff800;color:#000;font-weight:800;font-style:italic;text-align:center;padding:12px 8px;font-size:14px;line-height:1.25;box-sizing:border-box;width:100%;display:block;}
@@ -5400,6 +5405,7 @@ function renderInvoiceForm(){
     <div class="field full"><label>Catatan</label><input id="ivNote" value="${esc(i.note||'')}" oninput="ivSet('note',this.value)"></div>
     <div class="iv-payment-record">
       <h3>Payment Record / Riwayat Pembayaran</h3>
+      <label class="iv-refund-toggle"><input type="checkbox" id="ivRefundNoteOn" ${i.refundNoteOn!==false?'checked':''} onchange="ivToggleRefundNote(this.checked)"><span><b>Catatan Overpayment / Refund</b> — tampilkan kolom catatan di bawah baris "Refund via …" (Mandiri, BSI, Tunai) pada invoice. Matikan jika tidak diperlukan.</span></label>
       <table class="iv-payment-table"><thead><tr><th>JENIS PEMBAYARAN</th><th style="width:24%">DATE</th><th style="width:27%">AMOUNT</th><th style="width:54px"></th></tr></thead><tbody id="ivPaymentRows"></tbody></table>
       <div class="iv-payment-actions"><button type="button" class="secondary" onclick="ivAddPayment()">＋ Tambah Pembayaran</button><span class="iv-payment-total">Total Payment: <b id="ivPaymentTotal">${rp(invCalc(i).paid)}</b></span></div>
     </div>
@@ -5482,6 +5488,11 @@ function ivUpdateTypeFields(){
   }
 }
 function ivSetNeedDepositDefault(){ivUpdateTypeFields();ivTotals()}
+function ivToggleRefundNote(on){ivDraft.refundNoteOn=!!on;ivRenderPayments()}
+function ivRefundNoteRow(p,n){
+  if(ivDraft.refundNoteOn===false||!isRefundMethod(p.label))return '';
+  return `<tr class="iv-refund-note-row"><td colspan="4"><input type="text" maxlength="160" placeholder="Catatan overpayment / refund (tampil di bawah baris Refund pada invoice)" value="${esc(p.note||'')}" oninput="ivPaymentChange(${n},'note',this.value)"></td></tr>`;
+}
 function ivAddPayment(){ivDraft.additionalPayments.push({label:PAY_TYPES[0],date:ivDraft.date||todayStr(),amount:0});ivRenderPayments();ivTotals()}
 function ivDelPayment(n){
   ivDraft.additionalPayments.splice(n,1);
@@ -5497,13 +5508,14 @@ function ivPaymentChange(n,k,v){
   ivDraft.paid=invCalc(ivDraft).paid;
   let total=document.getElementById('ivPaymentTotal');if(total)total.textContent=rp(ivDraft.paid);
   ivTotals();
+  if(k==='label')ivRenderPayments();
 }
 function ivMoneyInput(el,n){
   let value=num(el.value);el.value=value?rp(value):'';ivPaymentChange(n,'amount',value);
 }
 function ivRenderPayments(){
   let box=document.getElementById('ivPaymentRows');if(!box)return;
-  box.innerHTML=ivDraft.additionalPayments.length ? ivDraft.additionalPayments.map((p,n)=>`<tr><td><select class="${isRefundMethod(p.label)?'refund-select':''}" required onchange="ivPaymentChange(${n},'label',this.value);this.classList.toggle('refund-select',isRefundMethod(this.value))">${payTypeOptions(p.label)}</select></td><td><input lang="id" type="date" required value="${esc(p.date||'')}" onchange="ivPaymentChange(${n},'date',this.value)"></td><td><input required inputmode="numeric" value="${num(p.amount)?rp(p.amount):''}" placeholder="Rp 0" onfocus="this.value=num(this.value)||''" onblur="ivMoneyInput(this,${n})"></td><td class="iv-pay-delete"><button type="button" class="secondary" onclick="ivDelPayment(${n})" title="Hapus pembayaran">🗑</button></td></tr>`).join('') : `<tr><td colspan="4" style="text-align:center;color:#777;padding:14px">Belum ada pembayaran. Klik <b>＋ Tambah Pembayaran</b> jika ingin menambahkan.</td></tr>`;
+  box.innerHTML=ivDraft.additionalPayments.length ? ivDraft.additionalPayments.map((p,n)=>`<tr><td><select class="${isRefundMethod(p.label)?'refund-select':''}" required onchange="ivPaymentChange(${n},'label',this.value);this.classList.toggle('refund-select',isRefundMethod(this.value))">${payTypeOptions(p.label)}</select></td><td><input lang="id" type="date" required value="${esc(p.date||'')}" onchange="ivPaymentChange(${n},'date',this.value)"></td><td><input required inputmode="numeric" value="${num(p.amount)?rp(p.amount):''}" placeholder="Rp 0" onfocus="this.value=num(this.value)||''" onblur="ivMoneyInput(this,${n})"></td><td class="iv-pay-delete"><button type="button" class="secondary" onclick="ivDelPayment(${n})" title="Hapus pembayaran">🗑</button></td></tr>${ivRefundNoteRow(p,n)}`).join('') : `<tr><td colspan="4" style="text-align:center;color:#777;padding:14px">Belum ada pembayaran. Klik <b>＋ Tambah Pembayaran</b> jika ingin menambahkan.</td></tr>`;
   let total=document.getElementById('ivPaymentTotal');if(total)total.textContent=rp(invCalc(ivDraft).paid);
 }
 
@@ -5714,7 +5726,7 @@ function submitInvoice(e){
     const k=[String(method).trim().toLowerCase(),String(p.date||''),String(num(p.amount))].join('|');
     if(p.id&&data.payments.some(x=>x.id===p.id)){
       const ex=data.payments.find(x=>x.id===p.id);
-      ex.invoice=rec.id;ex.customer=rec.customer;ex.date=p.date||ex.date;ex.amount=num(p.amount);ex.method=method;ex.note=p.note||ex.note||'';
+      ex.invoice=rec.id;ex.customer=rec.customer;ex.date=p.date||ex.date;ex.amount=num(p.amount);ex.method=method;ex.note=(p.note!=null?String(p.note):(ex.note||''));
     }else if(!existingKeys.has(k)){
       data.payments.push({id:'PAY-'+Date.now()+'-'+Math.floor(Math.random()*1000000),date:p.date||i.date||todayStr(),invoice:rec.id,customer:rec.customer,amount:num(p.amount),method,note:p.note||'',source:p.source||'INVOICE'});
       existingKeys.add(k);
@@ -5776,11 +5788,12 @@ function refreshAll(){
 function invoicePayments(i){
   const central=Array.isArray(data.payments)?data.payments.filter(p=>p.invoice===i.id):[];
   if(central.length){
-    return central.map(p=>({label:p.method+(p.note?' - '+p.note:''),date:p.date,amount:num(p.amount)}));
+    /* Pembayaran Refund: catatan tampil di BAWAH barisnya (jika fitur aktif), bukan menempel di label. */
+    return central.map(p=>{const rf=isRefundMethod(p.method);return {label:p.method+(!rf&&p.note?' - '+p.note:''),date:p.date,amount:num(p.amount),refundNote:(rf&&i.refundNoteOn!==false&&p.note)?String(p.note).trim():''}});
   }
   let list=[];
   if(num(i.initialPaid)>0)list.push({label:i.initialPaymentType||'Deposit via Mandiri',date:i.initialPaymentDate||i.date,amount:num(i.initialPaid)});
-  (i.additionalPayments||[]).forEach(p=>{if(num(p.amount)!==0)list.push({label:p.label||'Pembayaran',date:p.date,amount:num(p.amount)})});
+  (i.additionalPayments||[]).forEach(p=>{if(num(p.amount)!==0)list.push({label:p.label||'Pembayaran',date:p.date,amount:num(p.amount),refundNote:(isRefundMethod(p.label)&&i.refundNoteOn!==false&&p.note)?String(p.note).trim():''})});
   return list;
 }
 function invoiceSheetHTML(i){
@@ -5831,7 +5844,7 @@ function invoiceSheetHTML(i){
     <div class="sh-mid">
       <div class="paybox">
         <table class="pr"><thead><tr><th>PAYMENT RECORD</th><th style="width:22%">DATE</th><th style="width:28%">AMOUNT</th></tr></thead><tbody>
-        ${(()=>{const paymentRows=pays.length?pays.map(p=>{const refund=isRefundMethod(p.label)||num(p.amount)<0;const amtHtml=refund?`<div class="rp-cell refund-amount" style="color:#d71920 !important;font-weight:700 !important"><span class="rp-cur" style="color:#d71920 !important">Rp</span><span class="rp-num" style="color:#d71920 !important">${Number(p.amount||0).toLocaleString('id-ID')}</span></div>`:rpSplit(p.amount);return `<tr class="${refund?'refund-print-row':''}"><td>${esc(p.label)}</td><td class="c">${p.date?date(p.date):'-'}</td><td class="r ${refund?'refund-amount':''}">${amtHtml}</td></tr>`}).join(''):'<tr><td class="c muted">-</td><td class="c muted">&nbsp;</td><td class="c muted">&nbsp;</td></tr>';const blankCount=Math.max(0,8-Math.max(1,pays.length));const blanks=Array.from({length:blankCount},()=>'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>').join('');const allRows=paymentRows+blanks;const rowsArr=allRows.match(/<tr[\s\S]*?<\/tr>/g)||[];const mid=Math.ceil(rowsArr.length/2);
+        ${(()=>{const paymentRows=pays.length?pays.map(p=>{const refund=isRefundMethod(p.label)||num(p.amount)<0;const amtHtml=refund?`<div class="rp-cell refund-amount" style="color:#d71920 !important;font-weight:700 !important"><span class="rp-cur" style="color:#d71920 !important">Rp</span><span class="rp-num" style="color:#d71920 !important">${Number(p.amount||0).toLocaleString('id-ID')}</span></div>`:rpSplit(p.amount);return `<tr class="${refund?'refund-print-row':''}"><td>${esc(p.label)}</td><td class="c">${p.date?date(p.date):'-'}</td><td class="r ${refund?'refund-amount':''}">${amtHtml}</td></tr>${p.refundNote?`<tr class="refund-note-row"><td colspan="3">Catatan: ${esc(p.refundNote)}</td></tr>`:''}`}).join(''):'<tr><td class="c muted">-</td><td class="c muted">&nbsp;</td><td class="c muted">&nbsp;</td></tr>';const blankCount=Math.max(0,8-Math.max(1,pays.length)-pays.filter(p=>p.refundNote).length);const blanks=Array.from({length:blankCount},()=>'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>').join('');const allRows=paymentRows+blanks;const rowsArr=allRows.match(/<tr[\s\S]*?<\/tr>/g)||[];const mid=Math.ceil(rowsArr.length/2);
         /* Nominal kotak kuning "Need Deposit" mengikuti sisa yang masih harus
            dibayar (Total Kebutuhan DP - Total Pembayaran, floor Rp 0), bukan
            lagi nominal DP awal. c.sisa dari invCalc(i) sudah = dpTotal-paid
@@ -5992,6 +6005,7 @@ const INVOICE_PRINT_CSS = [
   'table.pr td:nth-child(2){text-align:center!important}',
   'table.pr .r,table.pr th.r{text-align:right;white-space:nowrap}',
   'table.pr td.muted{color:#707887}',
+  'table.pr tr.refund-note-row td{text-align:left!important;font-style:italic;font-size:9.5px;color:#d71920!important;font-weight:600;padding:3px 6px;word-break:break-word}',
   'table.ip td{border:1px solid #9b1519;padding:5px 6px;font-size:10.5px;color:#171b25}',
   'table.ip .r{text-align:right;white-space:nowrap}',
   'table.ip tr.tot td{background:#fff;font-weight:700}',
