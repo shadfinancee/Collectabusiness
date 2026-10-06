@@ -4977,7 +4977,7 @@ table.pr tfoot tr.total-payment th{background:#9b1519;color:#fff;border-color:#9
 table.pr tfoot tr.total-payment th.r{background:#9b1519!important;color:#fff!important;border-color:#9b1519!important}
 table.pr td.c{text-align:center}table.pr td:nth-child(2){text-align:center!important}table.pr .r,table.pr th.r{text-align:right;white-space:nowrap}
 table.pr td.muted{color:#707887}
-table.pr tr.refund-note-row td{text-align:left!important;font-style:italic;font-size:9.5px;color:#d71920!important;font-weight:600;padding:3px 6px;word-break:break-word}
+table.pr tr.pay-note-row td{text-align:left!important;font-style:italic;font-size:9.5px;color:#d71920!important;font-weight:600;padding:3px 6px;word-break:break-word}
 table.ip td{border:1px solid #9b1519;padding:5px 6px;font-size:10.5px;color:#171b25}
 table.ip .r{text-align:right;white-space:nowrap}
 table.ip tr.tot td{background:#fff;font-weight:700}
@@ -5314,6 +5314,8 @@ function nextInvoiceNo(dateStr){
 /* ---------- FORM INVOICE ---------- */
 const PAY_TYPES=['Deposit via Mandiri','Deposit via BSI','Deposit via Tunai','Booking Fee via Mandiri','Booking Fee via BSI','Booking Fee via Tunai','Full Payment via Mandiri','Full Payment via BSI','Full Payment via Tunai','Fee Portal','Refund via BSI','Refund via Mandiri','Refund via Tunai'];
 function isRefundMethod(method){return /^Refund via /i.test(String(method||''))}
+/* Jenis pembayaran yang boleh diberi Catatan Overpayment di bawah barisnya (bank apa pun / Tunai). */
+function isNoteMethod(method){return /^(Booking Fee|Deposit|Full Payment|Refund) via /i.test(String(method||''))}
 function payTypeOptions(v){let cur=v||PAY_TYPES[0];let list=PAY_TYPES.includes(cur)?PAY_TYPES:[cur].concat(PAY_TYPES);return list.map(o=>`<option value="${esc(o)}" ${o===cur?'selected':''}>${esc(o)}</option>`).join('')}
 function migratePayments(i){
   if(!Array.isArray(data.payments))data.payments=[];
@@ -5405,7 +5407,7 @@ function renderInvoiceForm(){
     <div class="field full"><label>Catatan</label><input id="ivNote" value="${esc(i.note||'')}" oninput="ivSet('note',this.value)"></div>
     <div class="iv-payment-record">
       <h3>Payment Record / Riwayat Pembayaran</h3>
-      <label class="iv-refund-toggle"><input type="checkbox" id="ivRefundNoteOn" ${i.refundNoteOn!==false?'checked':''} onchange="ivToggleRefundNote(this.checked)"><span><b>Catatan Overpayment / Refund</b> — tampilkan kolom catatan di bawah baris "Refund via …" (Mandiri, BSI, Tunai) pada invoice. Matikan jika tidak diperlukan.</span></label>
+      <label class="iv-refund-toggle"><input type="checkbox" id="ivRefundNoteOn" ${i.refundNoteOn!==false?'checked':''} onchange="ivToggleRefundNote(this.checked)"><span><b>Catatan Overpayment</b> — tampilkan kolom catatan di bawah baris Booking Fee / Deposit / Full Payment / Refund via Mandiri, BSI atau bank lain. Matikan jika tidak diperlukan.</span></label>
       <table class="iv-payment-table"><thead><tr><th>JENIS PEMBAYARAN</th><th style="width:24%">DATE</th><th style="width:27%">AMOUNT</th><th style="width:54px"></th></tr></thead><tbody id="ivPaymentRows"></tbody></table>
       <div class="iv-payment-actions"><button type="button" class="secondary" onclick="ivAddPayment()">＋ Tambah Pembayaran</button><span class="iv-payment-total">Total Payment: <b id="ivPaymentTotal">${rp(invCalc(i).paid)}</b></span></div>
     </div>
@@ -5490,8 +5492,8 @@ function ivUpdateTypeFields(){
 function ivSetNeedDepositDefault(){ivUpdateTypeFields();ivTotals()}
 function ivToggleRefundNote(on){ivDraft.refundNoteOn=!!on;ivRenderPayments()}
 function ivRefundNoteRow(p,n){
-  if(ivDraft.refundNoteOn===false||!isRefundMethod(p.label))return '';
-  return `<tr class="iv-refund-note-row"><td colspan="4"><input type="text" maxlength="160" placeholder="Catatan overpayment / refund (tampil di bawah baris Refund pada invoice)" value="${esc(p.note||'')}" oninput="ivPaymentChange(${n},'note',this.value)"></td></tr>`;
+  if(ivDraft.refundNoteOn===false||!isNoteMethod(p.label))return '';
+  return `<tr class="iv-refund-note-row"><td colspan="4"><input type="text" maxlength="160" placeholder="Catatan overpayment (opsional) — tampil di bawah baris pembayaran ini pada invoice" value="${esc(p.note||'')}" oninput="ivPaymentChange(${n},'note',this.value)"></td></tr>`;
 }
 function ivAddPayment(){ivDraft.additionalPayments.push({label:PAY_TYPES[0],date:ivDraft.date||todayStr(),amount:0});ivRenderPayments();ivTotals()}
 function ivDelPayment(n){
@@ -5788,12 +5790,13 @@ function refreshAll(){
 function invoicePayments(i){
   const central=Array.isArray(data.payments)?data.payments.filter(p=>p.invoice===i.id):[];
   if(central.length){
-    /* Pembayaran Refund: catatan tampil di BAWAH barisnya (jika fitur aktif), bukan menempel di label. */
-    return central.map(p=>{const rf=isRefundMethod(p.method);return {label:p.method+(!rf&&p.note?' - '+p.note:''),date:p.date,amount:num(p.amount),refundNote:(rf&&i.refundNoteOn!==false&&p.note)?String(p.note).trim():''}});
+    /* Booking Fee/Deposit/Full Payment/Refund via bank: catatan tampil di BAWAH barisnya (jika fitur
+       Catatan Overpayment aktif). Jenis lain (mis. Fee Portal) tetap memakai catatan di belakang label. */
+    return central.map(p=>{const nm=isNoteMethod(p.method);return {label:p.method+(!nm&&p.note?' - '+p.note:''),date:p.date,amount:num(p.amount),payNote:(nm&&i.refundNoteOn!==false&&p.note)?String(p.note).trim():''}});
   }
   let list=[];
   if(num(i.initialPaid)>0)list.push({label:i.initialPaymentType||'Deposit via Mandiri',date:i.initialPaymentDate||i.date,amount:num(i.initialPaid)});
-  (i.additionalPayments||[]).forEach(p=>{if(num(p.amount)!==0)list.push({label:p.label||'Pembayaran',date:p.date,amount:num(p.amount),refundNote:(isRefundMethod(p.label)&&i.refundNoteOn!==false&&p.note)?String(p.note).trim():''})});
+  (i.additionalPayments||[]).forEach(p=>{if(num(p.amount)!==0)list.push({label:p.label||'Pembayaran',date:p.date,amount:num(p.amount),payNote:(isNoteMethod(p.label)&&i.refundNoteOn!==false&&p.note)?String(p.note).trim():''})});
   return list;
 }
 function invoiceSheetHTML(i){
@@ -5844,7 +5847,7 @@ function invoiceSheetHTML(i){
     <div class="sh-mid">
       <div class="paybox">
         <table class="pr"><thead><tr><th>PAYMENT RECORD</th><th style="width:22%">DATE</th><th style="width:28%">AMOUNT</th></tr></thead><tbody>
-        ${(()=>{const paymentRows=pays.length?pays.map(p=>{const refund=isRefundMethod(p.label)||num(p.amount)<0;const amtHtml=refund?`<div class="rp-cell refund-amount" style="color:#d71920 !important;font-weight:700 !important"><span class="rp-cur" style="color:#d71920 !important">Rp</span><span class="rp-num" style="color:#d71920 !important">${Number(p.amount||0).toLocaleString('id-ID')}</span></div>`:rpSplit(p.amount);return `<tr class="${refund?'refund-print-row':''}"><td>${esc(p.label)}</td><td class="c">${p.date?date(p.date):'-'}</td><td class="r ${refund?'refund-amount':''}">${amtHtml}</td></tr>${p.refundNote?`<tr class="refund-note-row"><td colspan="3">Catatan: ${esc(p.refundNote)}</td></tr>`:''}`}).join(''):'<tr><td class="c muted">-</td><td class="c muted">&nbsp;</td><td class="c muted">&nbsp;</td></tr>';const blankCount=Math.max(0,8-Math.max(1,pays.length)-pays.filter(p=>p.refundNote).length);const blanks=Array.from({length:blankCount},()=>'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>').join('');const allRows=paymentRows+blanks;const rowsArr=allRows.match(/<tr[\s\S]*?<\/tr>/g)||[];const mid=Math.ceil(rowsArr.length/2);
+        ${(()=>{const paymentRows=pays.length?pays.map(p=>{const refund=isRefundMethod(p.label)||num(p.amount)<0;const amtHtml=refund?`<div class="rp-cell refund-amount" style="color:#d71920 !important;font-weight:700 !important"><span class="rp-cur" style="color:#d71920 !important">Rp</span><span class="rp-num" style="color:#d71920 !important">${Number(p.amount||0).toLocaleString('id-ID')}</span></div>`:rpSplit(p.amount);return `<tr class="${refund?'refund-print-row':''}"><td>${esc(p.label)}</td><td class="c">${p.date?date(p.date):'-'}</td><td class="r ${refund?'refund-amount':''}">${amtHtml}</td></tr>${p.payNote?`<tr class="pay-note-row"><td colspan="3">Catatan: ${esc(p.payNote)}</td></tr>`:''}`}).join(''):'<tr><td class="c muted">-</td><td class="c muted">&nbsp;</td><td class="c muted">&nbsp;</td></tr>';const blankCount=Math.max(0,8-Math.max(1,pays.length)-pays.filter(p=>p.payNote).length);const blanks=Array.from({length:blankCount},()=>'<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>').join('');const allRows=paymentRows+blanks;const rowsArr=allRows.match(/<tr[\s\S]*?<\/tr>/g)||[];const mid=Math.ceil(rowsArr.length/2);
         /* Nominal kotak kuning "Need Deposit" mengikuti sisa yang masih harus
            dibayar (Total Kebutuhan DP - Total Pembayaran, floor Rp 0), bukan
            lagi nominal DP awal. c.sisa dari invCalc(i) sudah = dpTotal-paid
@@ -6005,7 +6008,7 @@ const INVOICE_PRINT_CSS = [
   'table.pr td:nth-child(2){text-align:center!important}',
   'table.pr .r,table.pr th.r{text-align:right;white-space:nowrap}',
   'table.pr td.muted{color:#707887}',
-  'table.pr tr.refund-note-row td{text-align:left!important;font-style:italic;font-size:9.5px;color:#d71920!important;font-weight:600;padding:3px 6px;word-break:break-word}',
+  'table.pr tr.pay-note-row td{text-align:left!important;font-style:italic;font-size:9.5px;color:#d71920!important;font-weight:600;padding:3px 6px;word-break:break-word}',
   'table.ip td{border:1px solid #9b1519;padding:5px 6px;font-size:10.5px;color:#171b25}',
   'table.ip .r{text-align:right;white-space:nowrap}',
   'table.ip tr.tot td{background:#fff;font-weight:700}',
