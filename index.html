@@ -10,7 +10,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-512.png">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Firebase Web SDK (compat); public web config only, never Admin credentials -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<!--
+KONFIGURASI MIGRASI FIREBASE:
+- Buat Firebase project; aktifkan Authentication Email/Password, Firestore Database, dan Storage.
+- Isi FIREBASE_CONFIG di bagian JavaScript dengan konfigurasi Web App.
+- Buat akun Admin di Authentication, lalu buat profiles/{UID} di Firestore:
+  {name:"Finance Admin", email:"email-admin", role:"admin", status:"approved", requested_role:"admin"}.
+- Terapkan Firestore dan Storage Security Rules dari panduan migrasi.
+- Jangan pernah memasukkan Firebase Admin SDK service-account private key ke HTML.
+-->
 <style>
 /* ==========================================================================
    SHAD FINANCE — ACCURATE-STYLE ERP UI  (core design system)
@@ -1312,7 +1325,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 <button class="set-mitem" data-set="lampiran" onclick="setNav('lampiran')"><span class="ico">🖇</span>Lampiran</button>
 <button class="set-mitem" data-set="atribut" onclick="setNav('atribut')"><span class="ico">☰</span>Atribut Tambahan</button>
 <button class="set-mitem" data-set="akun" onclick="setNav('akun')"><span class="ico">▤</span>Akun Perkiraan</button>
-<button class="set-mitem" data-set="lainlain" onclick="setNav('lainlain')"><span class="ico">⋯</span>Lain-lain</button></aside><div class="set-panel"><div class="set-pane active" id="setpane-perusahaan"><div class="set-phead"><h2>Perusahaan</h2><p>Identitas dan periode akuntansi perusahaan.</p></div><div class="set-tabs"><button class="set-tab active" data-tab="info" onclick="setTab('info')">Info Perusahaan</button><button class="set-tab" data-tab="alamat" onclick="setTab('alamat')">Alamat</button></div><div class="set-tabpane active" id="settab-info"><div class="formgrid"><div class="field"><label>Nama Perusahaan</label><input id="setCompany" data-pref="company" value="PT Shad Al Fatih Indonesia"></div><div class="field"><label>Kategori Usaha</label><select id="setCategory" data-pref="category"><option>Jasa</option><option>Perdagangan</option><option>Manufaktur</option><option>Transportasi & Travel</option><option>Lainnya</option></select></div><div class="field"><label>Bidang Usaha</label><select id="setSector" data-pref="sector"><option>Tour & Travel</option><option>Tiketing Penerbangan</option><option>Umroh & Haji</option><option>Perhotelan</option><option>Rental Kendaraan</option><option>Lainnya</option></select></div><div class="field"><label>Telepon</label><input id="setPhone" data-pref="phone" placeholder="0274-000000"></div><div class="field"><label>Faksimili</label><input id="setFax" data-pref="fax" placeholder="0274-000000"></div><div class="field"><label>Email</label><input id="setEmail" data-pref="email" type="email" placeholder="finance@shadtour.co.id"></div><div class="field"><label>Tgl Mulai Data</label><input id="setStartDate" data-pref="startDate" type="date"></div><div class="field"><label>Periode Akuntansi</label><select id="setPeriod" data-pref="period"><option>Januari - Desember</option><option>April - Maret</option><option>Juli - Juni</option><option>Oktober - September</option></select></div></div></div><div class="set-tabpane" id="settab-alamat"><div class="formgrid"><div class="field full"><label>Alamat</label><textarea id="setAddress" data-pref="address" rows="3" placeholder="Jl. ..."></textarea></div><div class="field"><label>Kota</label><input id="setCity" data-pref="city" value="Yogyakarta"></div><div class="field"><label>Provinsi</label><input id="setProvince" data-pref="province" placeholder="DI Yogyakarta"></div><div class="field"><label>Kode Pos</label><input id="setZip" data-pref="zip" placeholder="55000"></div><div class="field"><label>Negara</label><input id="setCountry" data-pref="country" value="Indonesia"></div></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-fitur"><div class="set-phead"><h2>Fitur</h2><p>Aktifkan modul yang dipakai perusahaan.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="fMultiCurrency"><span>Modul Invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="fPiutang"><span>Modul Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fPembayaran"><span>Modul Pembayaran</span></label><label class="set-switch"><input type="checkbox" data-pref="fAging"><span>Modul Aging Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fWa"><span>Modul Monitoring WhatsApp</span></label><label class="set-switch"><input type="checkbox" data-pref="fImport"><span>Modul Impor Data</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pajak"><div class="set-phead"><h2>Pajak</h2><p>Pengaturan perpajakan untuk dokumen penjualan.</p></div><div class="formgrid"><div class="field"><label>NPWP</label><input data-pref="taxNpwp" placeholder="00.000.000.0-000.000"></div><div class="field"><label>Nama Wajib Pajak</label><input data-pref="taxName" placeholder=""></div><div class="field"><label>Jenis Pajak</label><select data-pref="taxType"><option>PPN 11%</option><option>PPN 12%</option><option>Non PPN</option></select></div><div class="field"><label>Tarif Pajak (%)</label><input type="number" data-pref="taxRate" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="taxInclusive"><span>Harga sudah termasuk pajak</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-penjualan"><div class="set-phead"><h2>Penjualan</h2><p>Default dokumen penjualan dan invoice.</p></div><div class="formgrid"><div class="field"><label>Termin Jatuh Tempo (hari)</label><input type="number" data-pref="salTerm" placeholder="0"></div><div class="field"><label>Prefix No. Invoice</label><input data-pref="salPrefix" placeholder="INV-"></div><div class="field"><label>Metode Pembayaran Default</label><select data-pref="salMethod"><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select></div><label class="set-switch"><input type="checkbox" data-pref="salDiscount"><span>Tampilkan diskon pada invoice</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembelian"><div class="set-phead"><h2>Pembelian</h2><p>Default dokumen pembelian dan hutang.</p></div><div class="formgrid"><div class="field"><label>Termin Hutang (hari)</label><input type="number" data-pref="purTerm" placeholder="0"></div><div class="field"><label>Prefix No. Pembelian</label><input data-pref="purPrefix" placeholder="PO-"></div><label class="set-switch"><input type="checkbox" data-pref="purRef"><span>Wajib nomor referensi supplier</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembatasan"><div class="set-phead"><h2>Pembatasan</h2><p>Batasan transaksi dan periode.</p></div><div class="formgrid"><div class="field"><label>Batas Maksimal Piutang per Customer (Rp)</label><input type="number" data-pref="limCredit" placeholder="0"></div><div class="field"><label>Batas Hari Overdue Peringatan</label><input type="number" data-pref="limOverdue" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="limLock"><span>Kunci transaksi periode lampau</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-persetujuan"><div class="set-phead"><h2>Persetujuan</h2><p>Alur approval dokumen.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="apvInvoice"><span>Aktifkan persetujuan invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="apvPayment"><span>Aktifkan persetujuan pembayaran</span></label><div class="field"><label>Nama Penyetuju</label><input data-pref="apvName" placeholder="Rizky Noviarini S.Gz., M.P.H."></div><div class="field"><label>Jabatan Penyetuju</label><input data-pref="apvRole" placeholder="Mnr. Finance"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lampiran"><div class="set-phead"><h2>Lampiran</h2><p>Aturan unggah lampiran dokumen.</p></div><div class="formgrid"><div class="field"><label>Ukuran Maksimal File (MB)</label><input type="number" data-pref="attMax" placeholder="0"></div><div class="field"><label>Tipe File Diizinkan</label><select data-pref="attTypes"><option>PDF</option><option>PDF, JPG, PNG</option><option>Semua Tipe</option></select></div><label class="set-switch"><input type="checkbox" data-pref="attRequired"><span>Wajib lampiran pada pembayaran</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-atribut"><div class="set-phead"><h2>Atribut Tambahan</h2><p>Kolom tambahan pada data invoice.</p></div><div class="formgrid"><div class="field"><label>Nama Atribut 1</label><input data-pref="atr1" placeholder=""></div><div class="field"><label>Nama Atribut 2</label><input data-pref="atr2" placeholder=""></div><div class="field"><label>Nama Atribut 3</label><input data-pref="atr3" placeholder=""></div><label class="set-switch"><input type="checkbox" data-pref="atrShow"><span>Tampilkan atribut pada laporan</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-akun"><div class="set-phead"><h2>Akun Perkiraan</h2><p>Pemetaan akun default buku besar.</p></div><div class="formgrid"><div class="field"><label>Akun Piutang Usaha</label><input data-pref="accAr" placeholder="1-10200"></div><div class="field"><label>Akun Kas & Bank</label><input data-pref="accCash" placeholder="1-10001"></div><div class="field"><label>Akun Pendapatan</label><input data-pref="accIncome" placeholder="4-40000"></div><div class="field"><label>Akun Pajak Keluaran</label><input data-pref="accTax" placeholder="2-20300"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lainlain"><div class="set-phead"><h2>Lain-lain</h2><p>Preferensi aplikasi dan cadangan data.</p></div><div class="formgrid"><div class="field"><label>Nama Pengguna</label><input id="setUser" data-pref="user" placeholder=""></div><div class="field"><label>Mata Uang</label><select id="setCurrency" data-pref="currency"><option>IDR - Rupiah</option></select></div></div><div class="notice"><b>Cloud Sync:</b> Data utama aplikasi dapat disimpan di Supabase agar invoice, customer, piutang, pembayaran, dan data terkait terbaca sama dari laptop/HP. Setelah konfigurasi Supabase di bagian kode, status koneksi akan tampil di kanan bawah.<br><button class="secondary" style="margin-top:8px" onclick="refreshFromCloud()">↻ Muat Data Terbaru dari Cloud</button></div><h3 style="margin:16px 0 6px">Cadangkan &amp; Pulihkan Data</h3><p style="color:var(--muted);margin:0 0 14px;font-size:12px">Unduh cadangan secara berkala agar data tidak hilang saat cache/browser dibersihkan.</p><div class="toolbar" style="margin:0"><button class="secondary" onclick="backupData()">⇩ Unduh Cadangan (JSON)</button><input class="input" id="restoreFile" type="file" accept=".json,application/json"><button class="secondary" onclick="restoreData()">⇧ Pulihkan dari Cadangan</button></div>
+<button class="set-mitem" data-set="lainlain" onclick="setNav('lainlain')"><span class="ico">⋯</span>Lain-lain</button></aside><div class="set-panel"><div class="set-pane active" id="setpane-perusahaan"><div class="set-phead"><h2>Perusahaan</h2><p>Identitas dan periode akuntansi perusahaan.</p></div><div class="set-tabs"><button class="set-tab active" data-tab="info" onclick="setTab('info')">Info Perusahaan</button><button class="set-tab" data-tab="alamat" onclick="setTab('alamat')">Alamat</button></div><div class="set-tabpane active" id="settab-info"><div class="formgrid"><div class="field"><label>Nama Perusahaan</label><input id="setCompany" data-pref="company" value="PT Shad Al Fatih Indonesia"></div><div class="field"><label>Kategori Usaha</label><select id="setCategory" data-pref="category"><option>Jasa</option><option>Perdagangan</option><option>Manufaktur</option><option>Transportasi & Travel</option><option>Lainnya</option></select></div><div class="field"><label>Bidang Usaha</label><select id="setSector" data-pref="sector"><option>Tour & Travel</option><option>Tiketing Penerbangan</option><option>Umroh & Haji</option><option>Perhotelan</option><option>Rental Kendaraan</option><option>Lainnya</option></select></div><div class="field"><label>Telepon</label><input id="setPhone" data-pref="phone" placeholder="0274-000000"></div><div class="field"><label>Faksimili</label><input id="setFax" data-pref="fax" placeholder="0274-000000"></div><div class="field"><label>Email</label><input id="setEmail" data-pref="email" type="email" placeholder="finance@shadtour.co.id"></div><div class="field"><label>Tgl Mulai Data</label><input id="setStartDate" data-pref="startDate" type="date"></div><div class="field"><label>Periode Akuntansi</label><select id="setPeriod" data-pref="period"><option>Januari - Desember</option><option>April - Maret</option><option>Juli - Juni</option><option>Oktober - September</option></select></div></div></div><div class="set-tabpane" id="settab-alamat"><div class="formgrid"><div class="field full"><label>Alamat</label><textarea id="setAddress" data-pref="address" rows="3" placeholder="Jl. ..."></textarea></div><div class="field"><label>Kota</label><input id="setCity" data-pref="city" value="Yogyakarta"></div><div class="field"><label>Provinsi</label><input id="setProvince" data-pref="province" placeholder="DI Yogyakarta"></div><div class="field"><label>Kode Pos</label><input id="setZip" data-pref="zip" placeholder="55000"></div><div class="field"><label>Negara</label><input id="setCountry" data-pref="country" value="Indonesia"></div></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-fitur"><div class="set-phead"><h2>Fitur</h2><p>Aktifkan modul yang dipakai perusahaan.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="fMultiCurrency"><span>Modul Invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="fPiutang"><span>Modul Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fPembayaran"><span>Modul Pembayaran</span></label><label class="set-switch"><input type="checkbox" data-pref="fAging"><span>Modul Aging Piutang</span></label><label class="set-switch"><input type="checkbox" data-pref="fWa"><span>Modul Monitoring WhatsApp</span></label><label class="set-switch"><input type="checkbox" data-pref="fImport"><span>Modul Impor Data</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pajak"><div class="set-phead"><h2>Pajak</h2><p>Pengaturan perpajakan untuk dokumen penjualan.</p></div><div class="formgrid"><div class="field"><label>NPWP</label><input data-pref="taxNpwp" placeholder="00.000.000.0-000.000"></div><div class="field"><label>Nama Wajib Pajak</label><input data-pref="taxName" placeholder=""></div><div class="field"><label>Jenis Pajak</label><select data-pref="taxType"><option>PPN 11%</option><option>PPN 12%</option><option>Non PPN</option></select></div><div class="field"><label>Tarif Pajak (%)</label><input type="number" data-pref="taxRate" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="taxInclusive"><span>Harga sudah termasuk pajak</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-penjualan"><div class="set-phead"><h2>Penjualan</h2><p>Default dokumen penjualan dan invoice.</p></div><div class="formgrid"><div class="field"><label>Termin Jatuh Tempo (hari)</label><input type="number" data-pref="salTerm" placeholder="0"></div><div class="field"><label>Prefix No. Invoice</label><input data-pref="salPrefix" placeholder="INV-"></div><div class="field"><label>Metode Pembayaran Default</label><select data-pref="salMethod"><option>Transfer Bank</option><option>Tunai</option><option>QRIS</option><option>Virtual Account</option></select></div><label class="set-switch"><input type="checkbox" data-pref="salDiscount"><span>Tampilkan diskon pada invoice</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembelian"><div class="set-phead"><h2>Pembelian</h2><p>Default dokumen pembelian dan hutang.</p></div><div class="formgrid"><div class="field"><label>Termin Hutang (hari)</label><input type="number" data-pref="purTerm" placeholder="0"></div><div class="field"><label>Prefix No. Pembelian</label><input data-pref="purPrefix" placeholder="PO-"></div><label class="set-switch"><input type="checkbox" data-pref="purRef"><span>Wajib nomor referensi supplier</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-pembatasan"><div class="set-phead"><h2>Pembatasan</h2><p>Batasan transaksi dan periode.</p></div><div class="formgrid"><div class="field"><label>Batas Maksimal Piutang per Customer (Rp)</label><input type="number" data-pref="limCredit" placeholder="0"></div><div class="field"><label>Batas Hari Overdue Peringatan</label><input type="number" data-pref="limOverdue" placeholder="0"></div><label class="set-switch"><input type="checkbox" data-pref="limLock"><span>Kunci transaksi periode lampau</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-persetujuan"><div class="set-phead"><h2>Persetujuan</h2><p>Alur approval dokumen.</p></div><div class="formgrid"><label class="set-switch"><input type="checkbox" data-pref="apvInvoice"><span>Aktifkan persetujuan invoice</span></label><label class="set-switch"><input type="checkbox" data-pref="apvPayment"><span>Aktifkan persetujuan pembayaran</span></label><div class="field"><label>Nama Penyetuju</label><input data-pref="apvName" placeholder="Rizky Noviarini S.Gz., M.P.H."></div><div class="field"><label>Jabatan Penyetuju</label><input data-pref="apvRole" placeholder="Mnr. Finance"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lampiran"><div class="set-phead"><h2>Lampiran</h2><p>Aturan unggah lampiran dokumen.</p></div><div class="formgrid"><div class="field"><label>Ukuran Maksimal File (MB)</label><input type="number" data-pref="attMax" placeholder="0"></div><div class="field"><label>Tipe File Diizinkan</label><select data-pref="attTypes"><option>PDF</option><option>PDF, JPG, PNG</option><option>Semua Tipe</option></select></div><label class="set-switch"><input type="checkbox" data-pref="attRequired"><span>Wajib lampiran pada pembayaran</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-atribut"><div class="set-phead"><h2>Atribut Tambahan</h2><p>Kolom tambahan pada data invoice.</p></div><div class="formgrid"><div class="field"><label>Nama Atribut 1</label><input data-pref="atr1" placeholder=""></div><div class="field"><label>Nama Atribut 2</label><input data-pref="atr2" placeholder=""></div><div class="field"><label>Nama Atribut 3</label><input data-pref="atr3" placeholder=""></div><label class="set-switch"><input type="checkbox" data-pref="atrShow"><span>Tampilkan atribut pada laporan</span></label></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-akun"><div class="set-phead"><h2>Akun Perkiraan</h2><p>Pemetaan akun default buku besar.</p></div><div class="formgrid"><div class="field"><label>Akun Piutang Usaha</label><input data-pref="accAr" placeholder="1-10200"></div><div class="field"><label>Akun Kas & Bank</label><input data-pref="accCash" placeholder="1-10001"></div><div class="field"><label>Akun Pendapatan</label><input data-pref="accIncome" placeholder="4-40000"></div><div class="field"><label>Akun Pajak Keluaran</label><input data-pref="accTax" placeholder="2-20300"></div></div><div class="set-foot"><button class="secondary" onclick="loadSettingsForm()">Batal</button><button class="primary" onclick="saveSettings()">Simpan</button></div></div><div class="set-pane" id="setpane-lainlain"><div class="set-phead"><h2>Lain-lain</h2><p>Preferensi aplikasi dan cadangan data.</p></div><div class="formgrid"><div class="field"><label>Nama Pengguna</label><input id="setUser" data-pref="user" placeholder=""></div><div class="field"><label>Mata Uang</label><select id="setCurrency" data-pref="currency"><option>IDR - Rupiah</option></select></div></div><div class="notice"><b>Cloud Sync:</b> Data utama aplikasi dapat disimpan di Firebase agar invoice, customer, piutang, pembayaran, dan data terkait terbaca sama dari laptop/HP. Setelah konfigurasi Firebase di bagian kode, status koneksi akan tampil di kanan bawah.<br><button class="secondary" style="margin-top:8px" onclick="refreshFromCloud()">↻ Muat Data Terbaru dari Cloud</button></div><h3 style="margin:16px 0 6px">Cadangkan &amp; Pulihkan Data</h3><p style="color:var(--muted);margin:0 0 14px;font-size:12px">Unduh cadangan secara berkala agar data tidak hilang saat cache/browser dibersihkan.</p><div class="toolbar" style="margin:0"><button class="secondary" onclick="backupData()">⇩ Unduh Cadangan (JSON)</button><input class="input" id="restoreFile" type="file" accept=".json,application/json"><button class="secondary" onclick="restoreData()">⇧ Pulihkan dari Cadangan</button></div>
 <h3 style="margin:20px 0 6px">Cadangan Otomatis Harian</h3><p style="color:var(--muted);margin:0 0 10px;font-size:12px">Aplikasi menyimpan cadangan data ke cloud secara otomatis satu kali setiap hari (saat pertama kali dibuka pada hari itu), disimpan selama 30 hari terakhir. Anda bisa mengunduh atau memulihkan salah satu cadangan di bawah.</p>
 <div id="backupAutoStatus" style="font-size:12px;color:var(--muted);margin-bottom:8px"></div>
 <div class="toolbar" style="margin:0 0 10px"><button class="secondary" onclick="loadBackupHistory()">↻ Muat Ulang Riwayat</button><button class="secondary" onclick="autoDailyBackup(true)">⚡ Cadangkan Sekarang</button></div>
@@ -1351,98 +1364,43 @@ apPayments:[],
 settings:{company:'PT Shad Al Fatih Indonesia',city:'Yogyakarta',currency:'IDR - Rupiah',user:'Finance User'}
 };
 
-// ===== SUPABASE CLOUD CONFIG =====
-// Isi dua nilai berikut dari Supabase Dashboard > Project Settings > API.
-// Gunakan Publishable/anon key, JANGAN pernah memasukkan service_role/secret key ke HTML.
-const SUPABASE_URL='https://mmndpdyzkjeordpbppzr.supabase.co';
-const SUPABASE_KEY='sb_publishable_5chAyZpYPPbCJGKc4F6yeg_gggwgPf8';
-const SUPABASE_TABLE='finance_app_state';
-const SUPABASE_STATE_ID='PT_SHAD_AL_FATIH_MAIN';
-let supabaseClient=null;
-/* ===================================================================
-   SETUP SERVER-SIDE UNTUK FITUR NONAKTIFKAN / AKTIFKAN / HAPUS AKUN
-   ===================================================================
-   Kode di file ini HANYA memanggil RPC/Edge Function berikut. Fungsi-
-   fungsi ini WAJIB dibuat di sisi Supabase (Dashboard > SQL Editor /
-   Edge Functions) karena operasi admin tidak boleh dijalankan langsung
-   dari browser dengan anon/publishable key.
-
-   1) RPC SECURITY DEFINER (SQL Editor), pola sama seperti approve_user
-      dan reject_user yang sudah ada:
-
-      create or replace function public.disable_user(target_id uuid)
-      returns void language plpgsql security definer as $$
-      begin
-        if (select role from public.profiles where id=auth.uid())<>'admin' then
-          raise exception 'Hanya Admin yang boleh menonaktifkan akun.';
-        end if;
-        update public.profiles
-          set status='disabled', disabled_at=now()
-          where id=target_id and role<>'admin';
-      end; $$;
-
-      create or replace function public.reactivate_user(target_id uuid)
-      returns void language plpgsql security definer as $$
-      begin
-        if (select role from public.profiles where id=auth.uid())<>'admin' then
-          raise exception 'Hanya Admin yang boleh mengaktifkan kembali akun.';
-        end if;
-        update public.profiles
-          set status='approved', disabled_at=null
-          where id=target_id and role<>'admin';
-      end; $$;
-
-      -- Kolom opsional (jika belum ada):
-      -- alter table public.profiles add column if not exists disabled_at timestamptz;
-
-   2) Edge Function 'admin-delete-user' (untuk Hapus Permanen), berjalan
-      dengan SUPABASE_SERVICE_ROLE_KEY yang disimpan aman sebagai secret
-      di server Supabase (TIDAK PERNAH dikirim ke browser):
-
-      - Verifikasi token Authorization pengirim request adalah user
-        dengan role='admin' di tabel profiles.
-      - Panggil supabaseAdmin.auth.admin.deleteUser(target_id).
-      - Hapus baris terkait di public.profiles jika diperlukan.
-      - Jangan menghapus data invoice/transaksi/pembayaran.
-
-   Selama dua hal di atas belum dibuat di Supabase, tombol Nonaktifkan/
-   Aktifkan Kembali/Hapus Permanen akan menampilkan pesan error dari
-   Supabase (fungsi tidak ditemukan) — ini normal sampai setup selesai.
-   =================================================================== */
-let cloudReady=false;
-let cloudSyncTimer=null;
-let cloudLoading=false;
-let cloudUpdatedAt=null;
-let cloudPollTimer=null;
+// ===== FIREBASE CLOUD CONFIG =====
+// Isi nilai ini dari Firebase Console > Project settings > Your apps > Web app.
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyA-8G2UojybERGRL4sPc9uwpsXkhFEqk94",
+  authDomain:"collecta-finance-a7ef5.firebaseapp.com",
+  projectId:"collecta-finance-a7ef5",
+  storageBucket:"collecta-finance-a7ef5.firebasestorage.app",
+  messagingSenderId:"351355506650",
+  appId:"1:351355506650:web:dbb95037280c043f2abae3",
+  measurementId:"G-P6DZFN1D8T"
+};
+const FIREBASE_MAIN_DOC='app_state/main',FIREBASE_LOG_DOC='app_meta/activity_log';
+const FIREBASE_BACKUP_COLLECTION='daily_backups',FIREBASE_PROFILE_COLLECTION='profiles';
+const FIREBASE_PDF_ROOT='invoice-pdfs';
+const FIREBASE_ADMIN_DELETE_FUNCTION_URL='';
+let firebaseApp=null,firebaseAuth=null,firestore=null,firebaseStorage=null;
+let mainStateUnsubscribe=null,activityUnsubscribe=null;
+let cloudReady=false,cloudSyncTimer=null,cloudLoading=false,cloudUpdatedAt=null,cloudPollTimer=null,cloudRevision=0,cloudConflict=false,lastCloudSnapshot='';
 let data=JSON.parse(localStorage.getItem(KEY)||'null')||JSON.parse(JSON.stringify(seed));
-
-// ===== ROLE-BASED ACCESS (Supabase Auth) =====
-const PROFILES_TABLE='profiles';
-// Role akun diambil dari tabel profiles berdasarkan UID Supabase.
-// Email ini adalah akun admin utama yang Anda tetapkan.
-const PRIMARY_ADMIN_EMAIL='andikawardana.fat@gmail.com';
-let currentUser=null;   // Supabase auth user object
-let currentRole=null;   // 'admin' | 'editor' | 'viewer'
-let currentName=null;   // display name from profiles table
-let realtimeChannel=null;
-
-function getSupabaseClient(){
-  if(supabaseClient)return supabaseClient;
-  if(!supabaseConfigured())return null;
-  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{
-    auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:false},
-    db:{schema:'public'}
-  });
-  return supabaseClient;
+let currentUser=null,currentRole=null,currentName=null,suppressAuthObserver=false;
+function firebaseConfigured(){
+ return !!(window.firebase&&FIREBASE_CONFIG.apiKey&&!FIREBASE_CONFIG.apiKey.startsWith('GANTI_')&&FIREBASE_CONFIG.projectId&&!FIREBASE_CONFIG.projectId.startsWith('GANTI_'));
 }
-
-async function fetchMyProfile(userId){
-  const sb=getSupabaseClient();
-  const {data:row,error}=await sb.from(PROFILES_TABLE).select('name,role,status,phone,requested_role').eq('id',userId).maybeSingle();
-  if(error){console.error('Profile fetch error:',cloudErrorText(error));return null}
-  return row;
+function getFirebase(){
+ if(!firebaseConfigured())return null;
+ if(!firebaseApp){
+  firebaseApp=firebase.apps.length?firebase.app():firebase.initializeApp(FIREBASE_CONFIG);
+  firebaseAuth=firebase.auth();firestore=firebase.firestore();firebaseStorage=firebase.storage();
+  firestore.settings({ignoreUndefinedProperties:true});
+ }
+ return {app:firebaseApp,auth:firebaseAuth,db:firestore,storage:firebaseStorage};
 }
-
+async function fetchMyProfile(uid){
+ const f=getFirebase();if(!f)return null;
+ const snap=await f.db.collection(FIREBASE_PROFILE_COLLECTION).doc(uid).get();
+ return snap.exists?{id:uid,...snap.data()}:null;
+}
 function roleLabel(role){return role==='admin'?'Admin':role==='editor'?'Editor':role==='viewer'?'Viewer':'Tidak dikenal'}
 
 function applyIdentityUI(){
@@ -1499,180 +1457,110 @@ document.addEventListener('submit',function(e){
 },true);
 
 function startRealtimeSync(){
-  const sb=getSupabaseClient();
-  if(!sb||realtimeChannel)return;
-  realtimeChannel=sb.channel('finance_state_changes')
-    .on('postgres_changes',{event:'*',schema:'public',table:SUPABASE_TABLE,filter:'id=eq.'+SUPABASE_STATE_ID},payload=>{
-      const row=payload.new;
-      if(row&&row.state&&(!cloudUpdatedAt||new Date(row.updated_at)>new Date(cloudUpdatedAt))){
-        data=row.state;
-        cloudUpdatedAt=row.updated_at||null;
-        localStorage.setItem(KEY,JSON.stringify(data));
-        refreshAfterHistory();
-        loadSettingsForm();
-        setCloudStatus('online','Data cloud diperbarui otomatis');
-      }
-    })
-    .subscribe();
+ const f=getFirebase();if(!f||mainStateUnsubscribe)return;
+ mainStateUnsubscribe=f.db.doc(FIREBASE_MAIN_DOC).onSnapshot(snap=>{
+  if(!snap.exists)return;const row=snap.data()||{};
+  const stamp=row.updatedAt&&row.updatedAt.toMillis?row.updatedAt.toMillis():0;
+  if((row.revision||0)>cloudRevision&&row.updatedBy!==currentUser.uid){
+   if(lastCloudSnapshot&&JSON.stringify(data)!==lastCloudSnapshot){
+    cloudConflict=true;setCloudStatus('error','Konflik: data berubah di perangkat lain. Backup lokal lalu muat ulang.');return;
+   }
+   cloudRevision=row.revision||0;cloudUpdatedAt=stamp;data=row.state||data;
+   lastCloudSnapshot=JSON.stringify(data);localStorage.setItem(KEY,JSON.stringify(data));
+   refreshAfterHistory();loadSettingsForm();setCloudStatus('online','Data Firebase diperbarui otomatis');
+  }
+ },err=>{console.error('Firestore listener:',err);setCloudStatus('error','Sinkronisasi Firebase terputus')});
+ activityUnsubscribe=f.db.doc(FIREBASE_LOG_DOC).onSnapshot(snap=>{
+  if(!snap.exists)return;activityLogs=mergeActivityLogs(activityLogs,(snap.data()||{}).logs||[]);
+  localStorage.setItem(LOG_KEY,JSON.stringify(activityLogs));updateActivityBadge();
+  if(document.getElementById('activityLogTable'))renderActivityLogTable();
+ },err=>console.warn('Activity listener:',err));
 }
-function stopRealtimeSync(){
-  const sb=getSupabaseClient();
-  if(sb&&realtimeChannel){sb.removeChannel(realtimeChannel);realtimeChannel=null;}
-}
-
+function stopRealtimeSync(){if(mainStateUnsubscribe){mainStateUnsubscribe();mainStateUnsubscribe=null}if(activityUnsubscribe){activityUnsubscribe();activityUnsubscribe=null}}
 function setCloudStatus(type,text){
-  const el=document.getElementById('cloudStatus');
-  const tx=document.getElementById('cloudStatusText');
-  if(!el||!tx)return;
-  el.className=type==='online'?'cloud-online':type==='sync'?'cloud-sync':'cloud-error';
-  tx.textContent=text;
+ const el=document.getElementById('cloudStatus'),tx=document.getElementById('cloudStatusText');if(!el||!tx)return;
+ el.className=type==='online'?'cloud-online':type==='sync'?'cloud-sync':'cloud-error';tx.textContent=text;
 }
-function cloudErrorText(e){
-  if(!e)return 'Unknown error';
-  return [e.message,e.details,e.hint,e.code].filter(Boolean).join(' | ');
-}
-function supabaseConfigured(){
-  return !!(window.supabase && SUPABASE_URL && SUPABASE_KEY &&
-    /^https:\/\/[^/]+\.supabase\.co$/.test(SUPABASE_URL) &&
-    SUPABASE_KEY.indexOf('PASTE_')!==0);
-}
+function cloudErrorText(e){return e?[e.message,e.code].filter(Boolean).join(' | '):'Unknown error'}
 async function initCloud(){
-  if(!supabaseConfigured()){
-    setCloudStatus('error','Cloud belum dikonfigurasi');
-    return false;
-  }
-  if(!currentUser){
-    setCloudStatus('error','Silakan login untuk memuat data cloud');
-    return false;
-  }
-  try{
-    const sb=getSupabaseClient();
-    supabaseClient=sb;
-    setCloudStatus('sync','Menghubungkan cloud…');
-
-    const {data:row,error}=await supabaseClient
-      .from(SUPABASE_TABLE)
-      .select('id,state,updated_at')
-      .eq('id',SUPABASE_STATE_ID)
-      .maybeSingle();
-    if(error)throw error;
-
-    cloudReady=true;
-    if(row && row.state && typeof row.state==='object'){
-      cloudUpdatedAt=row.updated_at||null;
-      data=row.state;
-      localStorage.setItem(KEY,JSON.stringify(data));
-      ensureCustomerIds();
-      setCloudStatus('online','Cloud tersinkron');
-    }else{
-      // Baris belum ada: buat sekali dari data lokal yang sedang dipakai.
-      await pushCloudState(true);
+ const f=getFirebase();if(!f){setCloudStatus('error','Firebase belum dikonfigurasi');return false}
+ if(!currentUser){setCloudStatus('error','Silakan login untuk memuat data Firebase');return false}
+ try{
+  setCloudStatus('sync','Menghubungkan Firebase…');
+  const ref=f.db.doc(FIREBASE_MAIN_DOC),snap=await ref.get();cloudReady=true;
+  if(snap.exists){
+   const row=snap.data()||{};if(row.state&&typeof row.state==='object'){
+    data=row.state;cloudUpdatedAt=row.updatedAt&&row.updatedAt.toMillis?row.updatedAt.toMillis():Date.now();
+    cloudRevision=row.revision||0;lastCloudSnapshot=JSON.stringify(data);
+    localStorage.setItem(KEY,JSON.stringify(data));ensureCustomerIds();
+   }
+   setCloudStatus('online','Firebase tersinkron');
+  }else{
+   cloudRevision=0;lastCloudSnapshot=JSON.stringify(data);
+   setCloudStatus('sync','Firebase kosong — migrasi perlu persetujuan Admin');
+   if(currentRole==='admin')setTimeout(async()=>{
+    if(!cloudReady||!currentUser)return;
+    if(confirm('Database Firebase masih kosong. Data lokal browser akan dicadangkan dahulu sebagai JSON. Pastikan data lokal ini memang data final yang telah diverifikasi, bukan data contoh atau data lama yang belum lengkap. Unduh backup dan lanjutkan migrasi?')){
+     downloadFile('backup_sebelum_migrasi_firebase_'+todayStr()+'.json',JSON.stringify(data,null,2),'application/json');
+     setTimeout(async()=>{if(confirm('Setelah backup terunduh, unggah salinan data lokal ini ke Firebase?'))await pushCloudState(true)},700);
     }
-    try{await loadActivityLogFromCloud()}catch(e){}
-    return true;
-  }catch(e){
-    console.error('Supabase init:',e);
-    console.error('Detail Supabase init:',cloudErrorText(e));
-    setCloudStatus('error','Cloud gagal terhubung');
-    return false;
+   },900);
   }
+  await loadActivityLogFromCloud();return true;
+ }catch(e){console.error('Firebase init:',e);setCloudStatus('error','Firebase gagal terhubung: '+cloudErrorText(e));return false}
 }
 async function pushCloudState(initial=false){
-  if(!supabaseClient)return false;
-  if(currentRole==='viewer'){console.warn('Viewer: penyimpanan cloud diblokir di sisi klien.');return false;}
-  try{
-    setCloudStatus('sync','Menyimpan ke cloud…');
-    const snapshot=JSON.parse(JSON.stringify(data));
-    const nowIso=new Date().toISOString();
-    const payload={id:SUPABASE_STATE_ID,state:snapshot,updated_at:nowIso};
-    const {error}=await supabaseClient
-      .from(SUPABASE_TABLE)
-      .upsert(payload,{onConflict:'id'});
-    if(error)throw error;
-    localStorage.setItem(KEY,JSON.stringify(data));
-    cloudUpdatedAt=nowIso;
-    setCloudStatus('online','Cloud tersinkron');
-    return true;
-  }catch(e){
-    console.error('Supabase save:',e);
-    console.error('Detail Supabase save:',cloudErrorText(e));
-    setCloudStatus('error','Gagal menyimpan cloud');
-    return false;
-  }
+ const f=getFirebase();if(!f||!cloudReady)return false;
+ if(currentRole==='viewer')return false;
+ try{
+  if(cloudConflict)throw new Error('Konflik perubahan. Backup data lokal, muat ulang data cloud, lalu ulangi perubahan yang belum tersimpan.');
+  setCloudStatus('sync','Menyimpan ke Firebase…');
+  const ref=f.db.doc(FIREBASE_MAIN_DOC),snapshotText=JSON.stringify(data),snapshot=JSON.parse(snapshotText);
+  let nextRevision=cloudRevision+1;
+  await f.db.runTransaction(async tx=>{
+   const remote=await tx.get(ref),remoteRevision=remote.exists?(remote.data().revision||0):0;
+   if(remoteRevision!==cloudRevision)throw new Error('CONFLICT: data sudah diubah pengguna/perangkat lain. Refresh diperlukan.');
+   nextRevision=remoteRevision+1;
+   tx.set(ref,{state:snapshot,revision:nextRevision,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAtClient:new Date().toISOString(),updatedBy:currentUser.uid},{merge:true});
+  });
+  cloudRevision=nextRevision;lastCloudSnapshot=snapshotText;localStorage.setItem(KEY,snapshotText);
+  cloudUpdatedAt=Date.now();setCloudStatus('online','Data tersimpan di Firebase');return true;
+ }catch(e){
+  console.error('Firebase save:',e);
+  if(String(e.message||'').includes('CONFLICT'))cloudConflict=true;
+  setCloudStatus('error',cloudConflict?'Konflik data: backup lokal lalu muat ulang':'Gagal menyimpan Firebase: '+cloudErrorText(e));return false
+ }
 }
-function scheduleCloudSync(){
-  if(!cloudReady)return;
-  clearTimeout(cloudSyncTimer);
-  cloudSyncTimer=setTimeout(()=>pushCloudState(false),500);
-}
+function scheduleCloudSync(){if(!cloudReady||currentRole==='viewer')return;clearTimeout(cloudSyncTimer);cloudSyncTimer=setTimeout(()=>pushCloudState(false),650)}
 async function refreshFromCloud(){
-  if(!cloudReady||!supabaseClient)return;
-  try{
-    setCloudStatus('sync','Memuat data terbaru…');
-    const {data:row,error}=await supabaseClient
-      .from(SUPABASE_TABLE)
-      .select('id,state,updated_at')
-      .eq('id',SUPABASE_STATE_ID)
-      .maybeSingle();
-    if(error)throw error;
-    if(row&&row.state){
-      data=row.state;
-      cloudUpdatedAt=row.updated_at||null;
-      localStorage.setItem(KEY,JSON.stringify(data));
-      refreshAfterHistory();
-    }
-    setCloudStatus('online','Cloud tersinkron');
-  }catch(e){
-    console.error('Supabase refresh:',e);
-    console.error('Detail Supabase refresh:',cloudErrorText(e));
-    setCloudStatus('error','Gagal memuat cloud');
+ const f=getFirebase();if(!cloudReady||!f)return;
+ try{
+  const snap=await f.db.doc(FIREBASE_MAIN_DOC).get();
+  if(snap.exists&&snap.data().state){
+   if(cloudConflict&&JSON.stringify(data)!==lastCloudSnapshot){
+    downloadFile('backup_konflik_lokal_'+todayStr()+'.json',JSON.stringify(data,null,2),'application/json');
+    if(!confirm('Perubahan lokal berbeda dari cloud. Backup lokal telah diunduh. Muat data terbaru dari Firebase dan buang perubahan lokal yang belum tersinkron?'))return;
+   }
+   const row=snap.data();data=row.state;cloudRevision=row.revision||0;cloudUpdatedAt=Date.now();
+   lastCloudSnapshot=JSON.stringify(data);cloudConflict=false;localStorage.setItem(KEY,JSON.stringify(data));refreshAfterHistory();loadSettingsForm();
   }
+  setCloudStatus('online','Firebase tersinkron');
+ }catch(e){console.error('Firebase refresh:',e);setCloudStatus('error','Gagal memuat Firebase')}
 }
-function setupCloudVisibilityPolling(){
-  document.addEventListener('visibilitychange',()=>{
-    if(!cloudReady)return;
-    if(document.hidden){
-      clearInterval(cloudPollTimer);
-      cloudPollTimer=null;
-    }else{
-      clearInterval(cloudPollTimer);
-      pollCloud();
-      cloudPollTimer=setInterval(pollCloud,30000);
-    }
-  },{once:false});
-}
-async function pollCloud(){
-  if(!cloudReady||!supabaseClient||document.hidden)return;
-  try{
-    const {data:row,error}=await supabaseClient
-      .from(SUPABASE_TABLE)
-      .select('id,state,updated_at')
-      .eq('id',SUPABASE_STATE_ID)
-      .maybeSingle();
-    if(error)throw error;
-    if(row&&row.updated_at&&(!cloudUpdatedAt||new Date(row.updated_at)>new Date(cloudUpdatedAt))){
-      data=row.state||data;
-      cloudUpdatedAt=row.updated_at;
-      localStorage.setItem(KEY,JSON.stringify(data));
-      refreshAfterHistory();
-      setCloudStatus('online','Data cloud diperbarui');
-    }
-  }catch(e){
-    console.warn('Cloud polling:',cloudErrorText(e));
-  }
-}
-
+function setupCloudVisibilityPolling(){document.addEventListener('visibilitychange',()=>{if(cloudReady&&!document.hidden)refreshFromCloud()})}
+async function pollCloud(){if(cloudReady&&!document.hidden)await refreshFromCloud()}
 
 /* ===================================================================
    RECORD PERUBAHAN (ACTIVITY LOG)
    ===================================================================
    Mencatat seluruh aktivitas pengguna: tambah, edit, hapus, pembayaran,
    invoice, customer, login/logout, dan undo/redo. Disimpan otomatis ke
-   localStorage dan disinkronkan ke Supabase menggunakan tabel yang sama
-   (SUPABASE_TABLE) dengan baris terpisah (SUPABASE_LOG_ID) sehingga
-   tidak memerlukan tabel baru di Supabase.
+   localStorage dan disinkronkan ke Firebase menggunakan tabel yang sama
+   (FIREBASE_TABLE) dengan baris terpisah (FIREBASE_LOG_ID) sehingga
+   tidak memerlukan tabel baru di Firebase.
    =================================================================== */
-const SUPABASE_LOG_ID=SUPABASE_STATE_ID+'_ACTIVITY_LOG';
+const FIREBASE_ACTIVITY_DOC=FIREBASE_LOG_DOC;
 const LOG_KEY=KEY+'_activity_log';
 const LOG_SEEN_KEY=LOG_KEY+'_seen';
 const ACTIVITY_LOG_LIMIT=500;
@@ -1706,16 +1594,9 @@ function scheduleActivityLogSync(){
   activityLogSyncTimer=setTimeout(()=>pushActivityLog(),500);
 }
 async function pushActivityLog(){
-  if(!supabaseClient)return false;
-  try{
-    const payload={id:SUPABASE_LOG_ID,state:{logs:activityLogs},updated_at:new Date().toISOString()};
-    const {error}=await supabaseClient.from(SUPABASE_TABLE).upsert(payload,{onConflict:'id'});
-    if(error)throw error;
-    return true;
-  }catch(e){
-    console.warn('Gagal menyimpan Record Perubahan ke cloud:',cloudErrorText(e));
-    return false;
-  }
+ const f=getFirebase();if(!f||!cloudReady)return false;
+ try{await f.db.doc(FIREBASE_ACTIVITY_DOC).set({logs:activityLogs,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});return true}
+ catch(e){console.warn('Gagal menyimpan log ke Firebase:',cloudErrorText(e));return false}
 }
 function mergeActivityLogs(a,b){
   const map=new Map();
@@ -1723,20 +1604,11 @@ function mergeActivityLogs(a,b){
   return Array.from(map.values()).sort((x,y)=>new Date(y.ts)-new Date(x.ts)).slice(0,ACTIVITY_LOG_LIMIT);
 }
 async function loadActivityLogFromCloud(){
-  if(!supabaseClient)return;
-  try{
-    const {data:row,error}=await supabaseClient
-      .from(SUPABASE_TABLE).select('id,state,updated_at').eq('id',SUPABASE_LOG_ID).maybeSingle();
-    if(error)throw error;
-    if(row&&row.state&&Array.isArray(row.state.logs)){
-      activityLogs=mergeActivityLogs(activityLogs,row.state.logs);
-      localStorage.setItem(LOG_KEY,JSON.stringify(activityLogs));
-    }
-    updateActivityBadge();
-    if(document.getElementById('activityLogTable'))renderActivityLogTable();
-  }catch(e){
-    console.warn('Gagal memuat Record Perubahan dari cloud:',cloudErrorText(e));
-  }
+ const f=getFirebase();if(!f)return;
+ try{const snap=await f.db.doc(FIREBASE_ACTIVITY_DOC).get();if(snap.exists&&Array.isArray((snap.data()||{}).logs)){
+  activityLogs=mergeActivityLogs(activityLogs,snap.data().logs);localStorage.setItem(LOG_KEY,JSON.stringify(activityLogs))}
+  updateActivityBadge();if(document.getElementById('activityLogTable'))renderActivityLogTable();
+ }catch(e){console.warn('Gagal memuat log Firebase:',cloudErrorText(e))}
 }
 function updateActivityBadge(){
   const el=document.getElementById('notifCount');if(!el)return;
@@ -2058,166 +1930,70 @@ return c||{};
 }
 const AUTH_KEY='shad_auth';
 async function sha256(text){const data=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('')}
-async function initAuth(){
-  let a; try{a=JSON.parse(localStorage.getItem(AUTH_KEY)||'null')}catch(e){a=null}
-  if(!a){a={username:'admin',email:'finance@shadtour.co.id',passwordHash:await sha256('admin'),pending:null};localStorage.setItem(AUTH_KEY,JSON.stringify(a));}
-  return a;
-}
+async function initAuth(){return {email:currentUser&&currentUser.email||'',uid:currentUser&&currentUser.uid||''}}
 function showRegisterForm(){
-  const lb=document.getElementById('loginBox'),rb=document.getElementById('registerBox');
-  if(lb)lb.classList.add('hidden');
-  if(rb)rb.classList.remove('hidden');
-  const e=document.getElementById('regError'),i=document.getElementById('regInfo');
-  if(e)e.style.display='none';
-  if(i)i.style.display='none';
+ const lb=document.getElementById('loginBox'),rb=document.getElementById('registerBox');
+ if(lb)lb.classList.add('hidden');if(rb)rb.classList.remove('hidden');
+ ['regError','regInfo'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
 }
-function showLoginForm(){
-  const lb=document.getElementById('loginBox'),rb=document.getElementById('registerBox');
-  if(rb)rb.classList.add('hidden');
-  if(lb)lb.classList.remove('hidden');
-}
-function regMsg(kind,text){
-  const e=document.getElementById('regError'),i=document.getElementById('regInfo');
-  if(e)e.style.display='none';
-  if(i)i.style.display='none';
-  const el=(kind==='ok')?i:e;
-  if(el&&text){el.textContent=text;el.style.display='block';}
-}
+function showLoginForm(){const lb=document.getElementById('loginBox'),rb=document.getElementById('registerBox');if(rb)rb.classList.add('hidden');if(lb)lb.classList.remove('hidden')}
+function regMsg(kind,text){const e=document.getElementById('regError'),i=document.getElementById('regInfo');if(e)e.style.display='none';if(i)i.style.display='none';const el=kind==='ok'?i:e;if(el&&text){el.textContent=text;el.style.display='block'}}
 async function registerAccount(){
-  const name=(document.getElementById('regName').value||'').trim();
-  const email=(document.getElementById('regEmail').value||'').trim();
-  const phone=(document.getElementById('regPhone').value||'').trim();
-  const requestedRole=document.getElementById('regRole').value||'viewer';
-  const pass=document.getElementById('regPass').value||'';
-  const pass2=document.getElementById('regPass2').value||'';
-  const btn=document.getElementById('regBtn');
-  regMsg('err','');
-  if(!name){regMsg('err','Nama lengkap wajib diisi.');return}
-  if(!email||email.indexOf('@')<0){regMsg('err','Masukkan email yang valid.');return}
-  if(!phone){regMsg('err','No. Handphone wajib diisi.');return}
-  if(pass.length<6){regMsg('err','Password minimal 6 karakter.');return}
-  if(pass!==pass2){regMsg('err','Konfirmasi password tidak cocok.');return}
-  if(!supabaseConfigured()){regMsg('err','Cloud belum dikonfigurasi, hubungi admin.');return}
-  const sb=getSupabaseClient();
-  if(btn){btn.disabled=true;btn.textContent='Memproses…';}
-  try{
-    const {data:signUpData,error}=await sb.auth.signUp({
-      email,password:pass,
-      options:{data:{name,phone,requested_role:requestedRole}}
-    });
-    if(error){
-      regMsg('err',error.message==='User already registered'?'Email sudah terdaftar. Silakan masuk atau gunakan email lain.':('Gagal mendaftar: '+error.message));
-      return;
-    }
-    // Jika Supabase mengembalikan sesi aktif (konfirmasi email nonaktif), keluarkan lagi
-    // karena akun baru wajib menunggu persetujuan Admin sebelum bisa mengakses dashboard.
-    if(signUpData&&signUpData.session){
-      try{await sb.auth.signOut()}catch(e){}
-    }
-    regMsg('ok','Pendaftaran berhasil. Akun Anda berstatus "Menunggu Persetujuan Admin". Anda akan menerima akses setelah disetujui.');
-    document.getElementById('regName').value='';
-    document.getElementById('regPhone').value='';
-    document.getElementById('regPass').value='';
-    document.getElementById('regPass2').value='';
-  }catch(e){
-    console.error('Register error:',e);
-    regMsg('err','Gagal mendaftar. Coba lagi.');
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='Daftar';}
-  }
+ const name=(document.getElementById('regName').value||'').trim(),email=(document.getElementById('regEmail').value||'').trim().toLowerCase();
+ const phone=(document.getElementById('regPhone').value||'').trim(),requestedRole=document.getElementById('regRole').value||'viewer';
+ const pass=document.getElementById('regPass').value||'',pass2=document.getElementById('regPass2').value||'',btn=document.getElementById('regBtn');
+ regMsg('err','');if(!name||!email||!phone){regMsg('err','Nama, email, dan nomor handphone wajib diisi.');return}
+ if(pass.length<8){regMsg('err','Password minimal 8 karakter.');return}if(pass!==pass2){regMsg('err','Konfirmasi password tidak cocok.');return}
+ const f=getFirebase();if(!f){regMsg('err','Firebase belum dikonfigurasi.');return}
+ if(btn){btn.disabled=true;btn.textContent='Memproses…'}
+ try{
+  suppressAuthObserver=true;
+  const cred=await f.auth.createUserWithEmailAndPassword(email,pass);
+  await f.db.collection(FIREBASE_PROFILE_COLLECTION).doc(cred.user.uid).set({
+   name,email,phone,role:'',requested_role:requestedRole,status:'pending',created_at:new Date().toISOString(),approved_at:null
+  });
+  await f.auth.signOut();suppressAuthObserver=false;regMsg('ok','Pendaftaran berhasil. Akun menunggu persetujuan Admin sebelum dapat masuk.');
+  ['regName','regPhone','regPass','regPass2'].forEach(id=>document.getElementById(id).value='');
+ }catch(e){suppressAuthObserver=false;console.error('Register Firebase:',e);regMsg('err','Gagal mendaftar: '+cloudErrorText(e))}
+ finally{if(btn){btn.disabled=false;btn.textContent='Daftar'}}
 }
 async function login(){
-  const emailEl=document.getElementById('loginEmail'),passEl=document.getElementById('loginPass');
-  const email=emailEl.value.trim(),pass=passEl.value;
-  const err=document.getElementById('loginError'); err.style.display='none';
-  const _inf=document.getElementById('loginInfo'); if(_inf)_inf.style.display='none';
-  const btn=document.getElementById('loginBtn');
-  if(!supabaseConfigured()){err.textContent='Cloud belum dikonfigurasi, hubungi admin.';err.style.display='block';return}
-  const sb=getSupabaseClient();
-  if(btn){btn.disabled=true;btn.textContent='Memproses…';}
-  try{
-    const {data:authData,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error||!authData.user){
-      err.textContent='Email atau password salah.';
-      err.style.display='block';
-      return;
-    }
-    const res=await onAuthenticated(authData.user);
-    if(!res.ok){
-      await sb.auth.signOut();
-      if(res.reason==='pending'){
-        err.textContent='Akun Anda masih menunggu persetujuan Admin.';
-      }else if(res.reason==='rejected'){
-        err.textContent='Akun Anda belum disetujui oleh Admin.';
-      }else if(res.reason==='disabled'){
-        err.textContent='Akun Anda telah dinonaktifkan oleh Admin. Silakan hubungi Admin.';
-      }else{
-        err.textContent='Akun ini belum terdaftar sebagai Editor/Viewer. Hubungi admin.';
-      }
-      err.style.display='block';
-      return;
-    }
-    const acc=acctData();acc.logins=[{time:new Date().toLocaleString('id-ID'),device:navigator.platform||'Web Browser'}].concat(acc.logins||[]).slice(0,15);acctSave(acc);
-    logActivity('Login','Sistem','Login berhasil sebagai '+roleLabel(currentRole)+' ('+(currentUser&&currentUser.email||'-')+')');
-  }catch(e){
-    console.error('Login error:',e);
-    err.textContent='Gagal login. Coba lagi.';
-    err.style.display='block';
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='Masuk';}
-  }
+ const emailEl=document.getElementById('loginEmail'),passEl=document.getElementById('loginPass'),email=emailEl.value.trim().toLowerCase(),pass=passEl.value;
+ const err=document.getElementById('loginError'),inf=document.getElementById('loginInfo'),btn=document.getElementById('loginBtn');
+ err.style.display='none';if(inf)inf.style.display='none';const f=getFirebase();
+ if(!f){err.textContent='Firebase belum dikonfigurasi. Hubungi admin.';err.style.display='block';return}
+ if(btn){btn.disabled=true;btn.textContent='Memproses…'}
+ try{
+  suppressAuthObserver=true;
+  const cred=await f.auth.signInWithEmailAndPassword(email,pass),res=await onAuthenticated(cred.user);
+  if(!res.ok){await f.auth.signOut();suppressAuthObserver=false;err.textContent=res.reason==='pending'?'Akun masih menunggu persetujuan Admin.':res.reason==='rejected'?'Pendaftaran ditolak.':res.reason==='disabled'?'Akun dinonaktifkan Admin.':'Profil akses belum disiapkan Admin.';err.style.display='block';return}
+  const acc=acctData();acc.logins=[{time:new Date().toLocaleString('id-ID'),device:navigator.platform||'Web Browser'}].concat(acc.logins||[]).slice(0,15);acctSave(acc);
+  logActivity('Login','Sistem','Login berhasil sebagai '+roleLabel(currentRole)+' ('+email+')');
+  suppressAuthObserver=false;
+ }catch(e){suppressAuthObserver=false;console.error('Login Firebase:',e);err.textContent='Gagal login: '+cloudErrorText(e);err.style.display='block'}
+ finally{if(btn){btn.disabled=false;btn.textContent='Masuk'}}
 }
-// Mengembalikan {ok:boolean, reason?:'pending'|'rejected'|'norole'|'notfound'}
 async function onAuthenticated(user){
-  const profile=await fetchMyProfile(user.id);
-  // Admin utama tetap dikenali sebagai Admin berdasarkan email + UID login.
-  // Untuk akun lain, role tetap wajib berasal dari tabel profiles.
-  const normalizedEmail=String(user.email||'').trim().toLowerCase();
-  const profileRole=String(profile&&profile.role||'').trim().toLowerCase();
-  const effectiveRole=(normalizedEmail===PRIMARY_ADMIN_EMAIL) ? 'admin' : profileRole;
-  if(!profile && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'notfound'}}
-  if(profile&&profile.status==='pending' && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'pending'}}
-  if(profile&&profile.status==='rejected' && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'rejected'}}
-  if(profile&&profile.status==='disabled' && normalizedEmail!==PRIMARY_ADMIN_EMAIL){return {ok:false,reason:'disabled'}}
-  if(!effectiveRole){return {ok:false,reason:'norole'}}
-  if(!['admin','editor','viewer'].includes(effectiveRole)){return {ok:false,reason:'norole'}}
-  currentUser=user;
-  currentRole=effectiveRole;
-  currentName=(profile&&profile.name)||user.email;
-  document.getElementById('login').classList.add('hidden');
-  applyIdentityUI();
-  applyAdminMenuVisibility();
-  startRoleObserver();
-  applyRoleRestrictions();
-  await boot();
-  startRealtimeSync();
-  return {ok:true};
+ const profile=await fetchMyProfile(user.uid);if(!profile)return {ok:false,reason:'notfound'};
+ if(profile.status==='pending')return {ok:false,reason:'pending'};if(profile.status==='rejected')return {ok:false,reason:'rejected'};if(profile.status==='disabled')return {ok:false,reason:'disabled'};
+ const role=String(profile.role||'').toLowerCase();if(!['admin','editor','viewer'].includes(role))return {ok:false,reason:'norole'};
+ currentUser=user;currentRole=role;currentName=profile.name||user.email;
+ document.getElementById('login').classList.add('hidden');applyIdentityUI();applyAdminMenuVisibility();startRoleObserver();applyRoleRestrictions();
+ await boot();startRealtimeSync();return {ok:true};
 }
-function applyAdminMenuVisibility(){
-  const pb=document.getElementById('menuPersetujuanBtn');
-  if(pb)pb.classList.toggle('hidden',currentRole!=='admin');
-}
+function applyAdminMenuVisibility(){const pb=document.getElementById('menuPersetujuanBtn');if(pb)pb.classList.toggle('hidden',currentRole!=='admin')}
 async function logout(){
-  try{ logActivity('Logout','Sistem','Logout dari sistem'); await pushActivityLog(); }catch(e){}
-  stopRealtimeSync();
-  clearInterval(cloudPollTimer);
-  const sb=getSupabaseClient();
-  try{ if(sb) await sb.auth.signOut(); }catch(e){}
-  currentUser=null;currentRole=null;currentName=null;
-  location.reload();
+ try{logActivity('Logout','Sistem','Logout dari sistem');await pushActivityLog()}catch(e){}
+ stopRealtimeSync();clearInterval(cloudPollTimer);const f=getFirebase();try{if(f)await f.auth.signOut()}catch(e){}
+ currentUser=null;currentRole=null;currentName=null;location.reload();
 }
-(async()=>{
-  if(!supabaseConfigured())return;
-  const sb=getSupabaseClient();
-  const {data:sessionData}=await sb.auth.getSession();
-  if(sessionData&&sessionData.session&&sessionData.session.user){
-    const res=await onAuthenticated(sessionData.session.user);
-    if(!res.ok){ try{await sb.auth.signOut()}catch(e){} }
-  }
-  sb.auth.onAuthStateChange((event)=>{
-    if(event==='SIGNED_OUT'){ currentUser=null;currentRole=null;currentName=null; }
-  });
-})();
+(function(){const f=getFirebase();if(!f)return;f.auth.onAuthStateChanged(async user=>{
+ if(suppressAuthObserver)return;
+ if(!user){currentUser=null;currentRole=null;currentName=null;return}
+ if(currentUser&&currentUser.uid===user.uid)return;
+ try{const res=await onAuthenticated(user);if(!res.ok){await f.auth.signOut();const el=document.getElementById('loginError');if(el){el.textContent='Akun belum mendapat akses. Status: '+res.reason;el.style.display='block'}}}
+ catch(e){console.error('Auth state:',e);await f.auth.signOut()}
+})})();
 
 function toggleSide(){document.getElementById('sidebar').classList.toggle('open')}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
@@ -4227,7 +4003,9 @@ let reader=new FileReader();
 reader.onload=()=>{
 try{
 let parsed=JSON.parse(reader.result);
-if(!Array.isArray(parsed.invoices)||!Array.isArray(parsed.customers)){alert('File cadangan tidak valid.');return}
+if(Array.isArray(parsed)&&parsed.length===1&&parsed[0]&&parsed[0].state)parsed=parsed[0].state;
+if(parsed&&parsed.state&&typeof parsed.state==='object')parsed=parsed.state;
+if(!Array.isArray(parsed.invoices)||!Array.isArray(parsed.customers)){alert('File JSON tidak valid. Gunakan backup Finance Collecta atau ekspor JSON baris finance_app_state dari Supabase (kolom state).');return}
 if(!confirm('Memulihkan data akan menimpa seluruh data yang ada saat ini. Lanjutkan?'))return;
 data=parsed;
 if(!Array.isArray(data.payments))data.payments=[];
@@ -4241,102 +4019,43 @@ reader.readAsText(f);
 }
 
 /* ===================================================================
-   CADANGAN OTOMATIS HARIAN
-   ===================================================================
-   Menyimpan salinan data ke Supabase satu kali per hari (baris terpisah
-   pada tabel SUPABASE_TABLE yang sama, sehingga tidak perlu membuat
-   tabel baru). Disimpan otomatis saat aplikasi dibuka pertama kali pada
-   hari itu dan sudah terhubung ke cloud. Cadangan lama otomatis dihapus
-   setelah BACKUP_RETENTION_DAYS hari.
+   CADANGAN OTOMATIS HARIAN — FIREBASE
    =================================================================== */
-const BACKUP_ID_PREFIX=SUPABASE_STATE_ID+'_BACKUP_';
-const BACKUP_RETENTION_DAYS=30;
-const AUTO_BACKUP_KEY=KEY+'_last_auto_backup_date';
-
+const BACKUP_RETENTION_DAYS=30,AUTO_BACKUP_KEY=KEY+'_last_auto_backup_date';
 async function autoDailyBackup(manual){
-  manual=!!manual;
-  const today=todayStr();
-  if(!manual && localStorage.getItem(AUTO_BACKUP_KEY)===today)return;
-  if(!cloudReady||!supabaseClient){
-    if(manual)alert('Cloud belum terhubung, tidak bisa membuat cadangan otomatis saat ini.');
-    return;
-  }
-  try{
-    const snapshot=JSON.parse(JSON.stringify(data));
-    const payload={id:BACKUP_ID_PREFIX+today,state:snapshot,updated_at:new Date().toISOString()};
-    const {error}=await supabaseClient.from(SUPABASE_TABLE).upsert(payload,{onConflict:'id'});
-    if(error)throw error;
-    localStorage.setItem(AUTO_BACKUP_KEY,today);
-    cleanupOldBackups();
-    if(document.getElementById('backupHistoryBody'))loadBackupHistory();
-    if(manual)alert('Cadangan hari ini berhasil disimpan ke cloud.');
-  }catch(e){
-    console.warn('Cadangan otomatis gagal:',cloudErrorText(e));
-    if(manual)alert('Gagal membuat cadangan: '+cloudErrorText(e));
-  }
+ manual=!!manual;const f=getFirebase(),today=todayStr();if(!manual&&localStorage.getItem(AUTO_BACKUP_KEY)===today)return;
+ if(!cloudReady||!f){if(manual)alert('Firebase belum terhubung.');return}
+ try{
+  await f.db.collection(FIREBASE_BACKUP_COLLECTION).doc(today).set({state:JSON.parse(JSON.stringify(data)),createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdAtClient:new Date().toISOString(),createdBy:currentUser.uid});
+  localStorage.setItem(AUTO_BACKUP_KEY,today);if(document.getElementById('backupHistoryBody'))loadBackupHistory();if(manual)alert('Cadangan harian berhasil disimpan ke Firebase.');
+ }catch(e){console.warn('Backup Firebase gagal:',cloudErrorText(e));if(manual)alert('Gagal membuat cadangan: '+cloudErrorText(e))}
 }
 async function cleanupOldBackups(){
-  if(!supabaseClient)return;
-  try{
-    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-BACKUP_RETENTION_DAYS);
-    const cutoffStr=isoLocal(cutoff);
-    const {data:rows,error}=await supabaseClient.from(SUPABASE_TABLE).select('id').like('id',BACKUP_ID_PREFIX+'%');
-    if(error)throw error;
-    const toDelete=(rows||[]).map(r=>r.id).filter(id=>id.slice(BACKUP_ID_PREFIX.length)<cutoffStr);
-    if(toDelete.length)await supabaseClient.from(SUPABASE_TABLE).delete().in('id',toDelete);
-  }catch(e){console.warn('Bersihkan cadangan lama gagal:',cloudErrorText(e))}
+ const f=getFirebase();if(!f||currentRole!=='admin')return;
+ try{const cutoff=new Date();cutoff.setDate(cutoff.getDate()-BACKUP_RETENTION_DAYS);
+  const snap=await f.db.collection(FIREBASE_BACKUP_COLLECTION).where('createdAtClient','<',cutoff.toISOString()).get();
+  const batch=f.db.batch();snap.docs.forEach(d=>batch.delete(d.ref));if(!snap.empty)await batch.commit();
+ }catch(e){console.warn('Cleanup backup:',cloudErrorText(e))}
 }
 async function loadBackupHistory(){
-  const tbody=document.getElementById('backupHistoryBody');
-  const statusEl=document.getElementById('backupAutoStatus');
-  if(!tbody)return;
-  if(statusEl){
-    const last=localStorage.getItem(AUTO_BACKUP_KEY);
-    statusEl.textContent=last?('Cadangan otomatis terakhir tersimpan: '+last):'Belum ada cadangan otomatis tersimpan di perangkat ini.';
-  }
-  if(!supabaseClient){tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted)">Cloud belum terhubung, cadangan otomatis tidak tersedia.</td></tr>';return}
-  tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted)">Memuat riwayat cadangan…</td></tr>';
-  try{
-    const {data:rows,error}=await supabaseClient.from(SUPABASE_TABLE).select('id,updated_at').like('id',BACKUP_ID_PREFIX+'%').order('id',{ascending:false});
-    if(error)throw error;
-    if(!rows||!rows.length){tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted)">Belum ada cadangan otomatis tersimpan.</td></tr>';return}
-    tbody.innerHTML=rows.map(r=>{
-      const tgl=r.id.slice(BACKUP_ID_PREFIX.length);
-      const waktu=r.updated_at?new Date(r.updated_at).toLocaleString('id-ID'):'-';
-      return `<tr><td>${esc(tgl)}</td><td>${esc(waktu)}</td><td class="rowact">
-        <button class="secondary" onclick="downloadDailyBackup('${tgl}')">⇩ Unduh</button>
-        <button class="secondary" onclick="restoreDailyBackup('${tgl}')">⇧ Pulihkan</button>
-      </td></tr>`;
-    }).join('');
-  }catch(e){
-    tbody.innerHTML='<tr><td colspan="3" style="color:#d71920">Gagal memuat riwayat cadangan: '+esc(cloudErrorText(e))+'</td></tr>';
-  }
+ const tbody=document.getElementById('backupHistoryBody'),statusEl=document.getElementById('backupAutoStatus');if(!tbody)return;
+ if(statusEl){const last=localStorage.getItem(AUTO_BACKUP_KEY);statusEl.textContent=last?'Cadangan otomatis terakhir: '+last:'Riwayat cadangan tersimpan di Firebase.'}
+ const f=getFirebase();if(!f||!cloudReady){tbody.innerHTML='<tr><td colspan="3">Firebase belum terhubung.</td></tr>';return}
+ tbody.innerHTML='<tr><td colspan="3">Memuat riwayat cadangan…</td></tr>';
+ try{const snap=await f.db.collection(FIREBASE_BACKUP_COLLECTION).orderBy('createdAtClient','desc').limit(60).get();
+  if(snap.empty){tbody.innerHTML='<tr><td colspan="3">Belum ada cadangan otomatis.</td></tr>';return}
+  tbody.innerHTML=snap.docs.map(d=>`<tr><td>${esc(d.id)}</td><td>${esc(d.data().createdAtClient||'-')}</td><td class="rowact"><button class="secondary" onclick="downloadDailyBackup('${d.id}')">⇩ Unduh</button> <button class="secondary" onclick="restoreDailyBackup('${d.id}')">⇧ Pulihkan</button></td></tr>`).join('');
+ }catch(e){tbody.innerHTML='<tr><td colspan="3">Gagal memuat riwayat: '+esc(cloudErrorText(e))+'</td></tr>'}
 }
-async function fetchDailyBackupState(tgl){
-  const {data:row,error}=await supabaseClient.from(SUPABASE_TABLE).select('state').eq('id',BACKUP_ID_PREFIX+tgl).maybeSingle();
-  if(error)throw error;
-  return row?row.state:null;
-}
-async function downloadDailyBackup(tgl){
-  try{
-    const state=await fetchDailyBackupState(tgl);
-    if(!state){alert('Cadangan tanggal tersebut tidak ditemukan.');return}
-    downloadFile('backup_finance_shad_'+tgl+'.json',JSON.stringify(state,null,2),'application/json');
-  }catch(e){alert('Gagal mengunduh cadangan: '+cloudErrorText(e))}
-}
+async function fetchDailyBackupState(tgl){const f=getFirebase();if(!f)throw new Error('Firebase belum dikonfigurasi');const snap=await f.db.collection(FIREBASE_BACKUP_COLLECTION).doc(tgl).get();return snap.exists?(snap.data()||{}).state:null}
+async function downloadDailyBackup(tgl){try{const state=await fetchDailyBackupState(tgl);if(!state){alert('Cadangan tidak ditemukan.');return}downloadFile('backup_finance_shad_'+tgl+'.json',JSON.stringify(state,null,2),'application/json')}catch(e){alert('Gagal mengunduh: '+cloudErrorText(e))}}
 async function restoreDailyBackup(tgl){
-  if(!confirm('Memulihkan cadangan tanggal '+tgl+' akan menimpa seluruh data yang ada saat ini (termasuk data di cloud). Lanjutkan?'))return;
-  try{
-    const state=await fetchDailyBackupState(tgl);
-    if(!state){alert('Cadangan tanggal tersebut tidak ditemukan.');return}
-    data=state;
-    if(!Array.isArray(data.payments))data.payments=[];
-    save();
-    if(cloudReady)await pushCloudState(false);
-    renderDashboard();renderCustomers();renderInvoices();renderReceivables();renderPayments();renderAging();renderReminders();renderImportSummary();
-    loadSettingsForm();
-    alert('Data berhasil dipulihkan dari cadangan tanggal '+tgl+'.');
-  }catch(e){alert('Gagal memulihkan cadangan: '+cloudErrorText(e))}
+ if(currentRole==='viewer'){alert('Akun Viewer tidak dapat memulihkan data.');return}
+ if(!confirm('Memulihkan cadangan '+tgl+' akan menimpa data saat ini. Lanjutkan?'))return;
+ try{const state=await fetchDailyBackupState(tgl);if(!state){alert('Cadangan tidak ditemukan.');return}
+  data=state;if(!Array.isArray(data.payments))data.payments=[];save();await pushCloudState(false);
+  renderDashboard();renderCustomers();renderInvoices();renderReceivables();renderPayments();renderAging();renderReminders();renderImportSummary();loadSettingsForm();alert('Data berhasil dipulihkan dari Firebase.');
+ }catch(e){alert('Gagal memulihkan: '+cloudErrorText(e))}
 }
 
 function csvCell(x){return `"${String(x??'').replaceAll('"','""')}"`}
@@ -5241,7 +4960,7 @@ function calcNeedDeposit(i){
 }
 /* Need Deposit yang ditampilkan ke user = Total Kebutuhan DP (Rate DP x Pax)
    dikurangi Total Seluruh Pembayaran yang sudah masuk (realtime, termasuk
-   payment record dari Cloud/Supabase via invCalc). Tidak pernah negatif:
+   payment record dari Cloud/Firebase via invCalc). Tidak pernah negatif:
    jika pembayaran sudah menutupi/melebihi kebutuhan DP, tampilkan Rp 0.
    Kekurangan DP memakai rumus yang sama: (Pax x Rate DP) - Jumlah terbayar.
    Jenis lain (Normal/Refund) nilainya tidak ikut dipotong pembayaran. */
@@ -6170,23 +5889,23 @@ WA_TYPES.forEach(t=>{if(data.waSettings.enabled[t.key]===undefined)data.waSettin
 }
 waInit();
 
-/* ---------- Penyimpanan file PDF invoice (cache lokal IndexedDB + Supabase Storage) ---------- */
+/* ---------- Penyimpanan file PDF invoice (cache lokal IndexedDB + Firebase Storage) ---------- */
 // PERBAIKAN PENTING: sebelumnya file PDF HANYA disimpan di IndexedDB, yaitu
 // penyimpanan LOKAL milik satu browser/komputer saja. Sementara itu data
-// invoice (data.waPdfIndex dkk) ikut tersinkron ke Supabase bersama seluruh
+// invoice (data.waPdfIndex dkk) ikut tersinkron ke Firebase bersama seluruh
 // data lain lewat save()->pushCloudState(). Akibatnya: invoice yang dibuat
 // atau di-generate PDF-nya di komputer A akan tercatat "sudah punya PDF" di
 // SEMUA perangkat (karena data-nya sinkron), padahal berkas PDF aslinya
 // hanya ada di IndexedDB komputer A -- begitu dibuka dari komputer/HP lain,
 // sistem gagal menemukan berkasnya dan menampilkan "PDF belum tersedia,
 // silakan unggah manual" walau invoicenya sendiri ada dan lengkap.
-// Sekarang setiap PDF yang dibuat juga diunggah ke Supabase Storage (bucket
-// SUPABASE_PDF_BUCKET) dan path-nya disimpan di data.invoicePdf[noInvoice]
+// Sekarang setiap PDF yang dibuat juga diunggah ke Firebase Storage (bucket
+// FIREBASE_PDF_BUCKET) dan path-nya disimpan di data.invoicePdf[noInvoice]
 // -- field ini ikut tersinkron cloud seperti data lain, sehingga PDF bisa
 // diambil ulang dari perangkat manapun. IndexedDB tetap dipakai sebagai
 // cache lokal supaya buka PDF yang sudah pernah dibuka tetap cepat & bisa
 // offline.
-const SUPABASE_PDF_BUCKET='invoice-pdfs';
+const FIREBASE_PDF_BUCKET='invoice-pdfs';
 let waDbP=null;
 function waDb(){
 if(waDbP)return waDbP;
@@ -6199,7 +5918,7 @@ return waDbP;
 }
 function waPdfKey(id){return String(id||'').trim().toUpperCase()}
 function waPdfName(id){return String(id||'invoice').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')+'.pdf'}
-// Path Supabase Storage untuk PDF invoice ini. Memakai NOMOR INVOICE (bukan
+// Path Firebase Storage untuk PDF invoice ini. Memakai NOMOR INVOICE (bukan
 // nama file) sebagai identitas unik, persis seperti diminta -- jadi satu
 // invoice = satu path tetap, walau nama file tampilannya berubah (mis.
 // setelah PNR diketahui).
@@ -6213,16 +5932,10 @@ return true;
 }catch(e){console.warn('Gagal menyimpan PDF invoice ke cache lokal',e);return false}
 }
 async function waSaveCloudPdf(id,file){
-try{
-const sb=getSupabaseClient();
-if(!sb)return false;
-const path=waPdfCloudPath(id);
-const {error}=await sb.storage.from(SUPABASE_PDF_BUCKET).upload(path,file,{upsert:true,contentType:'application/pdf',cacheControl:'3600'});
-if(error)throw error;
-if(!data.invoicePdf)data.invoicePdf={};
-data.invoicePdf[waPdfKey(id)]={path,name:file.name||waPdfName(id),updatedAt:new Date().toISOString()};
-return true;
-}catch(e){console.warn('Gagal mengunggah PDF invoice ke Supabase Storage (bucket "'+SUPABASE_PDF_BUCKET+'" mungkin belum dibuat)',e);return false}
+ try{const f=getFirebase();if(!f||!currentUser)return false;
+  const path=FIREBASE_PDF_BUCKET+'/'+waPdfCloudPath(id).split('/').pop();await f.storage.ref(path).put(file,{contentType:'application/pdf'});
+  if(!data.invoicePdf)data.invoicePdf={};data.invoicePdf[waPdfKey(id)]={path,name:file.name||waPdfName(id),updatedAt:new Date().toISOString()};return true;
+ }catch(e){console.warn('Gagal mengunggah PDF ke Firebase Storage:',e);return false}
 }
 async function waSavePdf(id,file){
 if(!id||!file)return false;
@@ -6246,22 +5959,16 @@ return await new Promise((res,rej)=>{const tx=db.transaction('pdf','readonly');c
 }catch(e){return null}
 }
 async function waFetchCloudPdf(id){
-try{
-const sb=getSupabaseClient();
-if(!sb)return null;
-const info=data.invoicePdf&&data.invoicePdf[waPdfKey(id)];
-const path=info&&info.path?info.path:waPdfCloudPath(id);
-const {data:blobData,error}=await sb.storage.from(SUPABASE_PDF_BUCKET).download(path);
-if(error||!blobData)return null;
-const buf=await blobData.arrayBuffer();
-const rec={name:(info&&info.name)||waPdfName(id),type:'application/pdf',size:buf.byteLength,buf};
-waSaveLocalPdf(id,new File([buf],rec.name,{type:'application/pdf'})); // simpan salinan cache lokal, tanpa menunggu
-return rec;
-}catch(e){console.warn('Gagal mengambil PDF invoice dari Supabase Storage',e);return null}
+ try{const f=getFirebase();if(!f)return null;const info=data.invoicePdf&&data.invoicePdf[waPdfKey(id)];
+  const path=info&&info.path?info.path:(FIREBASE_PDF_BUCKET+'/'+waPdfCloudPath(id).split('/').pop());
+  const url=await f.storage.ref(path).getDownloadURL(),response=await fetch(url);if(!response.ok)return null;
+  const blob=await response.blob(),buf=await blob.arrayBuffer(),rec={name:(info&&info.name)||waPdfName(id),type:'application/pdf',size:buf.byteLength,buf};
+  waSaveLocalPdf(id,new File([blob],rec.name,{type:'application/pdf'}));return rec;
+ }catch(e){console.warn('Gagal mengambil PDF Firebase:',e);return null}
 }
 // Ambil PDF invoice: coba cache lokal dulu (cepat), kalau tidak ada (mis.
 // invoice ini dibuat/di-generate di komputer atau HP lain) ambil dari
-// Supabase Storage berdasarkan NOMOR INVOICE.
+// Firebase Storage berdasarkan NOMOR INVOICE.
 async function waGetPdf(id){
 const local=await waGetLocalPdf(id);
 if(local)return local;
@@ -6322,22 +6029,10 @@ setTimeout(()=>URL.revokeObjectURL(url),4000);
 return true;
 }
 // Tombol "Lihat PDF": buka PDF invoice langsung di tab baru. Kalau sudah ada
-// di Supabase Storage, pakai signed URL (cepat, tidak perlu unduh penuh ke
+// di Firebase Storage, pakai signed URL (cepat, tidak perlu unduh penuh ke
 // memori dulu); kalau belum (mis. cloud belum terkonfigurasi/belum sempat
 // terunggah), pakai salinan lokal atau buat ulang otomatis lewat waDownloadPdf.
-async function waViewPdf(id){
-const info=data.invoicePdf&&data.invoicePdf[waPdfKey(id)];
-if(info&&info.path){
-try{
-const sb=getSupabaseClient();
-if(sb){
-const {data:signed,error}=await sb.storage.from(SUPABASE_PDF_BUCKET).createSignedUrl(info.path,3600);
-if(!error&&signed&&signed.signedUrl){window.open(signed.signedUrl,'_blank');return true}
-}
-}catch(e){console.warn('Gagal membuat signed URL PDF, coba salinan lokal/generate ulang',e)}
-}
-return waDownloadPdf(id,{mode:'view'});
-}
+async function waViewPdf(id){return waDownloadPdf(id,{mode:'view'});}
 
 // Nama file PDF invoice: sebelumnya mengikuti apa adanya No. Invoice
 // (contoh No. Invoice "INV/TIK/2026/09/016" -> "INV_TIK_2026_09_016.pdf",
@@ -6452,7 +6147,7 @@ waGetPdf(id).then(rec=>{
 waPdfVerifying.delete(id);
 if(rec){waPdfVerified.add(id);return}
 // Index bilang ada tapi berkasnya tidak ditemukan (baik di cache lokal
-// maupun di Supabase Storage) -> hapus catatan index yang salah, lalu
+// maupun di Firebase Storage) -> hapus catatan index yang salah, lalu
 // bangun ulang PDF-nya OTOMATIS dari invoice terbaru (menu Invoice) persis
 // seperti invoice yang belum pernah punya PDF.
 if(data.waPdfIndex)delete data.waPdfIndex[waPdfKey(id)];
@@ -6476,7 +6171,7 @@ try{
 const blob=await generateInvoicePdfBlob(inv);
 const file=new File([blob],waPdfDisplayName(inv),{type:'application/pdf'});
 // waSavePdf menyimpan dengan KEY/PATH yang sama persis (Nomor Invoice),
-// baik di cache lokal (IndexedDB put) maupun Supabase Storage (upload
+// baik di cache lokal (IndexedDB put) maupun Firebase Storage (upload
 // upsert:true) -- sehingga PDF LAMA (termasuk hasil impor/unggah manual
 // sebelumnya) OTOMATIS TERGANTI oleh PDF baru ini, bukan menumpuk jadi
 // beberapa file untuk invoice yang sama.
@@ -6928,7 +6623,7 @@ return `<div class="wa-tabs" style="margin-bottom:10px">${chips}</div>
 }
 // Ganti PDF satu invoice dengan versi terbaru hasil generate otomatis dari
 // data Invoice saat ini -- dipakai tombol "↻" per baris di Monitoring.
-// HANYA mengganti file PDF (lokal & Supabase Storage), TIDAK menyentuh data
+// HANYA mengganti file PDF (lokal & Firebase Storage), TIDAK menyentuh data
 // invoice/pembayaran sama sekali.
 function waRebuildOnePdf(id){
 queueAutoInvoicePdfRebuild(id);
@@ -7402,19 +7097,9 @@ async function openApprovalModal(){
   renderApprovalModal();
 }
 async function loadApprovalRequests(){
-  if(currentRole!=='admin'){approvalRequests=[];return}
-  const sb=getSupabaseClient();
-  if(!sb){approvalRequests=[];return}
-  try{
-    const {data:rows,error}=await sb.from(PROFILES_TABLE)
-      .select('id,name,email,phone,status,requested_role,role,created_at,approved_at')
-      .order('created_at',{ascending:false});
-    if(error){console.error('Load approval error:',cloudErrorText(error));approvalRequests=[];return}
-    approvalRequests=(rows||[]).filter(r=>(r.role||'')!=='admin');
-  }catch(e){
-    console.error('Load approval error:',e);
-    approvalRequests=[];
-  }
+ if(currentRole!=='admin'){approvalRequests=[];return}const f=getFirebase();if(!f){approvalRequests=[];return}
+ try{const snap=await f.db.collection(FIREBASE_PROFILE_COLLECTION).orderBy('created_at','desc').get();approvalRequests=snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.role!=='admin')}
+ catch(e){console.error('Load approval error:',e);approvalRequests=[]}
 }
 function approvalStatusBadge(s){
   if(s==='pending')return '<span class="badge by">Menunggu Persetujuan</span>';
@@ -7517,143 +7202,51 @@ function openApproveDialog(id,name,requestedRole){
   document.getElementById('modalTitle').textContent='Setujui Pendaftaran';
   document.getElementById('modalBody').innerHTML=html;
 }
+async function updateApprovalProfile(id,changes){
+ const f=getFirebase();if(!f||currentRole!=='admin')throw new Error('Hanya Admin dapat mengubah akses.');
+ await f.db.collection(FIREBASE_PROFILE_COLLECTION).doc(id).update({...changes,updated_at:new Date().toISOString()});
+}
 async function confirmApprove(id){
-  if(currentRole!=='admin')return;
-  const role=document.getElementById('apvRoleSelect').value;
-  const sb=getSupabaseClient();
-  try{
-    const {error}=await sb.rpc('approve_user',{target_id:id,new_role:role});
-    if(error){alert('Gagal menyetujui pengguna: '+cloudErrorText(error));return}
-    await loadApprovalRequests();
-    renderApprovalModal();
-  }catch(e){
-    console.error('Approve error:',e);
-    alert('Gagal menyetujui pengguna.');
-  }
+ if(currentRole!=='admin')return;const role=document.getElementById('apvRoleSelect').value;
+ try{await updateApprovalProfile(id,{role,status:'approved',approved_at:new Date().toISOString()});await loadApprovalRequests();renderApprovalModal()}
+ catch(e){alert('Gagal menyetujui: '+cloudErrorText(e))}
 }
 async function rejectRequest(id,name){
-  if(currentRole!=='admin')return;
-  if(!confirm('Tolak pendaftaran '+name+'? Pengguna tidak akan bisa masuk ke dashboard.'))return;
-  const sb=getSupabaseClient();
-  try{
-    const {error}=await sb.rpc('reject_user',{target_id:id});
-    if(error){alert('Gagal menolak pengguna: '+cloudErrorText(error));return}
-    await loadApprovalRequests();
-    renderApprovalModal();
-  }catch(e){
-    console.error('Reject error:',e);
-    alert('Gagal menolak pengguna.');
-  }
+ if(currentRole!=='admin'||!confirm('Tolak pendaftaran '+name+'?'))return;
+ try{await updateApprovalProfile(id,{status:'rejected',approved_at:new Date().toISOString()});await loadApprovalRequests();renderApprovalModal()}
+ catch(e){alert('Gagal menolak: '+cloudErrorText(e))}
 }
 async function disableUser(id,name){
-  if(currentRole!=='admin')return;
-  if(!confirm('Apakah Anda yakin ingin menonaktifkan akun ini? User tidak akan dapat mengakses website lagi.'))return;
-  const sb=getSupabaseClient();
-  try{
-    const {error}=await sb.rpc('disable_user',{target_id:id});
-    if(error){alert('Gagal menonaktifkan akun: '+cloudErrorText(error));return}
-    await loadApprovalRequests();
-    renderApprovalModal();
-  }catch(e){
-    console.error('Disable user error:',e);
-    alert('Gagal menonaktifkan akun.');
-  }
+ if(currentRole!=='admin'||!confirm('Nonaktifkan akun '+name+'?'))return;
+ try{await updateApprovalProfile(id,{status:'disabled',disabled_at:new Date().toISOString()});await loadApprovalRequests();renderApprovalModal()}
+ catch(e){alert('Gagal menonaktifkan: '+cloudErrorText(e))}
 }
 async function reactivateUser(id,name){
-  if(currentRole!=='admin')return;
-  if(!confirm('Apakah Anda ingin mengaktifkan kembali akun ini?'))return;
-  const sb=getSupabaseClient();
-  try{
-    const {error}=await sb.rpc('reactivate_user',{target_id:id});
-    if(error){alert('Gagal mengaktifkan kembali akun: '+cloudErrorText(error));return}
-    await loadApprovalRequests();
-    renderApprovalModal();
-  }catch(e){
-    console.error('Reactivate user error:',e);
-    alert('Gagal mengaktifkan kembali akun.');
-  }
+ if(currentRole!=='admin'||!confirm('Aktifkan kembali akun '+name+'?'))return;
+ try{await updateApprovalProfile(id,{status:'approved',disabled_at:null});await loadApprovalRequests();renderApprovalModal()}
+ catch(e){alert('Gagal mengaktifkan: '+cloudErrorText(e))}
 }
 async function hardDeleteUser(id,name){
-  if(currentRole!=='admin')return;
-  if(!confirm('Hapus akun '+name+' secara permanen? Tindakan ini memutus akses login pengguna.'))return;
-  if(!confirm('PERINGATAN: akun ini akan dihapus permanen dan tidak dapat dipulihkan. Lanjutkan?'))return;
-  const sb=getSupabaseClient();
-  try{
-    const {data:sessionData}=await sb.auth.getSession();
-    const token=sessionData&&sessionData.session&&sessionData.session.access_token;
-    if(!token){alert('Sesi tidak valid, silakan login ulang.');return}
-    const resp=await fetch(SUPABASE_URL+'/functions/v1/admin-delete-user',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':SUPABASE_KEY},
-      body:JSON.stringify({target_id:id})
-    });
-    if(!resp.ok){
-      let msg='Gagal menghapus akun.';
-      try{const j=await resp.json();if(j&&j.error)msg='Gagal menghapus akun: '+j.error;}catch(e){}
-      alert(msg);
-      return;
-    }
-    await loadApprovalRequests();
-    renderApprovalModal();
-  }catch(e){
-    console.error('Hard delete user error:',e);
-    alert('Gagal menghapus akun. Pastikan Edge Function admin-delete-user sudah dibuat di Supabase.');
-  }
+ if(currentRole!=='admin')return;
+ if(!FIREBASE_ADMIN_DELETE_FUNCTION_URL){alert('Penghapusan akun Firebase Authentication memerlukan HTTPS Cloud Function dengan Firebase Admin SDK di server. URL fungsi belum dikonfigurasi; profil tidak dihapus.');return}
+ if(!confirm('Hapus akun '+name+' secara permanen?'))return;
+ try{const f=getFirebase(),token=await f.auth.currentUser.getIdToken();
+  const resp=await fetch(FIREBASE_ADMIN_DELETE_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({uid:id})});
+  if(!resp.ok)throw new Error('Cloud Function menolak permintaan ('+resp.status+')');await loadApprovalRequests();renderApprovalModal();
+ }catch(e){alert('Gagal menghapus akun: '+cloudErrorText(e))}
 }
 function acctSaveProfile(e){e.preventDefault();const a=acctData();a.name=document.getElementById('acName').value.trim();a.email=document.getElementById('acEmail').value.trim();a.role=document.getElementById('acRole').value.trim();acctSave(a);closeModal();alert('Profil tersimpan.')}
 function acctToggle2FA(){const a=acctData();a.twofa=!a.twofa;acctSave(a);closeModal();alert('2FA '+(a.twofa?'diaktifkan':'dinonaktifkan')+'.')}
 async function acctChangePass(e){
- e.preventDefault();
- const oldP=document.getElementById('acOld').value,newP=document.getElementById('acNew').value,newP2=document.getElementById('acNew2').value,email=document.getElementById('acEmailVerify').value.trim();
- if(newP!==newP2){alert('Konfirmasi password baru tidak cocok.');return}
- if(newP.length<8){alert('Password baru minimal 8 karakter.');return}
- const a=await initAuth();
- if(await sha256(oldP)!==a.passwordHash){alert('Password lama salah.');return}
- if(!email){alert('Email wajib diisi.');return}
- const code=String(Math.floor(100000+Math.random()*900000));
- a.pending={email,codeHash:await sha256(code),newPasswordHash:await sha256(newP),expiresAt:Date.now()+10*60*1000};
- localStorage.setItem(AUTH_KEY,JSON.stringify(a));
-
- const acc=acctData();acc.email=email;acctSave(acc);
- const emailSent=await sendActivationEmail(email,code);
-
- // Jika EmailJS belum dikonfigurasi, jangan mengunci akun dalam status pending.
- // Karena file HTML berjalan tanpa backend email, password langsung diaktifkan.
- if(!emailSent){
-   a.passwordHash=await sha256(newP);
-   a.email=email;
-   a.pending=null;
-   localStorage.setItem(AUTH_KEY,JSON.stringify(a));
-   const updated=acctData();updated.email=email;acctSave(updated);
-   alert('Password berhasil diubah. Aktivasi email dilewati karena layanan pengiriman email belum dikonfigurasi pada aplikasi.');
-   closeModal();
-   return;
- }
-
- openActivationModal();
+ e.preventDefault();const oldP=document.getElementById('acOld').value,newP=document.getElementById('acNew').value,newP2=document.getElementById('acNew2').value;
+ if(newP!==newP2){alert('Konfirmasi password baru tidak cocok.');return}if(newP.length<8){alert('Password minimal 8 karakter.');return}
+ const f=getFirebase(),user=f&&f.auth.currentUser;if(!user||!user.email){alert('Sesi tidak ditemukan. Login ulang.');return}
+ try{const credential=firebase.auth.EmailAuthProvider.credential(user.email,oldP);await user.reauthenticateWithCredential(credential);await user.updatePassword(newP);closeModal();alert('Password Firebase berhasil diperbarui.')}
+ catch(err){alert('Gagal mengganti password: '+cloudErrorText(err))}
 }
-async function sendActivationEmail(email,code){
- const publicKey=window.SHAD_EMAILJS_PUBLIC_KEY||'';
- const serviceId=window.SHAD_EMAILJS_SERVICE_ID||'';
- const templateId=window.SHAD_EMAILJS_TEMPLATE_ID||'';
- if(publicKey&&serviceId&&templateId&&window.emailjs){
-   try{emailjs.init({publicKey});await emailjs.send(serviceId,templateId,{to_email:email,to_name:acctData().name,activation_code:code,subject:'Aktivasi Perubahan Password SHAD Finance'});return true}catch(err){console.warn('EmailJS gagal:',err)}
- }
- const subject=encodeURIComponent('Kode Aktivasi Perubahan Password SHAD Finance');
- const body=encodeURIComponent('Kode aktivasi Anda: '+code+'\n\nKode berlaku 10 menit.');
- window.open('mailto:'+encodeURIComponent(email)+'?subject='+subject+'&body='+body,'_blank');
- return false;
-}
-function openActivationModal(){openModal('Aktivasi Email','<form onsubmit="verifyPasswordActivation(event)"><p>Kode aktivasi telah disiapkan untuk email akun. Masukkan kode 6 digit untuk mengaktifkan password baru.</p><div class="field"><label>Kode Aktivasi</label><input id="activationCode" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required placeholder="000000"></div><div id="activationInfo" class="notice">Kode berlaku selama 10 menit.</div><div class="modalfoot"><button type="button" class="secondary" onclick="closeModal()">Nanti</button><button class="primary">Aktifkan Password</button></div></form>')}
-async function verifyPasswordActivation(e){
- e.preventDefault();const a=await initAuth();
- if(!a.pending){alert('Tidak ada perubahan password yang menunggu aktivasi.');return}
- if(Date.now()>a.pending.expiresAt){a.pending=null;localStorage.setItem(AUTH_KEY,JSON.stringify(a));alert('Kode aktivasi sudah kedaluwarsa. Silakan ulangi Ganti Password.');return}
- const code=document.getElementById('activationCode').value.trim();
- if(await sha256(code)!==a.pending.codeHash){alert('Kode aktivasi salah.');return}
- a.passwordHash=a.pending.newPasswordHash;a.email=a.pending.email;a.pending=null;localStorage.setItem(AUTH_KEY,JSON.stringify(a));
- const acc=acctData();acc.email=a.email;acctSave(acc);closeModal();alert('Password berhasil diaktifkan. Silakan login kembali dengan password baru.');logout();
-}
+async function sendActivationEmail(){return false}
+function openActivationModal(){alert('Aktivasi password lama tidak digunakan. Firebase Authentication mengelola password akun.')}
+async function verifyPasswordActivation(e){e.preventDefault();alert('Kode aktivasi lama tidak digunakan setelah migrasi Firebase.')}
 (function(){const a=acctData();a.logins=[{time:new Date().toLocaleString('id-ID'),device:navigator.platform||'Web Browser'}].concat(a.logins||[]).slice(0,15);localStorage.setItem(ACCT_KEY,JSON.stringify(a));renderAcct()})();
 </script>
 
@@ -7981,7 +7574,7 @@ table.ivitems td.amt{font-variant-numeric:tabular-nums}
 </style>
 
 <script>
-/* ===== LOGIN UI — show/hide password, lupa password, Google (Supabase OAuth) ===== */
+/* ===== LOGIN UI — show/hide password, lupa password, Google (Firebase OAuth) ===== */
 function lgMsg(kind,text){
   var e=document.getElementById('loginError'),i=document.getElementById('loginInfo');
   if(e){e.style.display='none';}
@@ -8000,44 +7593,16 @@ function toggleLoginPass(){
   inp.focus();
 }
 async function forgotPassword(){
-  var em=(document.getElementById('loginEmail')||{}).value||'';
-  em=em.trim();
-  if(!em||em.indexOf('@')<0){
-    lgMsg('err','Isi kolom email terlebih dahulu, lalu klik "Lupa Password?".');
-    var f=document.getElementById('loginEmail'); if(f)f.focus();
-    return;
-  }
-  if(typeof supabaseConfigured!=='function'||!supabaseConfigured()){
-    lgMsg('err','Cloud belum dikonfigurasi, hubungi admin untuk reset password.');
-    return;
-  }
-  try{
-    var sb=getSupabaseClient();
-    var res=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.href.split('#')[0]});
-    if(res&&res.error){lgMsg('err','Gagal mengirim tautan reset: '+res.error.message);return}
-    lgMsg('ok','Tautan reset password sudah dikirim ke '+em+'. Cek kotak masuk Anda.');
-  }catch(e){
-    lgMsg('err','Gagal mengirim tautan reset password. Coba lagi atau hubungi admin.');
-  }
+ let em=((document.getElementById('loginEmail')||{}).value||'').trim();if(!em||em.indexOf('@')<0){lgMsg('err','Isi email terlebih dahulu.');return}
+ const f=getFirebase();if(!f){lgMsg('err','Firebase belum dikonfigurasi.');return}
+ try{await f.auth.sendPasswordResetEmail(em);lgMsg('ok','Tautan reset password dikirim ke '+em+'. Periksa email Anda.')}
+ catch(e){lgMsg('err','Gagal mengirim tautan reset: '+cloudErrorText(e))}
 }
 async function loginGoogle(){
-  var btn=document.getElementById('lgGoogle');
-  if(typeof supabaseConfigured!=='function'||!supabaseConfigured()){
-    lgMsg('err','Cloud belum dikonfigurasi, login Google tidak tersedia.');
-    return;
-  }
-  if(btn){btn.disabled=true;}
-  try{
-    var sb=getSupabaseClient();
-    var res=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href.split('#')[0]}});
-    if(res&&res.error){
-      lgMsg('err','Login Google belum diaktifkan pada server. Hubungi admin.');
-      if(btn)btn.disabled=false;
-    }
-  }catch(e){
-    lgMsg('err','Login Google belum tersedia. Gunakan email dan password Anda.');
-    if(btn)btn.disabled=false;
-  }
+ const f=getFirebase(),btn=document.getElementById('lgGoogle');if(!f){lgMsg('err','Firebase belum dikonfigurasi.');return}
+ if(btn)btn.disabled=true;
+ try{await f.auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}
+ catch(e){lgMsg('err','Login Google gagal: '+cloudErrorText(e));if(btn)btn.disabled=false}
 }
 document.addEventListener('keydown',function(e){
   var lg=document.getElementById('login');
@@ -8821,7 +8386,7 @@ body.acc-skin{--acc-line:#d3dae6;--acc-line2:#e8edf4;--acc-head:#f6f8fb;font-siz
 /* ==========================================================================
    SHAD FINANCE — LAPISAN TAMPILAN "ACCURATE ONLINE" (GLOBAL)
    Hanya menambah elemen tampilan & kelas CSS. Tidak mengubah data,
-   fungsi bisnis, maupun koneksi Supabase.
+   fungsi bisnis, maupun koneksi Firebase.
    ========================================================================== */
 (function(){
   const VIEWS={
